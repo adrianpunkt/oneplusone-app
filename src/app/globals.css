@@ -1,26 +1,93 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --blush: #fef9f9;
+  --paper: #ffffff;
+  --mist: #f1ece4;
+  --ink: #211915;
+  --muted: #665951;
+  --faint: #8b7b72;
+  --line: rgba(84, 67, 61, 0.18);
+  --lipstick: #e53a3e;
+  --wine: #440a12;
+  --ocean: #26426b;
+  --gold: #c58732;
+  --background: var(--blush);
+  --foreground: var(--ink);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: #fef9f9;
+  --color-foreground: #211915;
+  --color-blush: #fef9f9;
+  --color-paper: #ffffff;
+  --color-mist: #f1ece4;
+  --color-ink: #211915;
+  --color-muted: #665951;
+  --color-faint: #8b7b72;
+  --color-lipstick: #e53a3e;
+  --color-wine: #440a12;
+  --color-ocean: #26426b;
+  --color-gold: #c58732;
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+  --font-display: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--background);
+  color: var(--foreground);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgba(229, 58, 62, 0.09), transparent 34rem),
+    linear-gradient(180deg, #fef9f9 0%, #fff 54%, #fef9f9 100%);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--lipstick);
+  color: white;
+}
+
+@layer base {
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.font-display {
+  font-family: var(--font-geist-sans), "Geist", ui-sans-serif, system-ui, sans-serif;
+}
+
+.app-grid {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+}
+
+@media (max-width: 900px) {
+  .app-grid {
+    grid-template-columns: 1fr;
+  }
 }

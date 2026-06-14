@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# One Plus One Club Member App
 
-## Getting Started
+Next.js member portal for one plus one club. The marketing/onboarding website stays in `../website`; this app extends the same Supabase projects for member-owned data.
 
-First, run the development server:
+## Local setup
+
+```bash
+npm install
+npm run dev
+```
+
+Required env:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET` or `APP_STRIPE_WEBHOOK_SECRET`
+
+Local development is configured to use the Supabase development project:
+
+```text
+opo-dev: https://oackdojvcfrkzbnprovb.supabase.co
+```
+
+The ignored `.env.local` file contains the matching dev publishable key and
+server-only service-role key. Use `.env.example` only as the template for new
+checkouts; do not commit real keys.
+
+Supabase Auth redirects for the dev project allow the member app callbacks:
+
+- `http://localhost:3000/**`
+- `http://127.0.0.1:3000/**`
+
+Local login links should come back to `http://localhost:3000/auth/callback`.
+If a new local login email opens `https://oneplusoneclub.com`, verify the app is
+running with `.env.local` and that the dev Auth config has been pushed.
+
+Login uses Supabase Auth email OTP. The Supabase email template must include
+both the one-time token and confirmation URL so members can enter the code or
+tap the backup link.
+
+## Supabase
+
+The app migration is in `supabase/migrations/20260613190000_member_app.sql`.
+This checkout is linked to `opo-dev` for local Supabase CLI commands:
+
+```bash
+supabase db push --yes
+```
+
+Before applying production migrations, explicitly relink to the production
+project ref from the website README and verify the target with
+`cat supabase/.temp/project-ref`.
+
+It assumes the website migrations have already created:
+
+- `profile_registrations`
+- `members`
+- `benefit_codes`
+- `benefit_code_redemptions`
+- `credit_ledger_entries`
+- `member_credit_balances`
+- the website membership RPCs
+
+Apply the website migrations first, then apply this app migration to the same
+project.
+
+## Stripe
+
+The app has a dedicated credit-pack checkout endpoint:
+
+- `POST /api/stripe/create-credit-checkout`
+- `POST /api/stripe/webhook`
+
+The app webhook only completes sessions where `metadata.purchase = credit_pack`, so it does not process the website membership sessions.
+
+## Commands
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run lint
+npm run build
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
