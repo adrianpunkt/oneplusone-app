@@ -9,7 +9,7 @@ export const navSections = [
   },
   {
     href: "/going-out",
-    label: "Going out",
+    label: "Goint-out",
     icon: Utensils,
     activePaths: ["/going-out", "/events", "/credits", "/preferences"],
   },
@@ -21,12 +21,22 @@ export const navSections = [
   },
 ] as const;
 
-export const meActivePaths = ["/me", "/profile", "/settings"] as const;
+export const meActivePaths = [
+  "/me",
+  "/my-story",
+  "/profile",
+  "/settings",
+] as const;
 
-export function isPathInSection(pathname: string, activePaths: readonly string[]) {
+export function isPathInSection(
+  pathname: string,
+  activePaths: readonly string[],
+) {
   const currentPath = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
 
   return activePaths.some((activePath) => {
-    return currentPath === activePath || currentPath.startsWith(`${activePath}/`);
+    return (
+      currentPath === activePath || currentPath.startsWith(`${activePath}/`)
+    );
   });
 }

@@ -1,9 +1,21 @@
 import Link from "next/link";
-import { CalendarDays, CreditCard, MessageCircle, Sparkles, Utensils } from "lucide-react";
+import {
+  CalendarDays,
+  CreditCard,
+  MessageCircle,
+  Sparkles,
+  Utensils,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { requireMemberContext } from "@/lib/data/member";
 import {
   getConversations,
@@ -27,7 +39,8 @@ export default async function DashboardPage() {
   const nextInvitation = invitations.find((invitation) =>
     ["invited", "waitlisted", "confirmed"].includes(invitation.status),
   );
-  const firstName = storyValue(profile?.profile_json, "profile.first_name") || "there";
+  const firstName =
+    storyValue(profile?.profile_json, "profile.first_name") || "there";
 
   return (
     <>
@@ -37,7 +50,8 @@ export default async function DashboardPage() {
           Hi {firstName}.
         </h1>
         <p className="max-w-2xl text-sm leading-6 text-muted">
-          Your profile, credits, invitations, and post-event conversations live here.
+          Your profile, credits, invitations, and post-event conversations live
+          here.
         </p>
       </section>
 
@@ -104,20 +118,30 @@ export default async function DashboardPage() {
           <CardContent className="grid gap-4">
             <dl className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg bg-blush p-3">
-                <dt className="text-xs font-bold uppercase text-faint">Looking for</dt>
+                <dt className="text-xs font-bold uppercase text-faint">
+                  Looking for
+                </dt>
                 <dd className="mt-1 text-sm font-semibold text-wine">
-                  {storyValue(profile?.profile_json, "profile.available_relationships") || "Not set"}
+                  {storyValue(
+                    profile?.profile_json,
+                    "profile.available_relationships",
+                  ) || "Not set"}
                 </dd>
               </div>
               <div className="rounded-lg bg-blush p-3">
-                <dt className="text-xs font-bold uppercase text-faint">Can meet in</dt>
+                <dt className="text-xs font-bold uppercase text-faint">
+                  Can meet in
+                </dt>
                 <dd className="mt-1 text-sm font-semibold text-wine">
-                  {storyValue(profile?.profile_json, "profile.event_location") || "Not set"}
+                  {storyValue(
+                    profile?.profile_json,
+                    "profile.event_location",
+                  ) || "Not set"}
                 </dd>
               </div>
             </dl>
             <Button asChild>
-              <Link href="/profile">Review story</Link>
+              <Link href="/my-story">Review story</Link>
             </Button>
           </CardContent>
         </Card>
@@ -126,7 +150,7 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Utensils className="h-5 w-5 text-lipstick" />
-              Going out
+              Goint-out
             </CardTitle>
             <CardDescription>
               {preferences
@@ -136,9 +160,15 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="grid gap-3">
             <div className="flex flex-wrap gap-2">
-              {preferences?.prefers_saturday_dinner ? <Badge>Saturday dinner</Badge> : null}
-              {preferences?.prefers_sunday_brunch ? <Badge>Sunday brunch</Badge> : null}
-              {preferences?.wants_to_host ? <Badge variant="ocean">Open to host</Badge> : null}
+              {preferences?.prefers_saturday_dinner ? (
+                <Badge>Saturday dinner</Badge>
+              ) : null}
+              {preferences?.prefers_sunday_brunch ? (
+                <Badge>Sunday brunch</Badge>
+              ) : null}
+              {preferences?.wants_to_host ? (
+                <Badge variant="ocean">Open to host</Badge>
+              ) : null}
               {!preferences ? <Badge variant="muted">Not set</Badge> : null}
             </div>
             <Button asChild variant="secondary">

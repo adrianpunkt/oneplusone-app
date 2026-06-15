@@ -1,0 +1,13 @@
+Language autocomplete data is derived from Unicode CLDR JSON.
+Territory language source: https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-core/supplemental/territoryInfo.json
+Language names source: https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/en/languages.json
+Territory names source: https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/en/territories.json
+Script names source: https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json/cldr-localenames-full/main/en/scripts.json
+Language suggestions are limited to official, de facto official, and sufficiently common co-official regional/minority languages.
+Known CLDR regional records that are not official languages are excluded from country language suggestions.
+English is added client-side as a preferred language everywhere.
+License: Unicode License V3
+License URL: https://www.unicode.org/license.txt
+Generated at: 2026-06-01T22:16:19.419Z
+Language count: 166
+Country language count: 258

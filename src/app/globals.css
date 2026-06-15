@@ -68,6 +68,27 @@ body {
     color: inherit;
     text-decoration: none;
   }
+
+  a[href],
+  button,
+  select,
+  summary,
+  [role="button"],
+  label[for],
+  input[type="button"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="reset"],
+  input[type="submit"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled,
+  [aria-disabled="true"],
+  input:disabled {
+    cursor: not-allowed;
+  }
 }
 
 button,

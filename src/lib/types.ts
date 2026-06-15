@@ -100,6 +100,16 @@ export type Conversation = {
   created_at: string;
   updated_at: string;
   events?: EventRecord | null;
+  correspondent?: {
+    id: string;
+    imageUrl: string;
+    name: string;
+  } | null;
+  lastMessage?: {
+    createdAt: string;
+    direction: "sent" | "received";
+    isUnread: boolean;
+  } | null;
 };
 
 export type Message = {

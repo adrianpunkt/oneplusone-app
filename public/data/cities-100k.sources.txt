@@ -1,0 +1,22 @@
+City autocomplete data is derived from GeoNames.
+City source: https://download.geonames.org/export/dump/cities15000.zip
+Country source: https://download.geonames.org/export/dump/countryInfo.txt
+Admin2 source: https://download.geonames.org/export/dump/admin2Codes.txt
+Admin section country dumps: https://download.geonames.org/export/dump/FR.zip, https://download.geonames.org/export/dump/GB.zip, https://download.geonames.org/export/dump/AU.zip
+Filter: populated places with population > 100000
+Filter: parent cities are split only when at least 2 selectable sections are available.
+Configured administrative city sections can be included below the city population threshold when their parent city is above it.
+PPLX city sections are displayed with their inferred parent city when GeoNames admin codes allow it.
+Unparented PPLX rows are excluded because they are sections or neighborhoods without a selectable city context.
+Configured country administrative sections are also included when they can be parented to a larger city.
+Countries requiring explicit section rules: US
+Configured special city sections, such as New York City boroughs, are displayed as selectable city sections.
+Parent cities with selectable sections are removed from the selectable city list.
+License: Creative Commons Attribution 4.0
+License URL: https://creativecommons.org/licenses/by/4.0/
+Generated at: 2026-05-17T16:01:34.631Z
+City count: 6080
+Parented city sections: 468
+Administrative city sections: 207
+Special city sections: 5
+Removed parent cities: 66

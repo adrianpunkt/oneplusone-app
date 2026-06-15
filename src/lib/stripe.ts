@@ -1,5 +1,7 @@
 import Stripe from "stripe";
 
+export const STRIPE_API_VERSION = "2026-05-27.dahlia";
+
 let stripeClient: Stripe | null = null;
 
 export function getStripe() {
@@ -10,7 +12,10 @@ export function getStripe() {
     throw new Error("Missing STRIPE_SECRET_KEY.");
   }
 
-  stripeClient = new Stripe(secretKey);
+  stripeClient = new Stripe(secretKey, {
+    apiVersion: STRIPE_API_VERSION,
+    typescript: true,
+  });
   return stripeClient;
 }
 

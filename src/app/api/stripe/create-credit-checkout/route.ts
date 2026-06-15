@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import type Stripe from "stripe";
 import { z } from "zod";
 
 import { getOptionalMemberContext } from "@/lib/data/member";
@@ -9,6 +10,8 @@ import type { CreditProduct } from "@/lib/types";
 const payloadSchema = z.object({
   productId: z.string().uuid(),
 });
+
+export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   const context = await getOptionalMemberContext();
@@ -33,9 +36,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Credit product was not found." }, { status: 404 });
   }
 
-  const origin = request.nextUrl.origin;
-  const stripe = getStripe();
-  const lineItem = product.stripe_price_id
+  const origin = getCheckoutOrigin(request);
+  const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = product.stripe_price_id
     ? {
         price: product.stripe_price_id,
         quantity: 1,
@@ -52,27 +54,66 @@ export async function POST(request: NextRequest) {
         },
       };
 
-  const session = await stripe.checkout.sessions.create({
-    mode: "payment",
-    customer_email: context.member.email || context.user.email || undefined,
-    line_items: [lineItem],
-    success_url: `${origin}/credits?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${origin}/credits?purchase=cancelled`,
-    metadata: {
-      purchase: "credit_pack",
-      member_id: context.member.id,
-      credit_product_id: product.id,
-      credits: String(product.credits),
-    },
-    payment_intent_data: {
+  try {
+    const session = await getStripe().checkout.sessions.create({
+      mode: "payment",
+      client_reference_id: context.member.id,
+      customer_email: context.member.email || context.user.email || undefined,
+      line_items: [lineItem],
+      success_url: `${origin}/credits?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/credits?purchase=cancelled`,
       metadata: {
         purchase: "credit_pack",
         member_id: context.member.id,
         credit_product_id: product.id,
         credits: String(product.credits),
       },
-    },
-  });
+      payment_intent_data: {
+        metadata: {
+          purchase: "credit_pack",
+          member_id: context.member.id,
+          credit_product_id: product.id,
+          credits: String(product.credits),
+        },
+      },
+    });
 
-  return NextResponse.json({ ok: true, url: session.url });
+    if (!session.url) {
+      return NextResponse.json({ ok: false, error: "Could not start checkout." }, { status: 502 });
+    }
+
+    return NextResponse.json({ ok: true, url: session.url });
+  } catch (checkoutError) {
+    console.error("Could not create credit checkout session", checkoutError);
+    const paymentNotConfigured =
+      checkoutError instanceof Error && checkoutError.message === "Missing STRIPE_SECRET_KEY.";
+    return NextResponse.json(
+      {
+        ok: false,
+        error: paymentNotConfigured ? "Payment is not configured yet." : "Could not start checkout.",
+      },
+      { status: paymentNotConfigured ? 500 : 502 },
+    );
+  }
+}
+
+function getCheckoutOrigin(request: NextRequest) {
+  const requestOrigin = request.nextUrl.origin;
+  if (isLocalOrigin(requestOrigin)) return requestOrigin;
+
+  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (configuredUrl) {
+    try {
+      return new URL(configuredUrl).origin;
+    } catch {
+      console.error("Ignoring invalid NEXT_PUBLIC_APP_URL for Stripe Checkout");
+    }
+  }
+
+  return requestOrigin;
+}
+
+function isLocalOrigin(origin: string) {
+  const hostname = new URL(origin).hostname;
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
 }

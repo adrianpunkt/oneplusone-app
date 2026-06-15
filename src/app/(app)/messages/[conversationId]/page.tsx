@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 
 import { SendMessageForm } from "@/components/forms/send-message-form";
+import { CorrespondentAvatar } from "@/components/messages/correspondent-avatar";
 import { MessageThreadRefresh } from "@/components/messages/message-thread-refresh";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireMemberContext } from "@/lib/data/member";
 import { getConversation } from "@/lib/data/portal";
@@ -17,28 +17,39 @@ export default async function ConversationPage({
 }) {
   const { conversationId } = await params;
   const { member } = await requireMemberContext();
-  const { conversation, messages } = await getConversation(conversationId);
+  const { conversation, messages } = await getConversation(conversationId, member.id);
 
   if (!conversation) notFound();
+
+  const correspondent = conversation.correspondent || {
+    imageUrl: "",
+    name: "Member",
+  };
 
   return (
     <>
       <MessageThreadRefresh conversationId={conversation.id} />
-      <section className="grid gap-2">
-        <Badge variant={conversation.status === "open" ? "ocean" : "muted"}>
-          {conversation.status}
-        </Badge>
-        <h1 className="font-display text-3xl font-black tracking-tight text-wine">
-          {conversation.events?.title || "Conversation"}
-        </h1>
-        <p className="max-w-2xl text-sm leading-6 text-muted">
-          Pending conversations allow one first message until the other person replies.
-        </p>
+      <section className="flex min-w-0 items-center gap-4">
+        <CorrespondentAvatar
+          className="h-16 w-16"
+          imageUrl={correspondent.imageUrl}
+          name={correspondent.name}
+        />
+        <div className="grid min-w-0 gap-1">
+          <h1 className="truncate font-display text-3xl font-black tracking-tight text-wine">
+            {correspondent.name}
+          </h1>
+          {conversation.events?.title ? (
+            <p className="truncate text-sm font-semibold text-muted">
+              {conversation.events.title}
+            </p>
+          ) : null}
+        </div>
       </section>
 
       <Card>
         <CardHeader>
-          <CardTitle>Thread</CardTitle>
+          <CardTitle>Conversation</CardTitle>
           <CardDescription>{formatDateTime(conversation.updated_at)}</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">

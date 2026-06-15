@@ -1,10 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireMemberContext } from "@/lib/data/member";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { preferencesSchema, profileFieldSchema } from "@/lib/validators/story";
+import {
+  preferencesSchema,
+  profileFieldSchema,
+  profileTextFieldNames,
+} from "@/lib/validators/story";
 
 export type FormActionState = {
   error?: string;
@@ -19,6 +24,13 @@ function optionalText(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
 }
 
+function selectedValues(formData: FormData, key: string) {
+  return formData
+    .getAll(key)
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+}
+
 export async function saveProfileAction(
   _previousState: FormActionState,
   formData: FormData,
@@ -29,30 +41,33 @@ export async function saveProfileAction(
     return { error: "No submitted story is linked to this account yet." };
   }
 
-  const parsed = profileFieldSchema.safeParse({
-    firstName: optionalText(formData, "profile.first_name"),
-    age: optionalText(formData, "profile.age"),
-    eventLocation: optionalText(formData, "profile.event_location"),
-    dateLanguages: optionalText(formData, "profile.date_languages"),
-    relationshipStatus: optionalText(formData, "profile.relationship_status"),
-    availableRelationships: optionalText(formData, "profile.available_relationships"),
-    anythingElse: optionalText(formData, "profile.anything_else"),
-  });
+  const fields: Record<string, string | string[]> = Object.fromEntries(
+    profileTextFieldNames.map((field) => [
+      field,
+      optionalText(formData, field),
+    ]),
+  );
+
+  fields["profile.deal_breakers"] = selectedValues(
+    formData,
+    "profile.deal_breakers",
+  );
+
+  const parsed = profileFieldSchema.safeParse(fields);
 
   if (!parsed.success) {
-    return { error: "Some profile fields are too long." };
+    return { error: "Some story fields need attention." };
   }
 
   const nextProfile = {
     ...(profile.profile_json || {}),
-    "profile.first_name": parsed.data.firstName || "",
-    "profile.age": parsed.data.age || "",
-    "profile.event_location": parsed.data.eventLocation || "",
-    "profile.date_languages": parsed.data.dateLanguages || "",
-    "profile.relationship_status": parsed.data.relationshipStatus || "",
-    "profile.available_relationships": parsed.data.availableRelationships || "",
-    "profile.anything_else": parsed.data.anythingElse || "",
   };
+
+  profileTextFieldNames.forEach((field) => {
+    nextProfile[field] = parsed.data[field] || "";
+  });
+  nextProfile["profile.deal_breakers"] =
+    parsed.data["profile.deal_breakers"] || [];
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase
@@ -68,9 +83,12 @@ export async function saveProfileAction(
     return { error: error.message };
   }
 
+  revalidatePath("/my-story");
+  revalidatePath("/my-story/edit");
   revalidatePath("/profile");
   revalidatePath("/dashboard");
-  return { ok: true };
+  revalidatePath("/me");
+  redirect("/my-story?saved=1");
 }
 
 export async function savePreferencesAction(
@@ -81,9 +99,22 @@ export async function savePreferencesAction(
   const parsed = preferencesSchema.safeParse({
     prefersSaturdayDinner: checkboxValue(formData, "prefers_saturday_dinner"),
     prefersSundayBrunch: checkboxValue(formData, "prefers_sunday_brunch"),
+    interestedInOtherEvents: checkboxValue(
+      formData,
+      "interested_in_other_events",
+    ),
+    otherEventIdeas: optionalText(formData, "other_event_ideas"),
+    prefersAffordableRelaxedLocations: checkboxValue(
+      formData,
+      "prefers_affordable_relaxed_locations",
+    ),
+    prefersMichelinGuideLocations: checkboxValue(
+      formData,
+      "prefers_michelin_guide_locations",
+    ),
     dietaryRestrictions: optionalText(formData, "dietary_restrictions"),
     wantsToHost: checkboxValue(formData, "wants_to_host"),
-    hostNotes: optionalText(formData, "host_notes"),
+    otherPreferences: optionalText(formData, "other_preferences"),
   });
 
   if (!parsed.success) {
@@ -91,13 +122,35 @@ export async function savePreferencesAction(
   }
 
   const supabase = await createSupabaseServerClient();
+  const { data: existingPreferences } = await supabase
+    .from("member_event_preferences")
+    .select("extra_preferences")
+    .eq("member_id", member.id)
+    .maybeSingle();
+  const existingExtraPreferences =
+    existingPreferences?.extra_preferences &&
+    typeof existingPreferences.extra_preferences === "object" &&
+    !Array.isArray(existingPreferences.extra_preferences)
+      ? existingPreferences.extra_preferences
+      : {};
   const { error } = await supabase.from("member_event_preferences").upsert({
     member_id: member.id,
     prefers_saturday_dinner: parsed.data.prefersSaturdayDinner,
     prefers_sunday_brunch: parsed.data.prefersSundayBrunch,
     dietary_restrictions: parsed.data.dietaryRestrictions || null,
     wants_to_host: parsed.data.wantsToHost,
-    host_notes: parsed.data.hostNotes || null,
+    extra_preferences: {
+      ...existingExtraPreferences,
+      interested_in_other_events: parsed.data.interestedInOtherEvents,
+      other_event_ideas: parsed.data.interestedInOtherEvents
+        ? parsed.data.otherEventIdeas || ""
+        : "",
+      prefers_affordable_relaxed_locations:
+        parsed.data.prefersAffordableRelaxedLocations,
+      prefers_michelin_guide_locations:
+        parsed.data.prefersMichelinGuideLocations,
+      other_preferences: parsed.data.otherPreferences || "",
+    },
     updated_at: new Date().toISOString(),
   });
 
@@ -107,5 +160,5 @@ export async function savePreferencesAction(
 
   revalidatePath("/preferences");
   revalidatePath("/dashboard");
-  return { ok: true };
+  redirect("/preferences?saved=1");
 }

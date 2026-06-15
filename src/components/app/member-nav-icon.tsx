@@ -19,6 +19,7 @@ export function MemberNavIcon({
           alt=""
           width={24}
           height={24}
+          loading="eager"
           sizes="24px"
           unoptimized
           className="h-full w-full object-cover"

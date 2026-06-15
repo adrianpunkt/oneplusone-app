@@ -2,9 +2,7 @@ import Link from "next/link";
 import { CalendarDays, MapPin } from "lucide-react";
 
 import {
-  CancelInvitationForm,
-  ConfirmInvitationForm,
-  DisabledInvitationAction,
+  InvitationDecisionForms,
 } from "@/components/forms/invitation-actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,13 +67,7 @@ export default async function EventsPage() {
                   <Button asChild variant="secondary">
                     <Link href={`/events/${invitation.event_id}`}>Details</Link>
                   </Button>
-                  {["invited", "waitlisted"].includes(invitation.status) ? (
-                    <ConfirmInvitationForm invitationId={invitation.id} />
-                  ) : invitation.status === "confirmed" ? (
-                    <CancelInvitationForm invitationId={invitation.id} />
-                  ) : (
-                    <DisabledInvitationAction label={invitation.status} />
-                  )}
+                  <InvitationDecisionForms invitation={invitation} />
                 </div>
               </article>
             ))

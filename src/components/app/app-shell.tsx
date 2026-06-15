@@ -5,20 +5,9 @@ import { BrandLogo } from "@/components/brand-logo";
 import { MobileMenu } from "@/components/app/mobile-menu";
 import { SectionNav } from "@/components/app/section-nav";
 import { SignOutButton } from "@/components/app/sign-out-button";
+import { profileImageUrl } from "@/lib/profile-image";
 import type { Member, NotificationRecord, ProfileRegistration } from "@/lib/types";
 import { initials, storyValue } from "@/lib/utils";
-
-function profileImageUrl(profile: ProfileRegistration | null) {
-  const story = profile?.profile_json;
-  const imageFields = [
-    "profile.photo_url",
-    "profile.profile_image_url",
-    "profile.avatar_url",
-    "profile.image_url",
-  ];
-
-  return imageFields.map((field) => storyValue(story, field)).find(Boolean) || "";
-}
 
 function memberDisplayName(member: Member, profile: ProfileRegistration | null) {
   return storyValue(profile?.profile_json, "profile.first_name") || member.email || "Me";
@@ -39,7 +28,7 @@ export function AppShell({
 }) {
   const unreadCount = notifications.length;
   const displayName = memberDisplayName(member, profile);
-  const imageUrl = profileImageUrl(profile);
+  const imageUrl = profileImageUrl(profile?.profile_json);
   const notificationHref = notifications[0]?.href || "/messages";
   const notificationLabel =
     unreadCount === 1 ? notifications[0]?.title || "1 new notification" : `${unreadCount} new notifications`;

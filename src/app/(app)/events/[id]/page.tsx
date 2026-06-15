@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, MapPin, UsersRound } from "lucide-react";
 
 import {
-  CancelInvitationForm,
-  ConfirmInvitationForm,
+  InvitationDecisionForms,
 } from "@/components/forms/invitation-actions";
 import { StartConversationForm } from "@/components/forms/start-conversation-form";
 import { Badge } from "@/components/ui/badge";
@@ -72,11 +71,7 @@ export default async function EventDetailPage({
                 {event.member_notes}
               </p>
             ) : null}
-            {invitation?.status === "confirmed" ? (
-              <CancelInvitationForm invitationId={invitation.id} />
-            ) : invitation && ["invited", "waitlisted"].includes(invitation.status) ? (
-              <ConfirmInvitationForm invitationId={invitation.id} />
-            ) : null}
+            {invitation ? <InvitationDecisionForms invitation={invitation} /> : null}
           </CardContent>
         </Card>
 
