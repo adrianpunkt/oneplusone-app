@@ -149,14 +149,6 @@ export function AppShell({
           />
 
           <div className="mt-auto flex items-center justify-between gap-4 px-0">
-            <div className="min-w-0">
-              <SignOutButton
-                className="h-9 justify-center border-wine/10 bg-white px-3 text-xs font-black text-wine shadow-sm hover:translate-y-0 hover:bg-lipstick/8 hover:text-lipstick hover:shadow-sm"
-                label={dictionary.common.signOut}
-                size="sm"
-                variant="secondary"
-              />
-            </div>
             <LanguageSwitcher
               activeClassName="bg-lipstick text-white"
               ariaLabel={dictionary.common.language}
@@ -165,6 +157,14 @@ export function AppShell({
               currentLocale={locale}
               inactiveClassName="text-wine hover:bg-lipstick/8 hover:text-lipstick"
             />
+            <div className="min-w-0">
+              <SignOutButton
+                className="h-9 justify-center border-wine/10 bg-white px-3 text-xs font-black text-wine shadow-sm hover:translate-y-0 hover:bg-lipstick/8 hover:text-lipstick hover:shadow-sm"
+                label={dictionary.common.signOut}
+                size="sm"
+                variant="secondary"
+              />
+            </div>
           </div>
         </div>
       </aside>
