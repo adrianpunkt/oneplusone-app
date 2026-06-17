@@ -19,7 +19,9 @@ export type LoginFormCopy = {
   email: string;
   emailCode: string;
   emailPlaceholder: string;
-  introBody: string;
+  introBodyAppName: string;
+  introBodyPrefix: string;
+  introBodySuffix: string;
   introTitle: string;
   joinClub: string;
   login: string;
@@ -39,7 +41,9 @@ function LoginIntro({ copy }: { copy: LoginFormCopy }) {
         {copy.introTitle}
       </h1>
       <p className="text-sm leading-6 text-muted">
-        {copy.introBody}
+        {copy.introBodyPrefix}
+        <strong className="font-extrabold text-ocean">{copy.introBodyAppName}</strong>
+        {copy.introBodySuffix}
       </p>
     </div>
   );

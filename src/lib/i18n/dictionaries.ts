@@ -37,8 +37,9 @@ const en = {
   login: {
     metadataTitle: "Login",
     introTitle: "Welcome back",
-    introBody:
-      "Use the email from your story to login to the one plus one app. We will send you a private code to login.",
+    introBodyPrefix: "Use the email from your story to login to the ",
+    introBodyAppName: "one plus one app",
+    introBodySuffix: ". We will send you a private code to login.",
     missingCode:
       "That login link was issued for a different auth flow. Request a fresh link from this page.",
     email: "Email",
@@ -730,8 +731,9 @@ const es: typeof en = {
   login: {
     metadataTitle: "Login",
     introTitle: "Bienvenido de nuevo",
-    introBody:
-      "Usa el email de tu historia para entrar en la app de one plus one. Te enviaremos un código privado para iniciar sesión.",
+    introBodyPrefix: "Usa el email de tu historia para entrar en la ",
+    introBodyAppName: "one plus one app",
+    introBodySuffix: ". Te enviaremos un código privado para iniciar sesión.",
     missingCode:
       "Ese enlace de acceso pertenece a otro flujo de autenticación. Pide un enlace nuevo desde esta página.",
     email: "Email",
