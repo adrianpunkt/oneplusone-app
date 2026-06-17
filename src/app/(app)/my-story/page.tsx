@@ -22,7 +22,7 @@ export default async function MyStoryPage({ searchParams }: MyStoryPageProps) {
   const displayName = firstName || member.email || "Me";
 
   return (
-    <article className="grid w-full min-w-0 gap-6">
+    <article className="grid w-full min-w-0 gap-6" data-app-content="wide">
       <header>
         <h1 className="font-display text-3xl font-black text-wine sm:text-4xl">
           {dictionary.profile.title}

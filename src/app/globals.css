@@ -107,6 +107,10 @@ textarea {
   grid-template-columns: 260px minmax(0, 1fr);
 }
 
+.app-grid > div > main:has([data-app-content="wide"]) {
+  max-width: none;
+}
+
 @media (max-width: 900px) {
   .app-grid {
     grid-template-columns: 1fr;

@@ -95,6 +95,7 @@ let locationPromise: Promise<LocationData> | null = null;
 type StoryAutocompleteCopy = Dictionary["autocomplete"];
 
 const defaultAutocompleteCopy: StoryAutocompleteCopy = {
+  allAreas: "ALL AREAS",
   and: "and",
   citySuggestionPlural: "city suggestions available.",
   citySuggestionSingular: "city suggestion available.",
@@ -148,7 +149,9 @@ export function StoryAutocompleteField({
     longitude: null,
   });
   const [selected, setSelected] = useState<Selection[]>(() =>
-    parseStoredParts(defaultValue, kind).map((value) => makeStoredSelection(kind, value)),
+    parseStoredParts(defaultValue, kind).map((value) =>
+      makeStoredSelection(kind, value, copy.allAreas),
+    ),
   );
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -160,11 +163,13 @@ export function StoryAutocompleteField({
   const isLoaded = kind === "city" ? Boolean(cityData) : Boolean(languageData);
   const suggestions = useMemo(() => {
     if (kind === "city") {
-      return cityData ? getCitySuggestions(cityData, selected, location, query) : [];
+      return cityData
+        ? getCitySuggestions(cityData, selected, location, query, copy.allAreas)
+        : [];
     }
 
     return languageData ? getLanguageSuggestions(languageData, selected, location, query) : [];
-  }, [cityData, kind, languageData, location, query, selected]);
+  }, [cityData, copy.allAreas, kind, languageData, location, query, selected]);
   const visibleSuggestions = suggestions.slice(0, resultLimit);
   const suggestionText =
     kind === "city"
@@ -191,7 +196,9 @@ export function StoryAutocompleteField({
         setCityData(data);
         if (canonicalizedRef.current || userChangedRef.current) return;
         canonicalizedRef.current = true;
-        setSelected((current) => canonicalizeCitySelections(data, current, nextLocation));
+        setSelected((current) =>
+          canonicalizeCitySelections(data, current, nextLocation, copy.allAreas),
+        );
       });
     } else {
       void loadLocation().then(setLocation);
@@ -202,7 +209,7 @@ export function StoryAutocompleteField({
         setSelected((current) => canonicalizeLanguageSelections(data, current));
       });
     }
-  }, [kind]);
+  }, [copy.allAreas, kind]);
 
   useEffect(() => {
     if (isOpen) loadResources();
@@ -513,7 +520,11 @@ function parseStoredParts(rawValue: string | undefined, kind: AutocompleteKind) 
     .filter(Boolean);
 }
 
-function makeStoredSelection(kind: AutocompleteKind, value: string): Selection {
+function localizeAllAreasLabel(value: string, allAreasLabel = "ALL AREAS") {
+  return value.replace(/\bALL AREAS\b/g, allAreasLabel);
+}
+
+function makeStoredSelection(kind: AutocompleteKind, value: string, allAreasLabel = "ALL AREAS"): Selection {
   const item =
     kind === "city"
       ? ({
@@ -531,7 +542,7 @@ function makeStoredSelection(kind: AutocompleteKind, value: string): Selection {
   return {
     item,
     key: `custom:${normalize(value)}`,
-    label: value,
+    label: kind === "city" ? localizeAllAreasLabel(value, allAreasLabel) : value,
     storedLabel: value,
   };
 }
@@ -675,6 +686,9 @@ function makeAllAreasCity(city: CityItem, childCities: CityItem[]) {
     `${parentName} all areas`,
     `${parentAsciiName} all areas`,
     country ? `${parentName} all areas, ${country}` : "",
+    `${parentName} todas las zonas`,
+    `${parentAsciiName} todas las zonas`,
+    country ? `${parentName} todas las zonas, ${country}` : "",
   ];
 
   return {
@@ -732,8 +746,10 @@ function formatStoredCity(city: CityItem) {
   return city.country ? `${city.name}, ${city.country}` : city.name;
 }
 
-function formatVisibleCity(city: CityItem) {
-  if (city.isAllAreas) return `${city.parentName || city.originalName || city.name} - ALL AREAS`;
+function formatVisibleCity(city: CityItem, allAreasLabel = "ALL AREAS") {
+  if (city.isAllAreas) {
+    return `${city.parentName || city.originalName || city.name} - ${allAreasLabel}`;
+  }
   const parentName = String(city.parentName || "").trim();
   const sectionName = String(city.sectionName || "").trim();
   if (parentName && sectionName && normalize(parentName) !== normalize(sectionName)) {
@@ -764,13 +780,13 @@ function parentAreaKey(city: CityItem | Selection) {
   return `${String(item.countryCode || "").toUpperCase()}:${String(item.parentId)}`;
 }
 
-function makeCitySelection(city: CityItem): Selection {
+function makeCitySelection(city: CityItem, allAreasLabel = "ALL AREAS"): Selection {
   return {
     country: city.country,
     countryCode: city.countryCode,
     item: city,
     key: selectedCityKey(city),
-    label: formatVisibleCity(city),
+    label: formatVisibleCity(city, allAreasLabel),
     meta: city.country,
     storedLabel: formatStoredCity(city),
   };
@@ -805,10 +821,15 @@ function findCityFromStored(data: CityData, value: string, location?: LocationDa
   return [...matches].sort((a, b) => compareCitiesByLocation(a, b, location, ""))[0];
 }
 
-function canonicalizeCitySelections(data: CityData, selections: Selection[], location?: LocationData) {
+function canonicalizeCitySelections(
+  data: CityData,
+  selections: Selection[],
+  location?: LocationData,
+  allAreasLabel = "ALL AREAS",
+) {
   return selections.map((selection) => {
     const city = findCityFromStored(data, selection.storedLabel, location);
-    return city ? makeCitySelection(city) : selection;
+    return city ? makeCitySelection(city, allAreasLabel) : selection;
   });
 }
 
@@ -874,12 +895,13 @@ function getCitySuggestions(
   selected: Selection[],
   location: LocationData,
   rawQuery: string,
+  allAreasLabel = "ALL AREAS",
 ) {
   const query = normalize(rawQuery);
   return [...data.cities, ...data.allAreaCities]
     .filter((city) => !isCitySelected(city, selected) && cityMatchRank(city, query) !== null)
     .sort((a, b) => compareCitiesByLocation(a, b, location, query))
-    .map(makeCitySelection);
+    .map((city) => makeCitySelection(city, allAreasLabel));
 }
 
 function isCitySelected(city: CityItem, selected: Selection[]) {
@@ -911,6 +933,15 @@ function compareCitiesByLocation(
   location: LocationData,
   query: string,
 ) {
+  const rankDifference = Number(cityMatchRank(a, query)) - Number(cityMatchRank(b, query));
+  if (query && rankDifference) return rankDifference;
+
+  const sameParentArea = parentAreaKey(a) && parentAreaKey(a) === parentAreaKey(b);
+  if (sameParentArea) {
+    const allAreasDifference = Number(Boolean(b.isAllAreas)) - Number(Boolean(a.isAllAreas));
+    if (allAreasDifference) return allAreasDifference;
+  }
+
   const locatedDifference = Number(isLocatedCity(b, location)) - Number(isLocatedCity(a, location));
   if (locatedDifference) return locatedDifference;
 
@@ -926,11 +957,7 @@ function compareCitiesByLocation(
   const countryDifference = Number(isSameCountry(b, location)) - Number(isSameCountry(a, location));
   if (countryDifference) return countryDifference;
 
-  const rankDifference = Number(cityMatchRank(a, query)) - Number(cityMatchRank(b, query));
   if (rankDifference) return rankDifference;
-
-  const allAreasDifference = Number(Boolean(b.isAllAreas)) - Number(Boolean(a.isAllAreas));
-  if (allAreasDifference) return allAreasDifference;
 
   const populationDifference = Number(b.population || 0) - Number(a.population || 0);
   if (populationDifference) return populationDifference;

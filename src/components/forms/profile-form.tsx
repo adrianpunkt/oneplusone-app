@@ -38,6 +38,7 @@ const SELECT_DIALOG_MAX_WIDTH = 520;
 
 type Mode = "read" | "edit";
 type Option = {
+  aliases?: string[];
   value: string;
   label: string;
 };
@@ -49,6 +50,8 @@ type ProfileImageConfig = {
 type ProfileCopy = Dictionary["profile"];
 type ProfileImageUploaderCopy = Dictionary["imageUploader"];
 type StoryAutocompleteCopy = Dictionary["autocomplete"];
+type GenderVariant = "masculine" | "feminine" | "neutral";
+type GenderedText = Record<GenderVariant, string>;
 
 const DirtyCheckContext = createContext<(() => void) | null>(null);
 const ProfileCopyContext = createContext<ProfileCopy | null>(null);
@@ -61,6 +64,28 @@ function useProfileCopy() {
   const copy = useContext(ProfileCopyContext);
   if (!copy) throw new Error("Profile copy is missing.");
   return copy;
+}
+
+function profileGenderVariant(gender: string): GenderVariant {
+  if (gender === "Female") return "feminine";
+  if (gender === "Male") return "masculine";
+  return "neutral";
+}
+
+function genderedText(
+  values: GenderedText | undefined,
+  gender: string,
+  fallback: string,
+) {
+  return values?.[profileGenderVariant(gender)] || fallback;
+}
+
+function genderedSentence(
+  copy: ProfileCopy,
+  key: keyof ProfileCopy["genderedSentences"] & keyof ProfileCopy["sentences"],
+  gender: string,
+) {
+  return genderedText(copy.genderedSentences[key], gender, copy.sentences[key]);
 }
 
 function serializeForm(form: HTMLFormElement) {
@@ -82,12 +107,20 @@ const orientationOptions: Option[] = [
   { value: "Heterosexual", label: "heterosexual" },
   { value: "Homosexual", label: "homosexual" },
   { value: "Bisexual", label: "bisexual" },
-  { value: "Other", label: "other" },
+  { value: "Other", label: "Other" },
 ];
 
 const homeBaseOptions: Option[] = [
-  { value: "live in one place", label: "living in one place" },
-  { value: "travel mostly", label: "traveling mostly" },
+  {
+    value: "live in one place",
+    label: "living in one place",
+    aliases: ["I live in one place", "Living in one place"],
+  },
+  {
+    value: "travel mostly",
+    label: "traveling mostly",
+    aliases: ["I travel mostly", "Traveling mostly"],
+  },
 ];
 
 const geographyOptions: Option[] = [
@@ -111,22 +144,59 @@ const mattersOptions: Option[] = [
 
 const relationshipStatusOptions: Option[] = [
   { value: "Single", label: "single" },
-  { value: "Married, but separated", label: "married, but separated" },
-  { value: "Divorcing (in process)", label: "divorcing (in process)" },
+  {
+    value: "Married, but separated",
+    label: "married, but separated",
+    aliases: ["Married but separated", "Separated"],
+  },
+  {
+    value: "Divorcing (in process)",
+    label: "divorcing (in process)",
+    aliases: ["Divorcing", "In the process of divorcing"],
+  },
   { value: "Divorced", label: "divorced" },
   { value: "Widowed", label: "widowed" },
-  { value: "Open / polyamorous", label: "open / polyamorous" },
+  {
+    value: "Open / polyamorous",
+    label: "open / polyamorous",
+    aliases: ["Open/polyamorous", "Open or polyamorous", "Open / poly"],
+  },
 ];
 
 const relationshipOptions: Option[] = [
-  { value: "Marriage / life partner", label: "marriage / life partner" },
-  { value: "Exclusive relationship", label: "exclusive relationship" },
+  {
+    value: "Marriage / life partner",
+    label: "marriage / life partner",
+    aliases: [
+      "A serious relationship, slow dating, and meeting someone offline first",
+      "A serious relationship",
+      "Serious relationship",
+    ],
+  },
+  {
+    value: "Exclusive relationship",
+    label: "exclusive relationship",
+    aliases: ["A committed exclusive relationship", "Committed relationship"],
+  },
   {
     value: "Casual dating, seeing where it goes",
     label: "casual dating, seeing where it goes",
+    aliases: [
+      "Casual dating",
+      "Meeting people and seeing where it goes",
+      "See where it goes",
+    ],
   },
-  { value: "Ethical non-monogamy", label: "ethical non-monogamy" },
-  { value: "Not sure - still exploring", label: "not sure - still exploring" },
+  {
+    value: "Ethical non-monogamy",
+    label: "ethical non-monogamy",
+    aliases: ["Open relationship / ethical non-monogamy"],
+  },
+  {
+    value: "Not sure - still exploring",
+    label: "not sure - still exploring",
+    aliases: ["Not sure yet", "Still exploring"],
+  },
 ];
 
 const childrenOptions: Option[] = [
@@ -176,7 +246,7 @@ const faithOptions: Option[] = [
     value: "Spiritual but not affiliated",
     label: "spiritual, but not affiliated",
   },
-  { value: "Other", label: "other" },
+  { value: "Other", label: "Other" },
 ];
 
 const politicalImportanceOptions: Option[] = [
@@ -282,13 +352,20 @@ function optionValues(values: readonly string[]) {
   return values.map((value) => ({ value, label: value }));
 }
 
-function localizedOptions(options: Option[], copy: ProfileCopy) {
+function localizedOptions(options: Option[], copy: ProfileCopy, gender = "") {
   return options.map((option) => ({
     ...option,
     label:
       option.value === noneDealBreaker
         ? copy.options.noneDealBreaker
-        : copy.options.labels[
+        : genderedText(
+            copy.options.genderedLabels[
+              option.value as keyof typeof copy.options.genderedLabels
+            ],
+            gender,
+            "",
+          ) ||
+          copy.options.labels[
             option.label as keyof typeof copy.options.labels
           ] ||
           copy.options.labels[
@@ -306,16 +383,27 @@ function storyArray(story: Record<string, unknown>, key: string) {
   return text ? [text] : [];
 }
 
+function optionLookupKey(value: string) {
+  return value.trim().toLocaleLowerCase();
+}
+
+function optionMatches(option: Option, value: string) {
+  const lookupValue = optionLookupKey(value);
+  return [option.value, option.label, ...(option.aliases || [])].some(
+    (candidate) => optionLookupKey(candidate) === lookupValue,
+  );
+}
+
+function findOption(options: Option[], value: string) {
+  return options.find((option) => optionMatches(option, value));
+}
+
 function fieldId(name: string) {
   return name.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
 function displayLabel(options: Option[], value: string, placeholder: string) {
-  return (
-    options.find((option) => option.value === value)?.label ||
-    value ||
-    placeholder
-  );
+  return findOption(options, value)?.label || value || placeholder;
 }
 
 function fieldSizerText(value: string, placeholder: string) {
@@ -350,14 +438,14 @@ function StoryChapter({
           <div className="flex min-w-0 justify-center md:block">{media}</div>
         ) : null}
         <div className="min-w-0">
-          <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-lipstick">
+          <span className="mb-3 block font-display text-[0.78rem] font-bold uppercase tracking-[0.22em] text-lipstick">
             {eyebrow}
           </span>
-          <h2 className="font-display text-2xl font-extrabold leading-tight text-wine sm:text-3xl">
+          <h2 className="font-display text-[clamp(2rem,5vw,3rem)] font-extrabold leading-[1.05] text-wine">
             {title}
           </h2>
           {description ? (
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+            <p className="mt-[18px] max-w-none text-[1.08rem] leading-[1.65] text-muted">
               {description}
             </p>
           ) : null}
@@ -680,17 +768,16 @@ function InlineSelect({
   const dialogRef = useRef<HTMLSpanElement>(null);
   const listRef = useRef<HTMLSpanElement>(null);
   const currentValue = value ?? localValue;
+  const currentOption = findOption(options, currentValue);
+  const resolvedValue = currentOption?.value || currentValue;
   const hasCurrentValue = Boolean(currentValue);
-  const hasMatchingOption = options.some(
-    (option) => option.value === currentValue,
-  );
   const currentLabel = displayLabel(options, currentValue, placeholder);
   const dialogOptions =
-    !hasCurrentValue || hasMatchingOption
+    !hasCurrentValue || currentOption
       ? options
       : [{ value: currentValue, label: currentValue }, ...options];
   const selectedIndex = Math.max(
-    dialogOptions.findIndex((option) => option.value === currentValue),
+    dialogOptions.findIndex((option) => option.value === resolvedValue),
     0,
   );
   const longestLabelLength = dialogOptions.reduce(
@@ -733,7 +820,7 @@ function InlineSelect({
   }
 
   function selectOption(nextValue: string) {
-    if (nextValue !== currentValue) checkDirty?.();
+    if (nextValue !== resolvedValue) checkDirty?.();
     setLocalValue(nextValue);
     onChange?.(nextValue);
     closeList({ restoreFocus: false });
@@ -798,7 +885,7 @@ function InlineSelect({
 
   return (
     <span className="relative inline max-w-full align-baseline">
-      <input id={id} name={name} type="hidden" value={currentValue} />
+      <input id={id} name={name} type="hidden" value={resolvedValue} />
       <button
         aria-expanded={isOpen}
         aria-haspopup="dialog"
@@ -859,7 +946,7 @@ function InlineSelect({
             >
               {dialogOptions.length ? (
                 dialogOptions.map((option, index) => {
-                  const isSelected = option.value === currentValue;
+                  const isSelected = option.value === resolvedValue;
 
                   return (
                     <button
@@ -1249,34 +1336,57 @@ function StoryNarrative({
         ? copy.sentences.heightToo
         : "";
   const showSaveActions = mode === "edit" && (isDirty || Boolean(state?.error));
-  const localizedGenderOptions = localizedOptions(genderOptions, copy);
-  const localizedOrientationOptions = localizedOptions(orientationOptions, copy);
-  const localizedHomeBaseOptions = localizedOptions(homeBaseOptions, copy);
-  const localizedGeographyOptions = localizedOptions(geographyOptions, copy);
-  const localizedRelocationOptions = localizedOptions(relocationOptions, copy);
-  const localizedMattersOptions = localizedOptions(mattersOptions, copy);
+  const localizedGenderOptions = localizedOptions(genderOptions, copy, gender);
+  const localizedOrientationOptions = localizedOptions(
+    orientationOptions,
+    copy,
+    gender,
+  );
+  const localizedHomeBaseOptions = localizedOptions(homeBaseOptions, copy, gender);
+  const localizedGeographyOptions = localizedOptions(
+    geographyOptions,
+    copy,
+    gender,
+  );
+  const localizedRelocationOptions = localizedOptions(
+    relocationOptions,
+    copy,
+    gender,
+  );
+  const localizedMattersOptions = localizedOptions(mattersOptions, copy, gender);
   const localizedRelationshipStatusOptions = localizedOptions(
     relationshipStatusOptions,
     copy,
+    gender,
   );
-  const localizedRelationshipOptions = localizedOptions(relationshipOptions, copy);
-  const localizedChildrenOptions = localizedOptions(childrenOptions, copy);
-  const localizedReligionOptions = localizedOptions(religionOptions, copy);
-  const localizedAlignmentOptions = localizedOptions(alignmentOptions, copy);
-  const localizedFaithOptions = localizedOptions(faithOptions, copy);
+  const localizedRelationshipOptions = localizedOptions(
+    relationshipOptions,
+    copy,
+    gender,
+  );
+  const localizedChildrenOptions = localizedOptions(childrenOptions, copy, gender);
+  const localizedReligionOptions = localizedOptions(religionOptions, copy, gender);
+  const localizedAlignmentOptions = localizedOptions(alignmentOptions, copy, gender);
+  const localizedFaithOptions = localizedOptions(faithOptions, copy, gender);
   const localizedPoliticalImportanceOptions = localizedOptions(
     politicalImportanceOptions,
     copy,
+    gender,
   );
-  const localizedPoliticsOptions = localizedOptions(politicsOptions, copy);
+  const localizedPoliticsOptions = localizedOptions(politicsOptions, copy, gender);
   const localizedFinancialImportanceOptions = localizedOptions(
     financialImportanceOptions,
     copy,
+    gender,
   );
-  const localizedFinancialOptions = localizedOptions(financialOptions, copy);
-  const localizedFitnessOptions = localizedOptions(fitnessOptions, copy);
-  const localizedRhythmOptions = localizedOptions(rhythmOptions, copy);
-  const localizedDealBreakerOptions = localizedOptions(dealBreakerOptions, copy);
+  const localizedFinancialOptions = localizedOptions(financialOptions, copy, gender);
+  const localizedFitnessOptions = localizedOptions(fitnessOptions, copy, gender);
+  const localizedRhythmOptions = localizedOptions(rhythmOptions, copy, gender);
+  const localizedDealBreakerOptions = localizedOptions(
+    dealBreakerOptions,
+    copy,
+    gender,
+  );
 
   function toggleDealBreaker(value: string) {
     if (mode === "read") return;
@@ -1425,7 +1535,7 @@ function StoryNarrative({
             defaultValue={storyValue(story, "profile.event_location")}
             placeholder={copy.placeholders.cities}
           />
-          {copy.sentences.openDating}
+          {genderedSentence(copy, "openDating", gender)}
           <InlineSelect
             label={copy.fields.geography}
             mode={mode}
@@ -1447,7 +1557,7 @@ function StoryNarrative({
         </p>
 
         <p>
-          {copy.sentences.languagesAre}
+          {genderedSentence(copy, "languagesAre", gender)}
           <StoryAutocompleteField
             copy={autocompleteCopy}
             kind="language"
@@ -1557,7 +1667,7 @@ function StoryNarrative({
         </p>
 
         <p>
-          {copy.sentences.relationshipStatus}
+          {genderedSentence(copy, "relationshipStatus", gender)}
           <InlineSelect
             label={copy.fields.relationshipStatus}
             mode={mode}
@@ -1566,7 +1676,7 @@ function StoryNarrative({
             defaultValue={storyValue(story, "profile.relationship_status")}
             placeholder={copy.placeholders.blank}
           />
-          {copy.sentences.openToNow}
+          {genderedSentence(copy, "openToNow", gender)}
           <InlineSelect
             label={copy.fields.relationshipType}
             mode={mode}
