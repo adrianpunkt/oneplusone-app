@@ -7,7 +7,7 @@ import {
 import { StartConversationForm } from "@/components/forms/start-conversation-form";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireMemberContext } from "@/lib/data/member";
+import { requireMemberContextForRender } from "@/lib/data/member";
 import { getEventDetail } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
@@ -37,7 +37,7 @@ export default async function EventDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { locale, member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const { attendee, event, eventAttendees, invitation } = await getEventDetail(id, member.id);
 

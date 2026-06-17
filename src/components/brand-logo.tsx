@@ -1,6 +1,7 @@
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
+import brandLogoImage from "../../public/one-plus-one-club-app-logo-transparent.webp";
 
 export function BrandLogo({
   className,
@@ -14,10 +15,8 @@ export function BrandLogo({
   return (
     <span className={cn("inline-flex items-center", className)}>
       <Image
-        src="/one-plus-one-club-app-logo-transparent.webp"
+        src={brandLogoImage}
         alt="one plus one club app"
-        width={720}
-        height={367}
         priority={priority}
         className={cn("h-auto w-full object-contain", imageClassName)}
       />

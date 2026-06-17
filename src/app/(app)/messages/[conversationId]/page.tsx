@@ -6,7 +6,7 @@ import { SendMessageForm } from "@/components/forms/send-message-form";
 import { AvatarPreview } from "@/components/messages/avatar-preview";
 import { MessageThreadRefresh } from "@/components/messages/message-thread-refresh";
 import { Card, CardContent } from "@/components/ui/card";
-import { requireMemberContext } from "@/lib/data/member";
+import { requireMemberContextForRender } from "@/lib/data/member";
 import { getConversation } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { requirePublicSupabaseEnv } from "@/lib/supabase/server";
@@ -20,7 +20,7 @@ export default async function ConversationPage({
   params: Promise<{ conversationId: string }>;
 }) {
   const { conversationId } = await params;
-  const { locale, member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const { conversation, messages } = await getConversation(conversationId, member.id);
   const supabaseConfig = requirePublicSupabaseEnv();

@@ -1,6 +1,6 @@
 import { RouteToast } from "@/components/app/route-toast";
 import { ProfileForm } from "@/components/forms/profile-form";
-import { requireMemberContext } from "@/lib/data/member";
+import { requireMemberContextForRender } from "@/lib/data/member";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { profileImageUrl } from "@/lib/profile-image";
 import { storyValue } from "@/lib/utils";
@@ -14,7 +14,7 @@ type MyStoryPageProps = {
 };
 
 export default async function MyStoryPage({ searchParams }: MyStoryPageProps) {
-  const { locale, member, profile } = await requireMemberContext();
+  const { locale, member, profile } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const { saved } = await searchParams;
   const firstName = storyValue(profile?.profile_json, "profile.first_name");

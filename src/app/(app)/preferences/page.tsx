@@ -1,6 +1,6 @@
 import { PreferencesForm } from "@/components/forms/preferences-form";
 import { Card, CardContent } from "@/components/ui/card";
-import { requireMemberContext } from "@/lib/data/member";
+import { requireMemberContextForRender } from "@/lib/data/member";
 import { getPreferences } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 
@@ -20,7 +20,7 @@ function searchParamValue(value: string | string[] | undefined) {
 export default async function PreferencesPage({
   searchParams,
 }: PreferencesPageProps) {
-  const { locale, member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const { from, saved } = await searchParams;
   const preferences = await getPreferences(member.id);

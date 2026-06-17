@@ -102,3 +102,16 @@ npm run dev
 npm run lint
 npm run build
 ```
+
+## Performance notes
+
+- Member pages stay server-verified, but render-time member context should use
+  the cached `*ForRender` helpers so shared layouts and pages do not repeat the
+  same Supabase auth/member/profile lookups during one request.
+- Keep `loading.tsx` fallbacks for dynamic member routes so client-side
+  navigation shows immediate feedback while Server Components stream in.
+- Import stable local images from `public/` instead of passing string paths to
+  `next/image`; this emits hashed `/_next/static/media/` assets that Cloudflare
+  can cache immutably.
+- Keep `middleware.ts` for OpenNext Cloudflare, but avoid broad middleware work
+  on public/callback/static-safe routes.

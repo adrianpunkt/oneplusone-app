@@ -4,7 +4,7 @@ import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { CorrespondentAvatar } from "@/components/messages/correspondent-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireMemberContext } from "@/lib/data/member";
+import { requireMemberContextForRender } from "@/lib/data/member";
 import { getConversations } from "@/lib/data/portal";
 import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
@@ -60,7 +60,7 @@ function NotificationHeart() {
 }
 
 export default async function MessagesPage() {
-  const { locale, member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const conversations = await getConversations(member.id, {
     includeCorrespondents: true,

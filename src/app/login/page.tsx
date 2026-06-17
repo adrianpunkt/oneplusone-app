@@ -5,7 +5,7 @@ import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { BrandLogo } from "@/components/brand-logo";
 import { LoginForm } from "@/components/forms/login-form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { getOptionalMemberContext } from "@/lib/data/member";
+import { getOptionalMemberContextForRender } from "@/lib/data/member";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
 import { safeInternalPath } from "@/lib/utils";
@@ -53,7 +53,7 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<LoginSearchParams>;
 }) {
-  const context = await getOptionalMemberContext();
+  const context = await getOptionalMemberContextForRender();
   if (context) redirect("/dashboard");
   const locale = await getRequestLocaleFallback();
   const dictionary = getDictionary(locale);

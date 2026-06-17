@@ -10,6 +10,7 @@ import { ProfileImageUploader } from "@/components/forms/profile-image-uploader"
 import { Button } from "@/components/ui/button";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { useToast } from "@/components/ui/toast";
+import successCheckmarkImage from "../../../public/success-checkmark-transparent.webp";
 
 export type DashboardChecklistStep = {
   action?: "profileImage";
@@ -50,10 +51,8 @@ function StepContent({
   return (
     <>
       <Image
-        src="/success-checkmark-transparent.webp"
+        src={successCheckmarkImage}
         alt=""
-        width={40}
-        height={40}
         aria-hidden="true"
         className={`h-10 w-10 shrink-0 object-contain transition duration-150 ${
           step.checked ? "" : "grayscale opacity-30"

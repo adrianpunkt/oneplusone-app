@@ -5,7 +5,7 @@ import {
 import { RouteToast } from "@/components/app/route-toast";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { requireMemberContext } from "@/lib/data/member";
+import { requireMemberContextForRender } from "@/lib/data/member";
 import {
   getPreferences,
   hasAttendedSecondEvent,
@@ -106,7 +106,7 @@ function onboardingSteps({
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
-  const { locale, member, profile } = await requireMemberContext();
+  const { locale, member, profile } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const { preferences: preferencesParam } = await searchParams;
   const preferencesSaved = searchParamValue(preferencesParam) === "saved";

@@ -10,7 +10,7 @@ import {
   syncCreditCheckoutSessionForMember,
   type CreditCheckoutSyncResult,
 } from "@/lib/credit-purchases";
-import { requireMemberContext } from "@/lib/data/member";
+import { requireMemberContextForRender } from "@/lib/data/member";
 import {
   getCreditLedger,
   getCreditProducts,
@@ -20,6 +20,7 @@ import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
 import type { CreditProduct } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
+import successCheckmarkImage from "../../../../public/success-checkmark-transparent.webp";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +32,7 @@ type CreditsPageProps = {
 };
 
 export default async function CreditsPage({ searchParams }: CreditsPageProps) {
-  const { locale, member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const { purchase, session_id: sessionId } = await searchParams;
   const checkoutResult =
@@ -345,10 +346,8 @@ function PurchaseStatus({
         role="status"
       >
         <Image
-          src="/success-checkmark-transparent.webp"
+          src={successCheckmarkImage}
           alt=""
-          width={44}
-          height={44}
           aria-hidden="true"
           className="h-11 w-11 shrink-0 object-contain"
           style={{ filter: "brightness(0) invert(1)" }}

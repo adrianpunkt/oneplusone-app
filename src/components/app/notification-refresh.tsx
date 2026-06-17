@@ -8,6 +8,8 @@ import {
   type SupabaseBrowserConfig,
 } from "@/lib/supabase/client";
 
+const notificationRefreshDebounceMs = 1000;
+
 export function NotificationRefresh({
   memberId,
   supabaseConfig,
@@ -19,6 +21,46 @@ export function NotificationRefresh({
   const { supabaseAnonKey, supabaseUrl } = supabaseConfig;
 
   useEffect(() => {
+    let refreshTimeout: number | null = null;
+    let refreshDeferredUntilVisible = false;
+
+    function clearRefreshTimeout() {
+      if (!refreshTimeout) return;
+      window.clearTimeout(refreshTimeout);
+      refreshTimeout = null;
+    }
+
+    function queueRefresh() {
+      if (document.visibilityState === "hidden") {
+        refreshDeferredUntilVisible = true;
+        clearRefreshTimeout();
+        return;
+      }
+
+      if (refreshTimeout) return;
+
+      refreshTimeout = window.setTimeout(() => {
+        refreshTimeout = null;
+        router.refresh();
+      }, notificationRefreshDebounceMs);
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "hidden") {
+        if (refreshTimeout) {
+          refreshDeferredUntilVisible = true;
+          clearRefreshTimeout();
+        }
+        return;
+      }
+
+      if (!refreshDeferredUntilVisible) return;
+      refreshDeferredUntilVisible = false;
+      queueRefresh();
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     const supabase = createSupabaseBrowserClient({
       supabaseAnonKey,
       supabaseUrl,
@@ -33,11 +75,13 @@ export function NotificationRefresh({
           table: "notifications",
           filter: `member_id=eq.${memberId}`,
         },
-        () => router.refresh(),
+        queueRefresh,
       )
       .subscribe();
 
     return () => {
+      clearRefreshTimeout();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       void supabase.removeChannel(channel);
     };
   }, [memberId, router, supabaseAnonKey, supabaseUrl]);

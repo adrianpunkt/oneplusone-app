@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import type { User } from "@supabase/supabase-js";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -62,6 +63,14 @@ export async function getOptionalMemberContext(): Promise<MemberContext | null> 
 
 export async function requireMemberContext(): Promise<MemberContext> {
   const context = await getOptionalMemberContext();
+  if (!context) redirect("/login");
+  return context;
+}
+
+export const getOptionalMemberContextForRender = cache(getOptionalMemberContext);
+
+export async function requireMemberContextForRender(): Promise<MemberContext> {
+  const context = await getOptionalMemberContextForRender();
   if (!context) redirect("/login");
   return context;
 }

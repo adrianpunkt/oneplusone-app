@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireMemberContext } from "@/lib/data/member";
+import { requireMemberContextForRender } from "@/lib/data/member";
 import {
   getAttendedEvents,
   getInvitations,
@@ -642,7 +642,7 @@ function PreferencesStrip({
 export default async function GoingOutPage({
   searchParams,
 }: GoingOutPageProps) {
-  const { locale, member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const { preferences: preferencesParam, waitlist } = await searchParams;
   const preferencesSaved = searchParamValue(preferencesParam) === "saved";

@@ -1,6 +1,6 @@
 import { AppShell } from "@/components/app/app-shell";
 import { NotificationRefresh } from "@/components/app/notification-refresh";
-import { requireMemberContext } from "@/lib/data/member";
+import { requireMemberContextForRender } from "@/lib/data/member";
 import { getCreditBalance, getUnreadNotifications } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeNotification } from "@/lib/i18n/dynamic";
@@ -13,7 +13,7 @@ export default async function PortalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { locale, member, profile } = await requireMemberContext();
+  const { locale, member, profile } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const supabaseConfig = requirePublicSupabaseEnv();
   const [creditBalance, notifications] = await Promise.all([
