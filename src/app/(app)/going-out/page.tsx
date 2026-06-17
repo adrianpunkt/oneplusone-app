@@ -11,6 +11,7 @@ import {
 import type { ReactNode } from "react";
 
 import { AddToCalendarButton } from "@/components/app/add-to-calendar-button";
+import { RouteToast } from "@/components/app/route-toast";
 import {
   CancelInvitationForm,
   InvitationDecisionForms,
@@ -39,6 +40,7 @@ type UpcomingEvent = {
 
 type GoingOutPageProps = {
   searchParams: Promise<{
+    preferences?: string | string[];
     waitlist?: string | string[];
   }>;
 };
@@ -191,6 +193,10 @@ function waitlistConfirmationStatus(
   return null;
 }
 
+function searchParamValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 function WaitlistConfirmation({
   status,
 }: {
@@ -238,20 +244,7 @@ function WaitlistConfirmation({
     );
   }
 
-  return (
-    <div
-      className="inline-flex items-start gap-3 rounded-lg border border-ocean/15 bg-white px-4 py-3 text-sm leading-6 text-ocean shadow-sm"
-      role="status"
-    >
-      <Check className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-      <div>
-        <p className="font-semibold">You&apos;re off the waitlist.</p>
-        <p className="text-muted">
-          You can rejoin later if it is still available.
-        </p>
-      </div>
-    </div>
-  );
+  return null;
 }
 
 function EventMeta({
@@ -567,7 +560,8 @@ export default async function GoingOutPage({
   searchParams,
 }: GoingOutPageProps) {
   const { member } = await requireMemberContext();
-  const { waitlist } = await searchParams;
+  const { preferences: preferencesParam, waitlist } = await searchParams;
+  const preferencesSaved = searchParamValue(preferencesParam) === "saved";
   const waitlistConfirmation = waitlistConfirmationStatus(waitlist);
   const [invitations, attendedEvents, preferences] = await Promise.all([
     getInvitations(member.id),
@@ -632,16 +626,39 @@ export default async function GoingOutPage({
     <>
       <section className="grid gap-2">
         <h1 className="font-display text-3xl font-black tracking-tight text-wine sm:text-4xl">
-          Goint-out
+          Going-out
         </h1>
       </section>
 
+      <RouteToast
+        clearSearchParams={["preferences"]}
+        title="Preferences saved."
+        toastKey={preferencesSaved ? "preferences-saved" : null}
+      />
+      <RouteToast
+        clearSearchParams={
+          waitlistConfirmation === "cancelled" ? ["waitlist"] : []
+        }
+        description={
+          waitlistConfirmation === "joined"
+            ? "We will email you if a seat opens up."
+            : "You can rejoin later if it is still available."
+        }
+        title={
+          waitlistConfirmation === "joined"
+            ? "You are on the waitlist."
+            : "You're off the waitlist."
+        }
+        toastKey={
+          waitlistConfirmation ? `waitlist-${waitlistConfirmation}` : null
+        }
+      />
       <WaitlistConfirmation status={waitlistConfirmation} />
 
       <PreferencesStrip preferences={preferences} />
 
       <section className="grid gap-4">
-        <EventSection icon={Inbox} title="Pending invitations">
+        <EventSection icon={Inbox} title="New invitations">
           {pendingInvitations.length ? (
             pendingInvitations.map((invitation) => (
               <PendingInvitationCard
@@ -653,41 +670,31 @@ export default async function GoingOutPage({
             <EmptyEventState
               title="We're finding your people..."
               body="As soon as enough members share your intentions, you'll be invited to an event together."
-              ctaHref="/my-story/edit"
+              ctaHref="/my-story"
               ctaLabel="Click here in case you need to update your story"
             />
           )}
         </EventSection>
 
-        <EventSection icon={CalendarDays} title="Upcoming events">
-          {upcomingEvents.length ? (
-            upcomingEvents.map((item) => (
+        {upcomingEvents.length ? (
+          <EventSection icon={CalendarDays} title="Upcoming events">
+            {upcomingEvents.map((item) => (
               <UpcomingEventCard key={item.key} item={item} />
-            ))
-          ) : (
-            <EmptyEventState
-              title="No upcoming events yet."
-              body="Once you confirm an invitation, the plan moves here."
-            />
-          )}
-        </EventSection>
+            ))}
+          </EventSection>
+        ) : null}
 
-        <CollapsibleEventSection
-          count={pastEvents.length}
-          icon={History}
-          title="Past events"
-        >
-          {pastEvents.length ? (
-            pastEvents.map((attendee) => (
+        {pastEvents.length > 1 ? (
+          <CollapsibleEventSection
+            count={pastEvents.length}
+            icon={History}
+            title="Past events"
+          >
+            {pastEvents.map((attendee) => (
               <PastEventCard key={attendee.id} attendee={attendee} />
-            ))
-          ) : (
-            <EmptyEventState
-              title="No event history yet."
-              body="After your first event, this will become your record of the tables you have joined."
-            />
-          )}
-        </CollapsibleEventSection>
+            ))}
+          </CollapsibleEventSection>
+        ) : null}
       </section>
     </>
   );

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { MemberNavIcon } from "@/components/app/member-nav-icon";
+import { MessageHeartIcon, messageNotificationTooltip } from "@/components/app/message-heart-icon";
 import { isPathInSection, meActivePaths, navSections } from "@/components/app/nav-sections";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +24,9 @@ export function SectionNav({
     <nav className="grid gap-1">
       {navSections.map((item) => {
         const isActive = isPathInSection(pathname, item.activePaths);
+        const isMessages = item.href === "/messages";
+        const messageTooltip =
+          isMessages && unreadCount > 0 ? messageNotificationTooltip(unreadCount) : undefined;
 
         return (
           <Button
@@ -37,12 +40,24 @@ export function SectionNav({
             key={item.href}
             variant="ghost"
           >
-            <Link aria-current={isActive ? "page" : undefined} href={item.href}>
-              <item.icon className="h-4 w-4" />
+            <Link
+              aria-current={isActive ? "page" : undefined}
+              aria-label={messageTooltip ? `${item.label}. ${messageTooltip}` : undefined}
+              href={item.href}
+            >
+              {isMessages ? (
+                <MessageHeartIcon
+                  className={cn("h-6 w-6", unreadCount > 0 ? "text-lipstick" : "text-current")}
+                  count={unreadCount}
+                  iconClassName="h-6 w-6"
+                  tooltip={messageTooltip}
+                />
+              ) : (
+                <span className="grid h-6 w-6 shrink-0 place-items-center">
+                  <item.icon className="h-4 w-4" />
+                </span>
+              )}
               {item.label}
-              {item.href === "/messages" && unreadCount > 0 ? (
-                <Badge className="ml-auto px-2 py-0.5">{unreadCount}</Badge>
-              ) : null}
             </Link>
           </Button>
         );
@@ -59,10 +74,16 @@ export function SectionNav({
       >
         <Link
           aria-current={isPathInSection(pathname, meActivePaths) ? "page" : undefined}
-          href="/me"
+          href="/my-story"
         >
-          <MemberNavIcon className="h-4 w-4" displayName={displayName} imageUrl={imageUrl} />
-          Me
+          <span className="grid h-6 w-6 shrink-0 place-items-center">
+            <MemberNavIcon
+              className="h-5 w-5"
+              displayName={displayName}
+              imageUrl={imageUrl}
+            />
+          </span>
+          My Story
         </Link>
       </Button>
     </nav>

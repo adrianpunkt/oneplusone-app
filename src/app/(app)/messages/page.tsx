@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { MessageCircle } from "lucide-react";
 
+import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { CorrespondentAvatar } from "@/components/messages/correspondent-avatar";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireMemberContext } from "@/lib/data/member";
 import { getConversations } from "@/lib/data/portal";
@@ -61,6 +62,9 @@ export default async function MessagesPage() {
     includeCorrespondents: true,
     includeLastMessage: true,
   });
+  const unreadConversationCount = conversations.filter((conversation) =>
+    Boolean(conversation.lastMessage?.isUnread),
+  ).length;
 
   return (
     <>
@@ -73,8 +77,12 @@ export default async function MessagesPage() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-lipstick" />
-            Your chats
+            <MessageHeartIcon
+              className="h-6 w-6 text-lipstick"
+              count={unreadConversationCount}
+              iconClassName="h-6 w-6"
+            />
+            Your conversations
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3">
@@ -83,6 +91,7 @@ export default async function MessagesPage() {
               const correspondent = conversation.correspondent || {
                 imageUrl: "",
                 name: "Member",
+                thumbnailUrl: "",
               };
               const hasNewMessage = Boolean(conversation.lastMessage?.isUnread);
 
@@ -91,21 +100,28 @@ export default async function MessagesPage() {
                   key={conversation.id}
                   href={`/messages/${conversation.id}`}
                   className={cn(
-                    "flex min-w-0 items-center gap-3 rounded-lg border p-4 shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-lipstick/35 hover:bg-white hover:shadow-[0_16px_30px_rgba(68,10,18,0.10)]",
+                    "relative flex min-w-0 items-center gap-3 overflow-hidden rounded-lg border p-4 shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-lipstick/35 hover:bg-white hover:shadow-[0_16px_30px_rgba(68,10,18,0.10)]",
                     hasNewMessage
-                      ? "border-lipstick/55 bg-white ring-1 ring-lipstick/15"
+                      ? "border-lipstick/70 bg-white shadow-[0_16px_34px_rgba(225,63,68,0.16)] ring-2 ring-lipstick/15 before:absolute before:inset-y-4 before:left-0 before:w-1 before:rounded-r-full before:bg-lipstick"
                       : "border-wine/10 bg-blush",
                   )}
                 >
                   <CorrespondentAvatar
                     className="h-12 w-12"
-                    imageUrl={correspondent.imageUrl}
+                    imageUrl={correspondent.thumbnailUrl || correspondent.imageUrl}
                     name={correspondent.name}
                   />
                   <div className="grid min-w-0 flex-1 gap-1">
-                    <h2 className="truncate font-display text-lg font-black text-wine">
-                      {correspondent.name}
-                    </h2>
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <h2 className="truncate font-display text-lg font-black text-wine">
+                        {correspondent.name}
+                      </h2>
+                      {hasNewMessage ? (
+                        <Badge className="shrink-0 rounded-md px-2 py-0.5 text-[11px]">
+                          New
+                        </Badge>
+                      ) : null}
+                    </div>
                     <p className="truncate text-sm font-semibold text-muted">
                       {eventContext(conversation)}
                     </p>
@@ -126,9 +142,7 @@ export default async function MessagesPage() {
             })
           ) : (
             <p className="rounded-lg border border-wine/10 bg-blush p-4 text-sm font-semibold leading-6 text-muted">
-              You will be able to reach out to the other guests of each event after the event.
-              Here you can send 1 message to any participant. As soon as they respond, you can
-              continue the conversation.
+              You will be able to reach out to the other guests after each event.
             </p>
           )}
         </CardContent>

@@ -22,9 +22,11 @@ const initialState: FormActionState = {};
 
 export function PreferencesForm({
   preferences,
+  returnToDashboard = false,
   saved = false,
 }: {
   preferences: EventPreferences | null;
+  returnToDashboard?: boolean;
   saved?: boolean;
 }) {
   const [state, action] = useActionState(savePreferencesAction, initialState);
@@ -54,6 +56,10 @@ export function PreferencesForm({
 
   return (
     <form action={action} className="grid gap-6 pb-24">
+      {returnToDashboard ? (
+        <input name="return_to" type="hidden" value="dashboard" />
+      ) : null}
+
       <section aria-labelledby="events-preferences" className="grid gap-4">
         <h2
           id="events-preferences"
@@ -218,7 +224,7 @@ export function PreferencesForm({
           id="hosting-preferences"
           className="font-display text-lg font-extrabold text-wine"
         >
-          Hosting option
+          Host preference
         </h2>
         <div className="grid gap-3 rounded-lg border border-wine/10 bg-blush p-4">
           <label className="flex cursor-pointer items-start gap-3">
@@ -229,7 +235,7 @@ export function PreferencesForm({
             />
             <span>
               <span className="block text-sm font-bold text-wine">
-                I am open to hosting
+                I am open to be the host
               </span>
               <span className="mt-2 block text-sm leading-6 text-muted">
                 You can attend an event for free by opting to be the host.
@@ -250,7 +256,7 @@ export function PreferencesForm({
                 <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine/10 bg-white p-5 shadow-2xl">
                   <div className="grid gap-2">
                     <Dialog.Title className="font-display text-xl font-black text-wine">
-                      Hosting an event
+                      Being the host
                     </Dialog.Title>
                     <Dialog.Description className="grid gap-3 text-sm leading-6 text-muted">
                       <span>
@@ -330,9 +336,16 @@ export function PreferencesForm({
               Save preferences
             </SubmitButton>
             <Button asChild variant="secondary">
-              <Link href="/going-out">Cancel</Link>
+              <Link href={returnToDashboard ? "/dashboard" : "/going-out"}>
+                Cancel
+              </Link>
             </Button>
-            <ActionStatus error={state.error} ok={state.ok || saved} />
+            <ActionStatus
+              error={state.error}
+              ok={state.ok || saved}
+              successMessage="Preferences saved."
+              toastKey={state}
+            />
           </div>
         </div>
       </div>

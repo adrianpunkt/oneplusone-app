@@ -2,6 +2,7 @@ import Image from "next/image";
 import { CreditCard, Gift, XCircle } from "lucide-react";
 
 import { CreditHistorySection } from "@/components/app/credit-history-section";
+import { RouteToast } from "@/components/app/route-toast";
 import { CreditCheckoutButton } from "@/components/forms/credit-checkout-button";
 import { ReferralCodeActions } from "@/components/forms/referral-code-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,23 +52,22 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
       </section>
 
       <PurchaseStatus purchase={purchase} result={checkoutResult} />
+      <PurchaseToast
+        purchase={purchase}
+        result={checkoutResult}
+        sessionId={sessionId}
+      />
 
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-lipstick" />
-            Referral code
+            Invite others to join the club
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <div className="flex flex-col gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0 px-2 py-2 font-mono text-2xl font-black tracking-[0.1em] break-all text-wine sm:px-3 sm:text-3xl sm:tracking-[0.14em]">
-              {referralCode || "Available after membership is active"}
-            </div>
-            <ReferralCodeActions code={referralCode} />
-          </div>
           <p className="grid gap-1 text-lg leading-8 text-muted">
-            <span>Know someone who&apos;d like to join the club?</span>
+            <span>Know someone who would like to join the club?</span>
             <span>
               Send them your code so{" "}
               <span className="text-lipstick">they get 1 extra credit</span>{" "}
@@ -75,6 +75,12 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
               <span className="text-lipstick">you get 1 extra credit</span>.
             </span>
           </p>
+          <div className="flex flex-col gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 px-2 py-2 font-mono text-2xl font-black tracking-[0.1em] break-all text-wine sm:px-3 sm:text-3xl sm:tracking-[0.14em]">
+              {referralCode || "Available after membership is active"}
+            </div>
+            <ReferralCodeActions code={referralCode} />
+          </div>
         </CardContent>
       </Card>
 
@@ -140,6 +146,64 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
   );
 }
 
+function PurchaseToast({
+  purchase,
+  result,
+  sessionId,
+}: {
+  purchase?: string;
+  result: CreditCheckoutSyncResult | null;
+  sessionId?: string;
+}) {
+  if (purchase === "cancelled") {
+    return (
+      <RouteToast
+        clearSearchParams={["purchase", "session_id"]}
+        title="Checkout cancelled."
+        toastKey="purchase-cancelled"
+        variant="info"
+      />
+    );
+  }
+
+  if (purchase !== "success") return null;
+
+  if (result?.status === "completed") {
+    return (
+      <RouteToast
+        clearSearchParams={["purchase", "session_id"]}
+        description={
+          result.credits
+            ? `${result.credits} credit${result.credits === 1 ? "" : "s"} added to your balance.`
+            : "Credits added to your balance."
+        }
+        title="Payment confirmed."
+        toastKey={`purchase-completed-${sessionId || "checkout"}`}
+      />
+    );
+  }
+
+  if (result?.status === "pending") {
+    return (
+      <RouteToast
+        description="Your credits will appear when Stripe confirms the payment."
+        title="Payment is still processing."
+        toastKey={`purchase-pending-${sessionId || "checkout"}`}
+        variant="info"
+      />
+    );
+  }
+
+  return (
+    <RouteToast
+      description={result?.error || "We could not verify this checkout session yet."}
+      title="Payment needs review."
+      toastKey={`purchase-review-${sessionId || "checkout"}`}
+      variant="error"
+    />
+  );
+}
+
 function formatCreditProductDescription(credits: number) {
   return `Attend ${credits} event${credits === 1 ? "" : "s"}`;
 }
@@ -196,7 +260,7 @@ function getCreditProductPricing(products: CreditProduct[]) {
     return {
       ...product,
       isPreferred,
-      label: isPreferred ? "MAX SAVING" : product.label,
+      label: isPreferred ? "MAX SAVINGS" : product.label,
     };
   });
 }

@@ -15,7 +15,7 @@ export function NotificationRefresh({ memberId }: { memberId: string }) {
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "notifications",
           filter: `member_id=eq.${memberId}`,

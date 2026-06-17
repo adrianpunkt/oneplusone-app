@@ -37,7 +37,12 @@ export function StartConversationForm({
           <MessageCircle className="h-4 w-4" />
           Send first message
         </SubmitButton>
-        <ActionStatus error={state.error} ok={state.ok} />
+        <ActionStatus
+          error={state.error}
+          ok={state.ok}
+          successMessage="First message sent."
+          toastKey={state}
+        />
       </div>
     </form>
   );

@@ -7,16 +7,22 @@ export const dynamic = "force-dynamic";
 
 type PreferencesPageProps = {
   searchParams: Promise<{
+    from?: string | string[];
     saved?: string;
   }>;
 };
+
+function searchParamValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 export default async function PreferencesPage({
   searchParams,
 }: PreferencesPageProps) {
   const { member } = await requireMemberContext();
-  const { saved } = await searchParams;
+  const { from, saved } = await searchParams;
   const preferences = await getPreferences(member.id);
+  const returnToDashboard = searchParamValue(from) === "dashboard";
 
   return (
     <>
@@ -27,7 +33,11 @@ export default async function PreferencesPage({
       </section>
       <Card>
         <CardContent className="pt-5">
-          <PreferencesForm preferences={preferences} saved={saved === "1"} />
+          <PreferencesForm
+            preferences={preferences}
+            returnToDashboard={returnToDashboard}
+            saved={saved === "1"}
+          />
         </CardContent>
       </Card>
     </>

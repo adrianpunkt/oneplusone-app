@@ -7,8 +7,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { MemberNavIcon } from "@/components/app/member-nav-icon";
+import { MessageHeartIcon, messageNotificationTooltip } from "@/components/app/message-heart-icon";
 import { isPathInSection, meActivePaths, navSections } from "@/components/app/nav-sections";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -104,10 +104,14 @@ export function MobileMenu({
         <nav className="grid w-full max-w-sm gap-3">
           {navSections.map((item) => {
             const isActive = isPathInSection(pathname, item.activePaths);
+            const isMessages = item.href === "/messages";
+            const messageTooltip =
+              isMessages && unreadCount > 0 ? messageNotificationTooltip(unreadCount) : undefined;
 
             return (
               <Link
                 aria-current={isActive ? "page" : undefined}
+                aria-label={messageTooltip ? `${item.label}. ${messageTooltip}` : undefined}
                 className={cn(
                   "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-bold transition-colors hover:bg-white hover:text-lipstick",
                   isActive ? "bg-white text-lipstick shadow-sm" : "text-wine",
@@ -116,15 +120,16 @@ export function MobileMenu({
                 key={item.href}
                 onClick={closeMenu}
               >
-                <item.icon className="h-6 w-6 shrink-0" />
-                <span className="relative">
-                  {item.label}
-                  {item.href === "/messages" && unreadCount > 0 ? (
-                    <Badge className="absolute left-full top-0 ml-1 -translate-y-1/2 px-2 py-0.5">
-                      {unreadCount}
-                    </Badge>
-                  ) : null}
-                </span>
+                {isMessages ? (
+                  <MessageHeartIcon
+                    className={cn("h-8 w-8", unreadCount > 0 ? "text-lipstick" : "text-current")}
+                    count={unreadCount}
+                    iconClassName="h-8 w-8"
+                  />
+                ) : (
+                  <item.icon className="h-6 w-6 shrink-0" />
+                )}
+                <span>{item.label}</span>
               </Link>
             );
           })}
@@ -136,7 +141,7 @@ export function MobileMenu({
                 ? "bg-white text-lipstick shadow-sm"
                 : "text-wine",
             )}
-            href="/me"
+            href="/my-story"
             onClick={closeMenu}
           >
             <MemberNavIcon
@@ -144,7 +149,7 @@ export function MobileMenu({
               displayName={displayName}
               imageUrl={imageUrl}
             />
-            <span>Me</span>
+            <span>My Story</span>
           </Link>
         </nav>
       </div>

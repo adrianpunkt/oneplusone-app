@@ -1,31 +1,28 @@
-import { Home, MessageCircle, Utensils } from "lucide-react";
+import { Heart, Home, Utensils } from "lucide-react";
 
 export const navSections = [
   {
     href: "/dashboard",
-    label: "Home",
+    label: "Welcome",
     icon: Home,
     activePaths: ["/dashboard"],
   },
   {
     href: "/going-out",
-    label: "Goint-out",
+    label: "Going-out",
     icon: Utensils,
     activePaths: ["/going-out", "/events", "/credits", "/preferences"],
   },
   {
     href: "/messages",
     label: "Messages",
-    icon: MessageCircle,
+    icon: Heart,
     activePaths: ["/messages"],
   },
 ] as const;
 
 export const meActivePaths = [
-  "/me",
   "/my-story",
-  "/profile",
-  "/settings",
 ] as const;
 
 export function isPathInSection(

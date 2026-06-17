@@ -1,22 +1,25 @@
 "use client";
 
-import Link from "next/link";
 import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import {
+  createContext,
   useActionState,
+  useCallback,
+  useContext,
   useEffect,
   useId,
-  useMemo,
   useRef,
   useState,
 } from "react";
 import { Check, Plus, Save } from "lucide-react";
 
 import { ActionStatus } from "@/components/forms/action-status";
+import { ProfileImageUploader } from "@/components/forms/profile-image-uploader";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { StoryAutocompleteField } from "@/components/forms/story-autocomplete";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/components/ui/toast";
 import { saveProfileAction, type FormActionState } from "@/lib/actions/profile";
 import type { ProfileRegistration } from "@/lib/types";
 import { cn, storyValue } from "@/lib/utils";
@@ -37,6 +40,26 @@ type Option = {
   value: string;
   label: string;
 };
+type ProfileImageConfig = {
+  currentImageUrl: string;
+  displayName: string;
+  hasProfile: boolean;
+};
+
+const DirtyCheckContext = createContext<(() => void) | null>(null);
+
+function useDirtyCheck() {
+  return useContext(DirtyCheckContext);
+}
+
+function serializeForm(form: HTMLFormElement) {
+  return JSON.stringify(
+    Array.from(new FormData(form).entries()).filter(
+      ([name, value]) =>
+        !name.startsWith("$ACTION_") && typeof value === "string",
+    ),
+  );
+}
 
 const genderOptions: Option[] = [
   { value: "Female", label: "female" },
@@ -274,31 +297,50 @@ function fieldSizerText(value: string, placeholder: string) {
 
 function StoryChapter({
   children,
+  className,
   description,
   eyebrow,
+  media,
   title,
 }: {
   children?: React.ReactNode;
+  className?: string;
   description?: string;
   eyebrow: string;
+  media?: React.ReactNode;
   title: string;
 }) {
   return (
-    <section className="min-w-0 scroll-mt-24">
-      <span className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-lipstick">
-        {eyebrow}
-      </span>
-      <h2 className="font-display text-2xl font-black leading-tight text-wine sm:text-3xl">
-        {title}
-      </h2>
-      {description ? (
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-          {description}
-        </p>
-      ) : null}
-      {children ? (
-        <div className={cn("mt-7 space-y-6", storyTextClass)}>{children}</div>
-      ) : null}
+    <section className={cn("min-w-0 scroll-mt-24", className)}>
+      <div
+        className={cn(
+          "min-w-0",
+          media &&
+            "grid gap-7 md:grid-cols-[10.5rem_minmax(0,1fr)] md:items-center",
+        )}
+      >
+        {media ? (
+          <div className="flex min-w-0 justify-center md:block">{media}</div>
+        ) : null}
+        <div className="min-w-0">
+          <span className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-lipstick">
+            {eyebrow}
+          </span>
+          <h2 className="font-display text-2xl font-black leading-tight text-wine sm:text-3xl">
+            {title}
+          </h2>
+          {description ? (
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+              {description}
+            </p>
+          ) : null}
+          {children ? (
+            <div className={cn("mt-7 space-y-6", storyTextClass)}>
+              {children}
+            </div>
+          ) : null}
+        </div>
+      </div>
     </section>
   );
 }
@@ -315,9 +357,11 @@ function Divider() {
 
 function ReadValue({
   children,
+  className,
   empty = false,
 }: {
   children: React.ReactNode;
+  className?: string;
   empty?: boolean;
 }) {
   return (
@@ -325,6 +369,7 @@ function ReadValue({
       className={cn(
         "mx-1 inline max-w-full break-words px-1 font-semibold text-lipstick",
         empty && "text-faint",
+        className,
       )}
     >
       {children}
@@ -387,6 +432,194 @@ function InlineText({
   );
 }
 
+function InlineLongText({
+  containerClassName,
+  defaultValue,
+  displayClassName,
+  editClassName,
+  editWidthClassName = "w-[min(42rem,calc(100%-3.25em))]",
+  label,
+  mode,
+  name,
+  onValueChange,
+  placeholder,
+  readClassName,
+  singleLine = false,
+  value,
+}: {
+  containerClassName?: string;
+  defaultValue?: string;
+  displayClassName?: string;
+  editClassName?: string;
+  editWidthClassName?: string;
+  label: string;
+  mode: Mode;
+  name: string;
+  onValueChange?: (value: string) => void;
+  placeholder: string;
+  readClassName?: string;
+  singleLine?: boolean;
+  value?: string;
+}) {
+  const id = fieldId(name);
+  const initialValue = String(defaultValue || "").trim();
+  const [localText, setLocalText] = useState(initialValue);
+  const [isEditing, setIsEditing] = useState(false);
+  const checkDirty = useDirtyCheck();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const currentText = value ?? localText;
+  const displayValue = currentText.trim();
+  const displayText = displayValue || placeholder;
+  const editSizerText = fieldSizerText(currentText, placeholder);
+
+  useEffect(() => {
+    if (!isEditing) return;
+
+    if (singleLine) {
+      const input = inputRef.current;
+      if (!input) return;
+
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(input.value.length, input.value.length);
+      return;
+    }
+
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.focus({ preventScroll: true });
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  }, [isEditing, singleLine]);
+
+  useEffect(() => {
+    if (!isEditing || singleLine) return;
+
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    textarea.style.height = "0px";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [currentText, isEditing, singleLine]);
+
+  if (mode === "read") {
+    return (
+      <ReadValue className={readClassName} empty={!displayValue}>
+        {displayValue || placeholder}
+      </ReadValue>
+    );
+  }
+
+  return (
+    <span
+      className={cn(
+        "mx-1 inline max-w-full align-baseline",
+        containerClassName,
+      )}
+    >
+      <input name={name} type="hidden" value={currentText} />
+      {!isEditing ? (
+        <button
+          className={cn(
+            "inline max-w-full cursor-text whitespace-pre-wrap border-0 bg-transparent p-0 text-left font-semibold leading-[1.35] text-lipstick underline decoration-dotted decoration-2 underline-offset-[0.28em] [overflow-wrap:anywhere] transition hover:text-wine focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25",
+            !currentText && "text-faint",
+            displayClassName,
+          )}
+          onClick={() => setIsEditing(true)}
+          type="button"
+        >
+          {displayText}
+        </button>
+      ) : singleLine ? (
+        <span
+          className={cn(
+            "relative inline-grid max-w-[min(24rem,100%)] align-baseline",
+            editClassName,
+          )}
+        >
+          <label className="sr-only" htmlFor={id}>
+            {label}
+          </label>
+          <span
+            aria-hidden="true"
+            className="invisible col-start-1 row-start-1 h-[1.35em] whitespace-pre p-0 text-[1em] font-semibold leading-[1.35]"
+          >
+            {editSizerText}
+          </span>
+          <input
+            className="absolute inset-0 h-[1.35em] w-full min-w-0 max-w-full rounded-none border-0 bg-transparent p-0 text-[1em] font-semibold leading-[1.35] text-lipstick underline decoration-dotted decoration-2 underline-offset-[0.28em] shadow-none outline-none placeholder:text-faint focus-visible:ring-0"
+            id={id}
+            onBlur={() => setIsEditing(false)}
+            onChange={(event) => {
+              if (value === undefined) setLocalText(event.currentTarget.value);
+              onValueChange?.(event.currentTarget.value);
+              checkDirty?.();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                event.currentTarget.blur();
+                return;
+              }
+
+              if (event.key === "Escape") {
+                event.currentTarget.blur();
+              }
+            }}
+            placeholder={placeholder}
+            ref={inputRef}
+            type="text"
+            value={currentText}
+          />
+        </span>
+      ) : (
+        <span
+          className={cn(
+            "inline-block max-w-full align-baseline",
+            editWidthClassName,
+            editClassName,
+          )}
+        >
+          <label className="sr-only" htmlFor={id}>
+            {label}
+          </label>
+          <textarea
+            className={cn(
+              "block w-full resize-none overflow-hidden rounded-none border-0 border-b-2 border-dotted border-lipstick bg-transparent px-1 text-[0.95em] font-semibold text-lipstick shadow-none outline-none placeholder:text-faint focus-visible:border-solid focus-visible:ring-0",
+              "min-h-[1.75em] py-0 leading-[1.45]",
+            )}
+            id={id}
+            onBlur={() => setIsEditing(false)}
+            onChange={(event) => {
+              const nextValue = singleLine
+                ? event.currentTarget.value.replace(/\s*\n+\s*/g, " ")
+                : event.currentTarget.value;
+              if (value === undefined) setLocalText(nextValue);
+              onValueChange?.(nextValue);
+              checkDirty?.();
+            }}
+            onKeyDown={(event) => {
+              if (singleLine && event.key === "Enter") {
+                event.preventDefault();
+                event.currentTarget.blur();
+                return;
+              }
+
+              if (event.key === "Escape") {
+                event.currentTarget.blur();
+              }
+            }}
+            placeholder={placeholder}
+            ref={textareaRef}
+            rows={1}
+            value={currentText}
+          />
+        </span>
+      )}
+    </span>
+  );
+}
+
 function InlineSelect({
   defaultValue = "",
   label,
@@ -414,6 +647,7 @@ function InlineSelect({
   const [localValue, setLocalValue] = useState(defaultValue);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const checkDirty = useDirtyCheck();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLSpanElement>(null);
   const listRef = useRef<HTMLSpanElement>(null);
@@ -423,10 +657,10 @@ function InlineSelect({
     (option) => option.value === currentValue,
   );
   const currentLabel = displayLabel(options, currentValue, placeholder);
-  const dialogOptions = useMemo(() => {
-    if (!hasCurrentValue || hasMatchingOption) return options;
-    return [{ value: currentValue, label: currentValue }, ...options];
-  }, [currentValue, hasCurrentValue, hasMatchingOption, options]);
+  const dialogOptions =
+    !hasCurrentValue || hasMatchingOption
+      ? options
+      : [{ value: currentValue, label: currentValue }, ...options];
   const selectedIndex = Math.max(
     dialogOptions.findIndex((option) => option.value === currentValue),
     0,
@@ -471,6 +705,7 @@ function InlineSelect({
   }
 
   function selectOption(nextValue: string) {
+    if (nextValue !== currentValue) checkDirty?.();
     setLocalValue(nextValue);
     onChange?.(nextValue);
     closeList({ restoreFocus: false });
@@ -482,7 +717,14 @@ function InlineSelect({
   }
 
   function handleTriggerKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    if (
+      event.key !== "ArrowDown" &&
+      event.key !== "ArrowUp" &&
+      event.key !== "Enter" &&
+      event.key !== " "
+    ) {
+      return;
+    }
 
     event.preventDefault();
     openList();
@@ -534,7 +776,7 @@ function InlineSelect({
         aria-haspopup="dialog"
         aria-controls={isOpen ? dialogId : undefined}
         className={cn(
-          "mx-1 inline max-w-full cursor-pointer whitespace-normal border-0 border-b-[1.5px] border-dotted border-lipstick bg-transparent px-px pb-0.5 text-left text-[1em] font-semibold leading-[1.3] text-lipstick no-underline [overflow-wrap:normal] align-baseline transition hover:border-solid hover:text-wine focus-visible:border-solid focus-visible:bg-lipstick/8 focus-visible:outline-none",
+          "group mx-1 inline-block max-w-[calc(100%-0.9em)] cursor-pointer whitespace-normal border-0 bg-transparent p-0 text-left text-[1em] font-semibold leading-[1.3] text-lipstick align-baseline transition hover:text-wine focus-visible:bg-lipstick/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25",
           !hasCurrentValue && "text-faint",
         )}
         onClick={openList}
@@ -542,7 +784,9 @@ function InlineSelect({
         ref={triggerRef}
         type="button"
       >
-        {currentLabel}
+        <span className="box-decoration-clone underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] [overflow-wrap:normal] group-hover:decoration-solid">
+          {currentLabel}
+        </span>
       </button>
 
       {isOpen ? (
@@ -634,11 +878,15 @@ function InlineSelect({
 function DealBreakerPicker({
   mode,
   onToggle,
+  onOtherDetailsChange,
+  otherDetails,
   options,
   selectedValues,
 }: {
   mode: Mode;
   onToggle: (value: string) => void;
+  onOtherDetailsChange: (value: string) => void;
+  otherDetails: string;
   options: Option[];
   selectedValues: string[];
 }) {
@@ -647,6 +895,10 @@ function DealBreakerPicker({
   const popupId = `${reactId}-deal-breaker-popup`;
   const popupTitleId = `${reactId}-deal-breaker-title`;
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const scrollAreaRef = useRef<HTMLSpanElement | null>(null);
+  const otherDetailsRef = useRef<HTMLTextAreaElement | null>(null);
+  const shouldFocusOtherDetailsRef = useRef(false);
+  const checkDirty = useDirtyCheck();
   const selectedOptions = selectedValues
     .map((value) => options.find((option) => option.value === value))
     .filter((option): option is Option => Boolean(option));
@@ -654,6 +906,7 @@ function DealBreakerPicker({
     (value) => value !== noneDealBreaker,
   ).length;
   const isNoneSelected = selectedValues.includes(noneDealBreaker);
+  const isOtherSelected = selectedValues.includes("Other");
 
   useEffect(() => {
     if (!isOpen) return;
@@ -667,6 +920,24 @@ function DealBreakerPicker({
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !isOtherSelected || !shouldFocusOtherDetailsRef.current)
+      return;
+
+    shouldFocusOtherDetailsRef.current = false;
+    window.requestAnimationFrame(() => {
+      const scrollArea = scrollAreaRef.current;
+      if (scrollArea) {
+        scrollArea.scrollTo({
+          top: scrollArea.scrollHeight,
+          behavior: "smooth",
+        });
+      }
+
+      otherDetailsRef.current?.focus({ preventScroll: true });
+    });
+  }, [isOpen, isOtherSelected]);
 
   if (mode === "read") {
     if (!selectedOptions.length)
@@ -710,11 +981,22 @@ function DealBreakerPicker({
     if (isOptionDisabled(option)) return;
 
     const selected = selectedValues.includes(option.value);
+    checkDirty?.();
+    if (option.value === "Other" && !selected) {
+      shouldFocusOtherDetailsRef.current = true;
+    }
     onToggle(option.value);
 
     if (option.value === noneDealBreaker && !selected) {
       closePicker();
     }
+  }
+
+  function handleOtherDetailsChange(
+    event: React.ChangeEvent<HTMLTextAreaElement>,
+  ) {
+    onOtherDetailsChange(event.currentTarget.value);
+    checkDirty?.();
   }
 
   return (
@@ -729,7 +1011,7 @@ function DealBreakerPicker({
             : null}
           <button
             aria-label={`Edit deal-breakers, currently includes ${option.label}`}
-            className="inline max-w-full cursor-pointer border-0 border-b-2 border-dotted border-lipstick bg-transparent px-0 pb-0.5 font-semibold leading-tight text-lipstick transition hover:border-solid hover:text-wine focus-visible:border-solid focus-visible:bg-lipstick/8 focus-visible:outline-none"
+            className="inline max-w-full cursor-pointer border-0 bg-transparent px-0 font-semibold leading-tight text-lipstick underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] transition hover:text-wine hover:decoration-solid focus-visible:bg-lipstick/8 focus-visible:outline-none"
             onClick={() => setIsOpen(true)}
             type="button"
           >
@@ -742,15 +1024,15 @@ function DealBreakerPicker({
         aria-controls={isOpen ? popupId : undefined}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className="ml-1 inline-flex h-[1.25em] w-[1.25em] cursor-pointer items-center justify-center border-0 border-b-2 border-dotted border-lipstick bg-transparent align-baseline text-lipstick transition hover:border-solid hover:text-wine focus-visible:border-solid focus-visible:bg-lipstick/8 focus-visible:outline-none"
+        className="ml-[0.16em] mr-[0.12em] inline-flex h-[1em] w-[1em] cursor-pointer items-center justify-center rounded-full border-0 bg-lipstick p-0 align-[-0.08em] text-white transition hover:bg-wine focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25"
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
         <span className="sr-only">Add deal-breaker</span>
         <Plus
-          className="h-[0.82em] w-[0.82em]"
+          className="h-[0.52em] w-[0.52em]"
           aria-hidden="true"
-          strokeWidth={3}
+          strokeWidth={3.25}
         />
       </button>
 
@@ -783,7 +1065,10 @@ function DealBreakerPicker({
                 Done
               </button>
             </span>
-            <span className="grid max-h-[min(29rem,calc(100svh-8.5rem))] gap-2 overflow-y-auto p-3">
+            <span
+              className="grid max-h-[min(29rem,calc(100svh-8.5rem))] gap-2 overflow-y-auto p-3"
+              ref={scrollAreaRef}
+            >
               {options.map((option) => {
                 const selected = selectedValues.includes(option.value);
                 const disabled = isOptionDisabled(option);
@@ -809,6 +1094,26 @@ function DealBreakerPicker({
                   </button>
                 );
               })}
+              {isOtherSelected ? (
+                <span className="mt-1 grid gap-2 rounded-md border border-lipstick/20 bg-lipstick/8 p-3">
+                  <label
+                    className="text-sm font-black leading-tight text-wine"
+                    htmlFor={`${popupId}-other-details`}
+                  >
+                    What else?
+                  </label>
+                  <textarea
+                    aria-label="Other deal-breaker"
+                    className="min-h-24 w-full resize-y rounded-md border border-lipstick/25 bg-white px-3 py-2 text-sm font-semibold leading-6 text-ink shadow-none outline-none placeholder:text-faint focus:border-lipstick focus:bg-white"
+                    id={`${popupId}-other-details`}
+                    onChange={handleOtherDetailsChange}
+                    placeholder="Tell us more"
+                    ref={otherDetailsRef}
+                    rows={3}
+                    value={otherDetails}
+                  />
+                </span>
+              ) : null}
             </span>
             <span className="border-t border-wine/10 px-4 py-3 text-sm font-bold leading-6 text-muted">
               {selectedValues.length} of 5 selected.
@@ -830,12 +1135,20 @@ function MissingStory() {
 }
 
 function StoryNarrative({
+  isDirty = false,
   mode,
+  onCancel,
+  onDirty,
   profile,
+  profileImage,
   state,
 }: {
+  isDirty?: boolean;
   mode: Mode;
+  onCancel?: () => void;
+  onDirty?: () => void;
   profile: ProfileRegistration | null;
+  profileImage?: ProfileImageConfig;
   state?: FormActionState;
 }) {
   const story = profile?.profile_json || {};
@@ -866,6 +1179,9 @@ function StoryNarrative({
   );
   const [dealBreakers, setDealBreakers] = useState(() =>
     storyArray(story, "profile.deal_breakers"),
+  );
+  const [dealBreakerDetails, setDealBreakerDetails] = useState(
+    storyValue(story, "profile.deal_breakers.details"),
   );
   const [showAnythingElse, setShowAnythingElse] = useState(
     mode === "read" || Boolean(storyValue(story, "profile.anything_else")),
@@ -898,6 +1214,7 @@ function StoryNarrative({
       : ageMatters === "Yes" && heightMatters === "Yes"
         ? ", too"
         : "";
+  const showSaveActions = mode === "edit" && (isDirty || Boolean(state?.error));
 
   function toggleDealBreaker(value: string) {
     if (mode === "read") return;
@@ -915,9 +1232,24 @@ function StoryNarrative({
   }
 
   return (
-    <div className={cn("min-w-0 space-y-10", mode === "edit" && "pb-28")}>
+    <div className={cn("min-w-0 space-y-10", showSaveActions && "pb-28")}>
       <StoryChapter
         eyebrow="Introduction"
+        media={
+          profileImage ? (
+            <div
+              className="w-full max-w-[11rem] shrink-0"
+              data-profile-image-uploader
+            >
+              <ProfileImageUploader
+                className="w-full max-w-[11rem] justify-self-center md:justify-self-start"
+                currentImageUrl={profileImage.currentImageUrl}
+                displayName={profileImage.displayName}
+                hasProfile={profileImage.hasProfile}
+              />
+            </div>
+          ) : undefined
+        }
         title="Hello"
         description="Great to meet you! Let's skip the small talk."
       />
@@ -1024,6 +1356,7 @@ function StoryNarrative({
             label="Cities where I could meet a group for dinner or brunch"
             mode={mode}
             name="profile.event_location"
+            onDirty={onDirty}
             defaultValue={storyValue(story, "profile.event_location")}
             placeholder="cities"
           />
@@ -1038,7 +1371,7 @@ function StoryNarrative({
           />
           , and relocating is
           <InlineSelect
-            label="Relocation openness"
+            label="Relocation"
             mode={mode}
             name="profile.relocation"
             options={relocationOptions}
@@ -1055,6 +1388,7 @@ function StoryNarrative({
             label="Languages I am comfortable speaking on a date"
             mode={mode}
             name="profile.date_languages"
+            onDirty={onDirty}
             defaultValue={storyValue(story, "profile.date_languages")}
             placeholder="languages"
           />
@@ -1202,7 +1536,7 @@ function StoryNarrative({
         <p>
           My relationship with religion or spirituality is
           <InlineSelect
-            label="Relationship with religion or spirituality"
+            label="Religion or spirituality"
             mode={mode}
             name="profile.religion_identity"
             options={religionOptions}
@@ -1217,7 +1551,7 @@ function StoryNarrative({
               {" "}
               And in a partner, sharing those views is
               <InlineSelect
-                label="Importance of shared religious views"
+                label="Religious alignment"
                 mode={mode}
                 name="profile.religion_alignment_importance"
                 options={alignmentOptions}
@@ -1267,7 +1601,7 @@ function StoryNarrative({
         <p>
           Being on the same political side as my partner is
           <InlineSelect
-            label="Importance of shared political views"
+            label="Political alignment"
             mode={mode}
             name="profile.political_alignment_importance"
             options={politicalImportanceOptions}
@@ -1294,7 +1628,7 @@ function StoryNarrative({
           ) : null}{" "}
           Our money habits on earning, spending and saving need to align
           <InlineSelect
-            label="Importance of financial alignment"
+            label="Financial alignment"
             mode={mode}
             name="profile.financial_alignment_importance"
             options={financialImportanceOptions}
@@ -1324,7 +1658,7 @@ function StoryNarrative({
         <p>
           Fitness and physical health show up in my life as
           <InlineSelect
-            label="Fitness and physical health priority"
+            label="Fitness and health"
             mode={mode}
             name="profile.fitness_priority"
             options={fitnessOptions}
@@ -1333,7 +1667,7 @@ function StoryNarrative({
           />
           . And the daily rhythm that suits me is
           <InlineSelect
-            label="Preferred daily rhythm"
+            label="Daily rhythm"
             mode={mode}
             name="profile.lifestyle_pace"
             options={rhythmOptions}
@@ -1357,7 +1691,9 @@ function StoryNarrative({
             deal-breakers:
             <DealBreakerPicker
               mode={mode}
+              onOtherDetailsChange={setDealBreakerDetails}
               onToggle={toggleDealBreaker}
+              otherDetails={dealBreakerDetails}
               options={dealBreakerOptions}
               selectedValues={dealBreakers}
             />
@@ -1374,18 +1710,15 @@ function StoryNarrative({
           {showDealBreakerDetails ? (
             <p>
               The other thing I won&apos;t tolerate is
-              <InlineText
+              <InlineLongText
+                editWidthClassName="w-[min(36rem,calc(100%-15rem))]"
                 label="Other deal-breaker"
                 mode={mode}
                 name="profile.deal_breakers.details"
-                defaultValue={storyValue(
-                  story,
-                  "profile.deal_breakers.details",
-                )}
+                onValueChange={setDealBreakerDetails}
                 placeholder="what else?"
-                wide
+                value={dealBreakerDetails}
               />
-              .
             </p>
           ) : null}
         </div>
@@ -1409,17 +1742,20 @@ function StoryNarrative({
           </>
         ) : (
           <div className={cn("space-y-3", storyTextClass)}>
-            <p>
-              P.S.
-              <InlineText
+            <p className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-2">
+              <span className="pt-[0.1em] leading-[1.45]">P.S.</span>
+              <InlineLongText
+                containerClassName="mx-0 block min-w-0 align-top"
+                displayClassName="block w-full leading-[1.45]"
+                editClassName="block w-full align-top"
+                editWidthClassName="w-full"
                 label="Anything else"
                 mode={mode}
                 name="profile.anything_else"
                 defaultValue={anythingElse}
                 placeholder="tell us more"
-                wide
+                readClassName="mx-0 block min-w-0 px-0 leading-[1.45]"
               />
-              .
             </p>
           </div>
         )}
@@ -1430,30 +1766,31 @@ function StoryNarrative({
       <StoryChapter eyebrow="About the Author" title="Written By">
         <p>
           My first name is
-          <InlineText
+          <InlineLongText
+            editWidthClassName="w-[min(24rem,calc(100%-9rem))]"
             label="First name"
             mode={mode}
             name="profile.first_name"
             defaultValue={storyValue(story, "profile.first_name")}
             placeholder="your name"
+            singleLine
           />
           and I can receive notifications at
-          <InlineText
+          <InlineLongText
             label="Email"
             mode={mode}
             name="profile.email"
-            type="email"
             defaultValue={
               storyValue(story, "profile.email") || profile.contact_email || ""
             }
             placeholder="your email"
-            wide
+            singleLine
           />
           .
         </p>
       </StoryChapter>
 
-      {mode === "edit" ? (
+      {showSaveActions ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-8 z-40 min-[901px]:left-[260px]">
           <div className="mx-auto flex w-full max-w-6xl justify-center px-4 sm:px-6 lg:px-8">
             <div className="pointer-events-auto flex min-w-0 flex-wrap items-center gap-3">
@@ -1461,10 +1798,15 @@ function StoryNarrative({
                 <Save className="h-4 w-4" />
                 Save story
               </SubmitButton>
-              <Button asChild variant="secondary">
-                <Link href="/my-story">Cancel</Link>
+              <Button onClick={onCancel} type="button" variant="secondary">
+                Cancel
               </Button>
-              <ActionStatus error={state?.error} ok={state?.ok} />
+              <ActionStatus
+                error={state?.error}
+                ok={state?.ok}
+                successMessage="Story saved."
+                toastKey={state}
+              />
             </div>
           </div>
         </div>
@@ -1475,24 +1817,102 @@ function StoryNarrative({
 
 export function ProfileStory({
   profile,
+  profileImage,
 }: {
   profile: ProfileRegistration | null;
+  profileImage?: ProfileImageConfig;
 }) {
-  return <StoryNarrative mode="read" profile={profile} />;
+  return (
+    <StoryNarrative mode="read" profile={profile} profileImage={profileImage} />
+  );
 }
 
 export function ProfileForm({
   profile,
+  profileImage,
 }: {
   profile: ProfileRegistration | null;
+  profileImage?: ProfileImageConfig;
 }) {
   const [state, action] = useActionState(saveProfileAction, initialState);
+  const { showToast } = useToast();
+  const [isDirty, setIsDirty] = useState(false);
+  const [formResetKey, setFormResetKey] = useState(0);
+  const [dismissedActionState, setDismissedActionState] =
+    useState<FormActionState | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const initialSnapshotRef = useRef<string | null>(null);
+  const suppressDirtyChecksRef = useRef(false);
+  const resetTimerRef = useRef<number | null>(null);
+  const updateDirtyState = useCallback(() => {
+    if (suppressDirtyChecksRef.current) return;
+
+    const form = formRef.current;
+    if (!form) return;
+
+    const snapshot = serializeForm(form);
+    if (initialSnapshotRef.current === null) {
+      initialSnapshotRef.current = snapshot;
+    }
+    setIsDirty(snapshot !== initialSnapshotRef.current);
+  }, []);
+  const scheduleDirtyCheck = useCallback(() => {
+    window.requestAnimationFrame(updateDirtyState);
+  }, [updateDirtyState]);
+
+  useEffect(() => {
+    updateDirtyState();
+  }, [updateDirtyState]);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+    };
+  }, []);
+
+  const handleCancel = useCallback(() => {
+    suppressDirtyChecksRef.current = true;
+    formRef.current?.reset();
+    setDismissedActionState(state);
+    setFormResetKey((current) => current + 1);
+    setIsDirty(false);
+    showToast({
+      duration: 2600,
+      title: "Changes discarded.",
+      variant: "info",
+    });
+
+    if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = window.setTimeout(() => {
+      suppressDirtyChecksRef.current = false;
+      updateDirtyState();
+    }, 0);
+  }, [showToast, state, updateDirtyState]);
 
   if (!profile) return <MissingStory />;
 
+  const visibleState = state === dismissedActionState ? initialState : state;
+
   return (
-    <form action={action} className="min-w-0">
-      <StoryNarrative mode="edit" profile={profile} state={state} />
-    </form>
+    <DirtyCheckContext.Provider value={scheduleDirtyCheck}>
+      <form
+        action={action}
+        className="min-w-0"
+        onChange={scheduleDirtyCheck}
+        onInput={scheduleDirtyCheck}
+        ref={formRef}
+      >
+        <StoryNarrative
+          key={formResetKey}
+          isDirty={isDirty}
+          mode="edit"
+          onCancel={handleCancel}
+          onDirty={scheduleDirtyCheck}
+          profile={profile}
+          profileImage={profileImage}
+          state={visibleState}
+        />
+      </form>
+    </DirtyCheckContext.Provider>
   );
 }

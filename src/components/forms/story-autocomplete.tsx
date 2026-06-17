@@ -97,6 +97,7 @@ export function StoryAutocompleteField({
   label,
   mode,
   name,
+  onDirty,
   placeholder,
 }: {
   defaultValue?: string;
@@ -104,6 +105,7 @@ export function StoryAutocompleteField({
   label: string;
   mode: Mode;
   name: string;
+  onDirty?: () => void;
   placeholder: string;
 }) {
   const reactId = useId();
@@ -213,6 +215,7 @@ export function StoryAutocompleteField({
 
   function selectSuggestion(item: Selection) {
     userChangedRef.current = true;
+    onDirty?.();
     setSelected((current) => {
       const withoutDuplicate = current.filter((selectedItem) => selectedItem.key !== item.key);
       if (kind === "city") {
@@ -225,6 +228,7 @@ export function StoryAutocompleteField({
 
   function removeSelected(key: string) {
     userChangedRef.current = true;
+    onDirty?.();
     setSelected((current) => current.filter((item) => item.key !== key));
     setActiveIndex(0);
   }
@@ -272,7 +276,7 @@ export function StoryAutocompleteField({
         {selected.map((item, index) => (
           <span key={item.key}>
             <button
-              className="mx-1 inline max-w-full cursor-pointer break-words border-0 border-b-2 border-dotted border-lipstick bg-transparent px-1 py-0 align-baseline font-semibold leading-[1.2] text-lipstick"
+              className="mx-1 inline max-w-full cursor-pointer break-words border-0 bg-transparent px-1 py-0 align-baseline font-semibold leading-[1.2] text-lipstick underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] transition hover:text-wine hover:decoration-solid"
               onClick={openList}
               type="button"
             >
@@ -288,7 +292,7 @@ export function StoryAutocompleteField({
           "inline-flex cursor-pointer items-center border-0 bg-transparent p-0 font-semibold leading-[1.2] text-lipstick transition hover:text-wine",
           selected.length
             ? "ml-[0.05em] mr-[0.12em] h-[1em] w-[1em] justify-center rounded-full bg-lipstick align-[-0.08em] text-white hover:bg-wine hover:text-white"
-            : "mx-1 gap-2 border-b-2 border-dotted border-lipstick px-1 align-baseline",
+            : "mx-1 gap-2 px-1 align-baseline underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em]",
         )}
         onClick={openList}
         type="button"
@@ -315,7 +319,7 @@ export function StoryAutocompleteField({
             {label}
           </label>
           <div
-            className="fixed left-1/2 top-24 z-[60] w-[min(26rem,calc(100vw-2rem))] -translate-x-1/2 text-base"
+            className="fixed left-1/2 top-24 z-[60] w-[min(26rem,calc(100vw-2rem))] -translate-x-1/2 text-base md:top-1/2 md:-translate-y-1/2"
             ref={popoverRef}
           >
             <div className="relative">

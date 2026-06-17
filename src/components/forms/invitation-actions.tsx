@@ -37,7 +37,12 @@ export function ConfirmInvitationForm({
         <CheckCircle2 className="h-4 w-4" />
         Confirm seat
       </SubmitButton>
-      <ActionStatus error={state.error} ok={state.ok} />
+      <ActionStatus
+        error={state.error}
+        ok={state.ok}
+        successMessage="Seat confirmed."
+        toastKey={state}
+      />
     </form>
   );
 }
@@ -61,7 +66,7 @@ export function CancelInvitationForm({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Root open={open && !state.ok} onOpenChange={setOpen}>
         <Dialog.Trigger asChild>
           <Button type="button" variant="secondary">
             <XCircle className="h-4 w-4" />
@@ -81,7 +86,9 @@ export function CancelInvitationForm({
             </div>
             <form action={action} className="grid gap-4">
               <input type="hidden" name="invitation_id" value={invitationId} />
-              {state.error ? <ActionStatus error={state.error} /> : null}
+              {state.error ? (
+                <ActionStatus error={state.error} toastKey={state} />
+              ) : null}
               <div className="flex flex-wrap justify-end gap-2">
                 <Dialog.Close asChild>
                   <Button type="button" variant="secondary">
@@ -100,7 +107,11 @@ export function CancelInvitationForm({
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
-      {!open ? <ActionStatus error={state.error} ok={state.ok} /> : null}
+      <ActionStatus
+        ok={state.ok}
+        successMessage={isWaitlist ? "Waitlist cancelled." : "Event cancelled."}
+        toastKey={state}
+      />
     </div>
   );
 }
@@ -115,7 +126,12 @@ export function JoinWaitlistForm({ invitationId }: { invitationId: string }) {
         <CheckCircle2 className="h-4 w-4" />
         Join waitlist
       </SubmitButton>
-      <ActionStatus error={state.error} ok={state.ok} />
+      <ActionStatus
+        error={state.error}
+        ok={state.ok}
+        successMessage="Waitlist joined."
+        toastKey={state}
+      />
     </form>
   );
 }
@@ -134,7 +150,12 @@ export function DeclineInvitationForm({
         <XCircle className="h-4 w-4" />
         Cannot make it
       </SubmitButton>
-      <ActionStatus error={state.error} ok={state.ok} />
+      <ActionStatus
+        error={state.error}
+        ok={state.ok}
+        successMessage="Response saved."
+        toastKey={state}
+      />
     </form>
   );
 }

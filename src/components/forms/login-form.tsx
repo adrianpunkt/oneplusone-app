@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { ExternalLink, KeyRound, Mail, RotateCcw, UserPlus } from "lucide-react";
 
 import { requestOtpAction, type AuthActionState, verifyOtpAction } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/toast";
 
 const initialState: AuthActionState = {};
 const joinUrl = "https://oneplusoneclub.com/story";
@@ -27,6 +28,7 @@ function LoginIntro() {
 
 export function LoginForm({ next = "/dashboard" }: { next?: string }) {
   const [hideVerifyError, setHideVerifyError] = useState(false);
+  const { showToast } = useToast();
   const [requestState, requestAction, requestPending] = useActionState(
     requestOtpAction,
     initialState,
@@ -45,6 +47,15 @@ export function LoginForm({ next = "/dashboard" }: { next?: string }) {
       : hideVerifyError
         ? requestState.error
         : verifyState.error || requestState.error;
+
+  useEffect(() => {
+    if (!requestState.sent || !requestState.email) return;
+
+    showToast({
+      description: requestState.email,
+      title: "Login code sent.",
+    });
+  }, [requestState, showToast]);
 
   if (notRegistered) {
     return (

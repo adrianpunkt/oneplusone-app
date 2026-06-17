@@ -2,15 +2,83 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand-logo";
+import { MessageHeartIcon, messageNotificationTooltip } from "@/components/app/message-heart-icon";
 import { MobileMenu } from "@/components/app/mobile-menu";
 import { SectionNav } from "@/components/app/section-nav";
 import { SignOutButton } from "@/components/app/sign-out-button";
-import { profileImageUrl } from "@/lib/profile-image";
+import { profileImageThumbnailUrl } from "@/lib/profile-image";
 import type { Member, NotificationRecord, ProfileRegistration } from "@/lib/types";
-import { initials, storyValue } from "@/lib/utils";
+import { cn, storyValue } from "@/lib/utils";
 
 function memberDisplayName(member: Member, profile: ProfileRegistration | null) {
   return storyValue(profile?.profile_json, "profile.first_name") || member.email || "Me";
+}
+
+function NotificationHeartLink({
+  className,
+  count,
+  href,
+  tooltip,
+}: {
+  className?: string;
+  count: number;
+  href: string;
+  tooltip: string;
+}) {
+  return (
+    <Link
+      aria-label={tooltip}
+      className={cn(
+        "grid h-10 w-10 shrink-0 place-items-center text-lipstick transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/30 focus-visible:ring-offset-2",
+        className,
+      )}
+      href={href}
+    >
+      <MessageHeartIcon
+        className="h-10 w-10 text-lipstick"
+        count={count}
+        iconClassName="h-9 w-9"
+        tooltip={tooltip}
+      />
+    </Link>
+  );
+}
+
+function CreditBalanceLink({
+  ariaLabel,
+  className,
+  creditBalance,
+}: {
+  ariaLabel: string;
+  className?: string;
+  creditBalance: number;
+}) {
+  const creditLabel = creditBalance === 1 ? "credit" : "credits";
+
+  return (
+    <Link
+      aria-label={ariaLabel}
+      className={cn(
+        "-ml-1.5 flex h-8 min-w-12 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-lipstick/25 bg-white py-0 pl-1.5 pr-2.5 text-sm font-semibold text-lipstick shadow-sm transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35 focus-visible:ring-offset-2",
+        className,
+      )}
+      href="/credits"
+    >
+      <span className="grid h-6 w-6 shrink-0 place-items-center">
+        <span className="grid h-4 w-4 place-items-center rounded-full bg-lipstick text-white">
+          <Star
+            className="h-2.5 w-2.5"
+            fill="#ffffff"
+            stroke="#ffffff"
+            strokeWidth={2.4}
+          />
+        </span>
+      </span>
+      <span className="leading-none text-lipstick">
+        {creditBalance} {creditLabel}
+      </span>
+    </Link>
+  );
 }
 
 export function AppShell({
@@ -28,11 +96,10 @@ export function AppShell({
 }) {
   const unreadCount = notifications.length;
   const displayName = memberDisplayName(member, profile);
-  const imageUrl = profileImageUrl(profile?.profile_json);
+  const imageUrl = profileImageThumbnailUrl(profile?.profile_json);
   const notificationHref = notifications[0]?.href || "/messages";
-  const notificationLabel =
-    unreadCount === 1 ? notifications[0]?.title || "1 new notification" : `${unreadCount} new notifications`;
-  const notificationCountLabel = unreadCount > 9 ? "9+" : String(unreadCount);
+  const creditAriaLabel = `You have ${creditBalance} ${creditBalance === 1 ? "credit" : "credits"}`;
+  const notificationTooltip = unreadCount > 0 ? messageNotificationTooltip(unreadCount) : "";
 
   return (
     <div className="min-h-screen app-grid">
@@ -42,21 +109,14 @@ export function AppShell({
             <BrandLogo className="w-36" priority />
           </Link>
 
+          <div className="flex w-full items-center justify-between px-4">
+            <CreditBalanceLink ariaLabel={creditAriaLabel} creditBalance={creditBalance} />
+          </div>
+
           <SectionNav displayName={displayName} imageUrl={imageUrl} unreadCount={unreadCount} />
 
-          <div className="mt-auto grid gap-4 rounded-lg border border-wine/10 bg-blush p-3">
-            <div className="flex items-center gap-3">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-wine text-xs font-black text-white">
-                {initials(member.email)}
-              </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-bold text-wine">{member.email}</p>
-                <p className="text-xs font-semibold capitalize text-muted">
-                  {member.membership_status}
-                </p>
-              </div>
-            </div>
-            <SignOutButton />
+          <div className="mt-auto px-2">
+            <SignOutButton className="w-full justify-start" size="default" />
           </div>
         </div>
       </aside>
@@ -73,51 +133,13 @@ export function AppShell({
             </Link>
             <div className="flex items-center gap-2">
               {unreadCount > 0 ? (
-                <Link
-                  aria-label={notificationLabel}
-                  className="grid h-10 w-10 place-items-center text-lipstick transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/30 focus-visible:ring-offset-2"
+                <NotificationHeartLink
+                  count={unreadCount}
                   href={notificationHref}
-                  title={notificationLabel}
-                >
-                  <svg
-                    aria-hidden="true"
-                    className="h-9 w-9 drop-shadow-sm"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78Z"
-                      fill="currentColor"
-                    />
-                    <text
-                      fill="white"
-                      fontSize={notificationCountLabel.length > 1 ? "8" : "8"}
-                      fontWeight="900"
-                      textAnchor="middle"
-                      x="12"
-                      y="13.4"
-                    >
-                      {notificationCountLabel}
-                    </text>
-                  </svg>
-                </Link>
+                  tooltip={notificationTooltip}
+                />
               ) : null}
-              <Link
-                aria-label={`${creditBalance} credits`}
-                className="flex h-8 min-w-12 items-center justify-center gap-1.5 rounded-full border border-lipstick/25 bg-white px-1.5 text-sm font-semibold text-lipstick shadow-sm transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35 focus-visible:ring-offset-2"
-                href="/credits"
-                title={`${creditBalance} credits`}
-              >
-                <span className="grid h-4 w-4 place-items-center rounded-full bg-lipstick text-white">
-                  <Star
-                    className="h-2.5 w-2.5"
-                    fill="#ffffff"
-                    stroke="#ffffff"
-                    strokeWidth={2.4}
-                  />
-                </span>
-                <span className="leading-none text-lipstick">{creditBalance}</span>
-              </Link>
+              <CreditBalanceLink ariaLabel={creditAriaLabel} creditBalance={creditBalance} />
               <MobileMenu displayName={displayName} imageUrl={imageUrl} unreadCount={unreadCount} />
             </div>
           </div>

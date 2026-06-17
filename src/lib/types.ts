@@ -104,6 +104,7 @@ export type Conversation = {
     id: string;
     imageUrl: string;
     name: string;
+    thumbnailUrl: string;
   } | null;
   lastMessage?: {
     createdAt: string;

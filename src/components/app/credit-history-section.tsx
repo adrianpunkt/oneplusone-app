@@ -16,10 +16,7 @@ export function CreditHistorySection({ entries }: CreditHistorySectionProps) {
           <span className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-2 font-display text-lg font-extrabold leading-tight text-wine">
               <History className="h-5 w-5 text-lipstick" />
-              Credit history
-            </span>
-            <span className="text-sm font-semibold text-muted">
-              {entries.length === 1 ? "1 entry" : `${entries.length} entries`}
+              Credits history
             </span>
           </span>
           <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-wine/10 bg-white px-3 text-xs font-semibold text-wine shadow-sm">

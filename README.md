@@ -13,7 +13,7 @@ Required env:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET` or `APP_STRIPE_WEBHOOK_SECRET`
 
@@ -24,7 +24,7 @@ opo-dev: https://oackdojvcfrkzbnprovb.supabase.co
 ```
 
 The ignored `.env.local` file contains the matching dev publishable key and
-server-only service-role key. Use `.env.example` only as the template for new
+server-only Supabase secret API key. Use `.env.example` only as the template for new
 checkouts; do not commit real keys.
 
 Supabase Auth redirects for the dev project allow the member app callbacks:
@@ -63,8 +63,15 @@ It assumes the website migrations have already created:
 - `member_credit_balances`
 - the website membership RPCs
 
-Apply the website migrations first, then apply this app migration to the same
-project.
+The website's member-registration/payment-resume migrations are mirrored here
+(`20260612110000_add_locale_to_profile_registrations.sql` and
+`20260615220000_membership_payment_resume.sql`) so a fresh app migration push has
+the same shared schema. Apply website/shared migrations first, then the app
+migration to the same project.
+
+Member login is intentionally active-only. Pending members created by the
+website after story submission cannot log in until Stripe payment or a free code
+marks `members.membership_status = active`.
 
 ## Stripe
 

@@ -24,6 +24,17 @@ function optionalText(formData: FormData, key: string) {
   return String(formData.get(key) || "").trim();
 }
 
+function optionalProfileText(
+  formData: FormData,
+  profileJson: Record<string, unknown>,
+  key: string,
+) {
+  if (formData.has(key)) return optionalText(formData, key);
+
+  const existingValue = profileJson[key];
+  return typeof existingValue === "string" ? existingValue.trim() : "";
+}
+
 function selectedValues(formData: FormData, key: string) {
   return formData
     .getAll(key)
@@ -41,10 +52,11 @@ export async function saveProfileAction(
     return { error: "No submitted story is linked to this account yet." };
   }
 
+  const existingProfileJson = profile.profile_json || {};
   const fields: Record<string, string | string[]> = Object.fromEntries(
     profileTextFieldNames.map((field) => [
       field,
-      optionalText(formData, field),
+      optionalProfileText(formData, existingProfileJson, field),
     ]),
   );
 
@@ -60,7 +72,7 @@ export async function saveProfileAction(
   }
 
   const nextProfile = {
-    ...(profile.profile_json || {}),
+    ...existingProfileJson,
   };
 
   profileTextFieldNames.forEach((field) => {
@@ -84,10 +96,7 @@ export async function saveProfileAction(
   }
 
   revalidatePath("/my-story");
-  revalidatePath("/my-story/edit");
-  revalidatePath("/profile");
   revalidatePath("/dashboard");
-  revalidatePath("/me");
   redirect("/my-story?saved=1");
 }
 
@@ -96,6 +105,7 @@ export async function savePreferencesAction(
   formData: FormData,
 ): Promise<FormActionState> {
   const { member } = await requireMemberContext();
+  const returnToDashboard = formData.get("return_to") === "dashboard";
   const parsed = preferencesSchema.safeParse({
     prefersSaturdayDinner: checkboxValue(formData, "prefers_saturday_dinner"),
     prefersSundayBrunch: checkboxValue(formData, "prefers_sunday_brunch"),
@@ -160,5 +170,10 @@ export async function savePreferencesAction(
 
   revalidatePath("/preferences");
   revalidatePath("/dashboard");
-  redirect("/preferences?saved=1");
+  revalidatePath("/going-out");
+  redirect(
+    returnToDashboard
+      ? "/dashboard?preferences=saved"
+      : "/going-out?preferences=saved",
+  );
 }

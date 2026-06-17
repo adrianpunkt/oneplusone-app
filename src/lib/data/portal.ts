@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
-import { profileImageUrl } from "@/lib/profile-image";
+import { profileImageThumbnailUrl, profileImageUrl } from "@/lib/profile-image";
 import type {
   Conversation,
   CreditLedgerEntry,
@@ -32,6 +32,9 @@ type ParticipantLookupRow = {
   last_read_at: string | null;
 };
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function normalizeEventRelation<T extends { events?: EventRecord | null }>(
   row: WithEventRelation<Omit<T, "events">>,
 ): T {
@@ -56,6 +59,85 @@ function capitalizeName(name: string) {
     .replace(/(^|[\s'-])([a-z])/g, (_, prefix: string, letter: string) =>
       `${prefix}${letter.toUpperCase()}`,
     );
+}
+
+function messageNotificationConversationId(notification: NotificationRecord) {
+  if (notification.type !== "message" || !notification.href) return null;
+
+  const match = notification.href.match(/^\/messages\/([^/?#]+)$/);
+  const conversationId = match?.[1];
+
+  return conversationId && UUID_PATTERN.test(conversationId) ? conversationId : null;
+}
+
+async function getUnreadConversationIds(memberId: string, conversationIds: string[]) {
+  if (!conversationIds.length) return new Set<string>();
+
+  const serviceSupabase = getSupabaseServiceClient();
+  const [{ data: messageData, error: messageError }, { data: participantData, error: participantError }] =
+    await Promise.all([
+      serviceSupabase
+        .from("messages")
+        .select("conversation_id,sender_member_id,created_at")
+        .in("conversation_id", conversationIds)
+        .order("created_at", { ascending: false }),
+      serviceSupabase
+        .from("conversation_participants")
+        .select("conversation_id,last_read_at")
+        .eq("member_id", memberId)
+        .in("conversation_id", conversationIds),
+    ]);
+
+  if (messageError || participantError) return new Set(conversationIds);
+
+  const latestByConversationId = new Map<string, MessageLookupRow>();
+  const lastReadAtByConversationId = new Map(
+    ((participantData || []) as ParticipantLookupRow[]).map((participant) => [
+      participant.conversation_id,
+      participant.last_read_at,
+    ]),
+  );
+
+  for (const message of (messageData || []) as MessageLookupRow[]) {
+    if (!latestByConversationId.has(message.conversation_id)) {
+      latestByConversationId.set(message.conversation_id, message);
+    }
+  }
+
+  return new Set(
+    conversationIds.filter((conversationId) => {
+      const latestMessage = latestByConversationId.get(conversationId);
+      const isParticipant = lastReadAtByConversationId.has(conversationId);
+      const lastReadAt = lastReadAtByConversationId.get(conversationId);
+
+      return (
+        isParticipant &&
+        latestMessage !== undefined &&
+        latestMessage.sender_member_id !== memberId &&
+        (!lastReadAt || new Date(latestMessage.created_at) > new Date(lastReadAt))
+      );
+    }),
+  );
+}
+
+async function filterStaleMessageNotifications(memberId: string, notifications: NotificationRecord[]) {
+  const conversationIds = Array.from(
+    new Set(
+      notifications
+        .map(messageNotificationConversationId)
+        .filter((conversationId): conversationId is string => Boolean(conversationId)),
+    ),
+  );
+
+  if (!conversationIds.length) return notifications;
+
+  const unreadConversationIds = await getUnreadConversationIds(memberId, conversationIds);
+
+  return notifications.filter((notification) => {
+    const conversationId = messageNotificationConversationId(notification);
+
+    return !conversationId || unreadConversationIds.has(conversationId);
+  });
 }
 
 async function attachCorrespondents(memberId: string, conversations: Conversation[]) {
@@ -106,6 +188,7 @@ async function attachCorrespondents(memberId: string, conversations: Conversatio
           id: member.id,
           imageUrl: profileImageUrl(profileJson),
           name: capitalizeName(name),
+          thumbnailUrl: profileImageThumbnailUrl(profileJson),
         },
       ];
     }),
@@ -119,6 +202,7 @@ async function attachCorrespondents(memberId: string, conversations: Conversatio
         id: correspondentId,
         imageUrl: "",
         name: "Member",
+        thumbnailUrl: "",
       },
     };
   });
@@ -224,6 +308,69 @@ export async function getReferralCode(memberId: string) {
     .maybeSingle();
 
   return data?.code || null;
+}
+
+export async function hasReferralCodeSignup(memberId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("benefit_code_redemptions")
+    .select("id")
+    .eq("referrer_member_id", memberId)
+    .eq("code_type", "referral")
+    .in("status", ["pending_payment", "completed"])
+    .limit(1)
+    .maybeSingle();
+
+  return Boolean(data?.id);
+}
+
+export async function hasReceivedEventInvitation(memberId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("event_invitations")
+    .select("id")
+    .eq("member_id", memberId)
+    .limit(1)
+    .maybeSingle();
+
+  return Boolean(data?.id);
+}
+
+export async function hasConfirmedEventInvitation(memberId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("event_invitations")
+    .select("id")
+    .eq("member_id", memberId)
+    .eq("status", "confirmed")
+    .limit(1)
+    .maybeSingle();
+
+  return Boolean(data?.id);
+}
+
+export async function hasSentMessage(memberId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("messages")
+    .select("id")
+    .eq("sender_member_id", memberId)
+    .limit(1)
+    .maybeSingle();
+
+  return Boolean(data?.id);
+}
+
+export async function hasAttendedSecondEvent(memberId: string) {
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("event_attendees")
+    .select("id")
+    .eq("member_id", memberId)
+    .in("status", ["attended", "host"])
+    .limit(2);
+
+  return (data?.length || 0) >= 2;
 }
 
 export async function getPreferences(memberId: string) {
@@ -356,9 +503,10 @@ export async function getUnreadNotifications(memberId: string) {
     .from("notifications")
     .select("id,member_id,type,title,body,href,read_at,created_at")
     .eq("member_id", memberId)
+    .eq("type", "message")
     .is("read_at", null)
     .order("created_at", { ascending: false })
     .limit(10);
 
-  return (data || []) as NotificationRecord[];
+  return filterStaleMessageNotifications(memberId, (data || []) as NotificationRecord[]);
 }
