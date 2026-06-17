@@ -17,10 +17,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "one plus one club",
-    template: "%s - one plus one club",
+    default: "one plus one app",
+    template: "%s - one plus one app",
   },
-  description: "Member portal for one plus one club.",
+  description: "Member portal for one plus one app.",
 };
 
 export default async function RootLayout({
