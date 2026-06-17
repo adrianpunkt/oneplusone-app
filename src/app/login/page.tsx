@@ -107,6 +107,7 @@ export default async function LoginPage({
               sentCodeSuffix: ".",
             }}
             initialEmail={decodeEmailHint(emailHint)}
+            locale={locale}
             next={safeInternalPath(next, "/dashboard")}
           />
         </CardContent>

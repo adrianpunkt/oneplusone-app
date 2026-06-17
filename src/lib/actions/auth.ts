@@ -8,6 +8,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
+import { normalizeLocale, type Locale } from "@/lib/i18n/locales";
 import { safeInternalPath } from "@/lib/utils";
 import { emailSchema, otpCodeSchema } from "@/lib/validators/story";
 
@@ -49,11 +50,21 @@ async function findActiveMemberByEmail(email: string) {
   return { error: null, member };
 }
 
+function getFormLocale(formData: FormData): Locale | null {
+  const value = formData.get("locale");
+  if (typeof value !== "string" || !value.trim()) return null;
+
+  return normalizeLocale(value);
+}
+
 export async function requestOtpAction(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const dictionary = getDictionary(await getRequestLocaleFallback());
+  const formLocale = getFormLocale(formData);
+  const requestLocale = await getRequestLocaleFallback();
+  const locale = formLocale || requestLocale;
+  const dictionary = getDictionary(locale);
   const parsedEmail = emailSchema.safeParse(formData.get("email"));
   const next = safeInternalPath(String(formData.get("next") || "/dashboard"));
 
@@ -71,7 +82,6 @@ export async function requestOtpAction(
 
   const requestHeaders = await headers();
   const origin = resolveAppOrigin(requestHeaders.get("origin"));
-
   let supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
   try {
@@ -85,6 +95,10 @@ export async function requestOtpAction(
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
+      data: {
+        language: locale,
+        locale,
+      },
       emailRedirectTo: redirectTo,
       shouldCreateUser: true,
     },

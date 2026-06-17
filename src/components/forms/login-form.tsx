@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
+import type { Locale } from "@/lib/i18n/locales";
 
 const initialState: AuthActionState = {};
 const joinUrl = "https://oneplusoneclub.com/story";
@@ -52,10 +53,12 @@ function LoginIntro({ copy }: { copy: LoginFormCopy }) {
 export function LoginForm({
   copy,
   initialEmail = "",
+  locale,
   next = "/dashboard",
 }: {
   copy: LoginFormCopy;
   initialEmail?: string;
+  locale: Locale;
   next?: string;
 }) {
   const [hideVerifyError, setHideVerifyError] = useState(false);
@@ -93,6 +96,7 @@ export function LoginForm({
       <div className="grid gap-4">
         <LoginIntro copy={copy} />
         <form action={requestAction} className="grid gap-4">
+          <input type="hidden" name="locale" value={locale} />
           <input type="hidden" name="next" value={next} />
           <div className="grid gap-2">
             <Label htmlFor="email">{copy.email}</Label>
@@ -174,6 +178,7 @@ export function LoginForm({
           onSubmit={() => setHideVerifyError(true)}
         >
           <input type="hidden" name="email" value={email} />
+          <input type="hidden" name="locale" value={locale} />
           <input type="hidden" name="next" value={activeNext} />
           <button
             className="group inline-flex items-center gap-1.5 text-sm font-semibold text-ocean underline decoration-ocean/40 underline-offset-4 transition-colors hover:text-ocean/80 hover:decoration-ocean disabled:pointer-events-none disabled:opacity-55"
@@ -192,6 +197,7 @@ export function LoginForm({
     <div className="grid gap-4">
       <LoginIntro copy={copy} />
       <form action={requestAction} className="grid gap-4">
+        <input type="hidden" name="locale" value={locale} />
         <input type="hidden" name="next" value={next} />
         <div className="grid gap-2">
           <Label htmlFor="email">{copy.email}</Label>
