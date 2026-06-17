@@ -36,9 +36,10 @@ constructs the Supabase URL from that ref instead of trusting generated
 `.env.local` values, so missing Worker secrets fail instead of silently using
 local development credentials.
 
-Production deploys should use `npm run deploy`. That wrapper temporarily hides
-local `.env*` files before OpenNext builds so generated Worker artifacts cannot
-carry development Supabase or Stripe values as runtime fallbacks.
+Cloudflare deploys should use `npm run deploy` for prod and `npm run deploy:dev`
+for dev. Those wrappers temporarily hide local `.env*` files before OpenNext
+builds so generated Worker artifacts cannot carry local Supabase or Stripe
+values as runtime fallbacks.
 
 The ignored `.env.local` file contains the matching dev publishable key and a
 server-only Supabase key. Use `.env.example` only as the template for new
