@@ -6,38 +6,41 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireMemberContext } from "@/lib/data/member";
 import { getConversations } from "@/lib/data/portal";
+import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
+import type { Locale } from "@/lib/i18n/locales";
+import { formatDate } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 type ConversationSummary = Awaited<ReturnType<typeof getConversations>>[number];
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return "TBC";
-
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-  }).format(new Date(value));
-}
-
-function eventContext(conversation: ConversationSummary) {
+function eventContext(
+  conversation: ConversationSummary,
+  dictionary: Dictionary,
+  locale: Locale,
+) {
   const event = conversation.events;
-  if (!event) return "Met after a shared event";
+  if (!event) return dictionary.messages.metAfterEvent;
 
-  const eventFormat = event.event_format === "other" ? "event" : event.event_format;
-  const city = event.city ? ` in ${event.city}` : "";
+  const eventFormat = dictionary.events.formats[event.event_format];
 
-  return `Met at ${eventFormat}${city} on ${formatDate(event.starts_at)}`;
+  return dictionary.messages.metAt(eventFormat, event.city || "", formatDate(event.starts_at, locale));
 }
 
-function lastMessageContext(conversation: ConversationSummary) {
-  if (!conversation.lastMessage) return "No messages yet";
+function lastMessageContext(
+  conversation: ConversationSummary,
+  dictionary: Dictionary,
+  locale: Locale,
+) {
+  if (!conversation.lastMessage) return dictionary.messages.noMessagesYet;
   if (conversation.lastMessage.isUnread) {
-    return `New message received on ${formatDate(conversation.lastMessage.createdAt)}`;
+    return dictionary.messages.newMessageReceived(formatDate(conversation.lastMessage.createdAt, locale));
   }
 
-  return `Last message ${conversation.lastMessage.direction} on ${formatDate(
-    conversation.lastMessage.createdAt,
-  )}`;
+  return dictionary.messages.lastMessage(
+    dictionary.messages.directions[conversation.lastMessage.direction],
+    formatDate(conversation.lastMessage.createdAt, locale),
+  );
 }
 
 function NotificationHeart() {
@@ -57,7 +60,8 @@ function NotificationHeart() {
 }
 
 export default async function MessagesPage() {
-  const { member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const conversations = await getConversations(member.id, {
     includeCorrespondents: true,
     includeLastMessage: true,
@@ -70,7 +74,7 @@ export default async function MessagesPage() {
     <>
       <section className="grid gap-2">
         <h1 className="font-display text-3xl font-black text-wine">
-          Messages
+          {dictionary.messages.title}
         </h1>
       </section>
 
@@ -82,7 +86,7 @@ export default async function MessagesPage() {
               count={unreadConversationCount}
               iconClassName="h-6 w-6"
             />
-            Your conversations
+            {dictionary.messages.conversations}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3">
@@ -90,7 +94,7 @@ export default async function MessagesPage() {
             conversations.map((conversation) => {
               const correspondent = conversation.correspondent || {
                 imageUrl: "",
-                name: "Member",
+                name: dictionary.messages.member,
                 thumbnailUrl: "",
               };
               const hasNewMessage = Boolean(conversation.lastMessage?.isUnread);
@@ -118,12 +122,12 @@ export default async function MessagesPage() {
                       </h2>
                       {hasNewMessage ? (
                         <Badge className="shrink-0 rounded-md px-2 py-0.5 text-xs">
-                          New
+                          {dictionary.messages.new}
                         </Badge>
                       ) : null}
                     </div>
                     <p className="truncate text-sm font-semibold text-muted">
-                      {eventContext(conversation)}
+                      {eventContext(conversation, dictionary, locale)}
                     </p>
                     <p
                       className={cn(
@@ -133,7 +137,7 @@ export default async function MessagesPage() {
                     >
                       {hasNewMessage ? <NotificationHeart /> : null}
                       <span className="truncate">
-                        {lastMessageContext(conversation)}
+                        {lastMessageContext(conversation, dictionary, locale)}
                       </span>
                     </p>
                   </div>
@@ -142,7 +146,7 @@ export default async function MessagesPage() {
             })
           ) : (
             <p className="rounded-lg border border-wine/10 bg-blush p-4 text-sm font-semibold leading-6 text-muted">
-              You will be able to reach out to the other guests after each event.
+              {dictionary.messages.noConversations}
             </p>
           )}
         </CardContent>

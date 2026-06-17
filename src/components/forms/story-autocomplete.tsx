@@ -4,6 +4,7 @@ import type { KeyboardEvent } from "react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { cn } from "@/lib/utils";
 
 type Mode = "read" | "edit";
@@ -91,7 +92,29 @@ let cityDataPromise: Promise<CityData> | null = null;
 let languageDataPromise: Promise<LanguageData> | null = null;
 let locationPromise: Promise<LocationData> | null = null;
 
+type StoryAutocompleteCopy = Dictionary["autocomplete"];
+
+const defaultAutocompleteCopy: StoryAutocompleteCopy = {
+  and: "and",
+  citySuggestionPlural: "city suggestions available.",
+  citySuggestionSingular: "city suggestion available.",
+  close: "Close",
+  closeSuggestions: "Close suggestions",
+  languageSuggestionPlural: "language suggestions available.",
+  languageSuggestionSingular: "language suggestion available.",
+  loadingCities: "Loading cities...",
+  loadingLanguages: "Loading languages...",
+  noMatchingCities: "No matching cities.",
+  noMatchingLanguages: "No matching languages.",
+  openCitySuggestions: "Open city suggestions",
+  openLanguageSuggestions: "Open language suggestions",
+  removePrefix: "Remove",
+  searchCities: "Search cities",
+  searchLanguages: "Search languages",
+};
+
 export function StoryAutocompleteField({
+  copy = defaultAutocompleteCopy,
   defaultValue,
   kind,
   label,
@@ -100,6 +123,7 @@ export function StoryAutocompleteField({
   onDirty,
   placeholder,
 }: {
+  copy?: StoryAutocompleteCopy;
   defaultValue?: string;
   kind: AutocompleteKind;
   label: string;
@@ -142,11 +166,23 @@ export function StoryAutocompleteField({
     return languageData ? getLanguageSuggestions(languageData, selected, location, query) : [];
   }, [cityData, kind, languageData, location, query, selected]);
   const visibleSuggestions = suggestions.slice(0, resultLimit);
+  const suggestionText =
+    kind === "city"
+      ? visibleSuggestions.length === 1
+        ? copy.citySuggestionSingular
+        : copy.citySuggestionPlural
+      : visibleSuggestions.length === 1
+        ? copy.languageSuggestionSingular
+        : copy.languageSuggestionPlural;
   const statusText = isLoaded
     ? visibleSuggestions.length
-      ? `${visibleSuggestions.length} ${kind} suggestions available.`
-      : `No matching ${kind === "city" ? "cities" : "languages"}.`
-    : `Loading ${kind === "city" ? "cities" : "languages"}...`;
+      ? `${visibleSuggestions.length} ${suggestionText}`
+      : kind === "city"
+        ? copy.noMatchingCities
+        : copy.noMatchingLanguages
+    : kind === "city"
+      ? copy.loadingCities
+      : copy.loadingLanguages;
 
   const loadResources = useCallback(() => {
     if (kind === "city") {
@@ -196,7 +232,9 @@ export function StoryAutocompleteField({
           !selected.length && "text-faint",
         )}
       >
-        {selected.length ? joinLabels(selected.map((item) => item.label)) : placeholder}
+        {selected.length
+          ? joinLabels(selected.map((item) => item.label), copy.and)
+          : placeholder}
       </span>
     );
   }
@@ -282,12 +320,16 @@ export function StoryAutocompleteField({
             >
               {item.label}
             </button>
-            {delimiterAfter(index, selected.length)}
+            {delimiterAfter(index, selected.length, copy.and)}
           </span>
         ))}
       </span>
       <button
-        aria-label={`Open ${kind === "city" ? "city" : "language"} suggestions`}
+        aria-label={
+          kind === "city"
+            ? copy.openCitySuggestions
+            : copy.openLanguageSuggestions
+        }
         className={cn(
           "inline-flex cursor-pointer items-center border-0 bg-transparent p-0 font-semibold leading-tight text-lipstick transition hover:text-wine",
           selected.length
@@ -340,14 +382,16 @@ export function StoryAutocompleteField({
                   setResultLimit(INITIAL_RESULT_LIMIT);
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder={`Search ${kind === "city" ? "cities" : "languages"}`}
+                placeholder={
+                  kind === "city" ? copy.searchCities : copy.searchLanguages
+                }
                 ref={inputRef}
                 role="combobox"
                 type="text"
                 value={query}
               />
               <button
-                aria-label="Close suggestions"
+                aria-label={copy.closeSuggestions}
                 className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0 text-sm font-semibold leading-none text-lipstick underline underline-offset-4 transition hover:text-wine"
                 onClick={() => {
                   closeList();
@@ -355,7 +399,7 @@ export function StoryAutocompleteField({
                 }}
                 type="button"
               >
-                Close
+                {copy.close}
               </button>
             </div>
             <div
@@ -380,7 +424,7 @@ export function StoryAutocompleteField({
                     >
                       <span className="min-w-0 truncate">{item.label}</span>
                       <button
-                        aria-label={`Remove ${item.label}`}
+                        aria-label={`${copy.removePrefix} ${item.label}`}
                         className="inline-grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-lipstick text-white transition hover:bg-wine"
                         onClick={() => removeSelected(item.key)}
                         type="button"
@@ -393,7 +437,7 @@ export function StoryAutocompleteField({
               ) : null}
               {!isLoaded ? (
                 <p className="px-3 py-3 text-sm font-semibold text-muted">
-                  Loading {kind === "city" ? "cities" : "languages"}...
+                  {kind === "city" ? copy.loadingCities : copy.loadingLanguages}
                 </p>
               ) : visibleSuggestions.length ? (
                 visibleSuggestions.map((item, index) => (
@@ -422,7 +466,7 @@ export function StoryAutocompleteField({
                 ))
               ) : (
                 <p className="px-3 py-3 text-sm font-semibold text-muted">
-                  No matching {kind === "city" ? "cities" : "languages"}.
+                  {kind === "city" ? copy.noMatchingCities : copy.noMatchingLanguages}
                 </p>
               )}
             </div>
@@ -492,15 +536,15 @@ function makeStoredSelection(kind: AutocompleteKind, value: string): Selection {
   };
 }
 
-function delimiterAfter(index: number, length: number) {
+function delimiterAfter(index: number, length: number, and: string) {
   if (index >= length - 1) return "";
-  if (index === length - 2) return " and ";
+  if (index === length - 2) return ` ${and} `;
   return ", ";
 }
 
-function joinLabels(labels: string[]) {
-  if (labels.length <= 2) return labels.join(labels.length === 2 ? " and " : "");
-  return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
+function joinLabels(labels: string[], and: string) {
+  if (labels.length <= 2) return labels.join(labels.length === 2 ? ` ${and} ` : "");
+  return `${labels.slice(0, -1).join(", ")} ${and} ${labels[labels.length - 1]}`;
 }
 
 async function loadLocation() {

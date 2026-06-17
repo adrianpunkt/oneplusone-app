@@ -3,19 +3,19 @@ import { Heart, Home, Utensils } from "lucide-react";
 export const navSections = [
   {
     href: "/dashboard",
-    label: "Welcome",
+    labelKey: "dashboard",
     icon: Home,
     activePaths: ["/dashboard"],
   },
   {
     href: "/going-out",
-    label: "Going-out",
+    labelKey: "goingOut",
     icon: Utensils,
     activePaths: ["/going-out", "/events", "/credits", "/preferences"],
   },
   {
     href: "/messages",
-    label: "Messages",
+    labelKey: "messages",
     icon: Heart,
     activePaths: ["/messages"],
   },

@@ -16,15 +16,18 @@ import {
   savePreferencesAction,
   type FormActionState,
 } from "@/lib/actions/profile";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { EventPreferences } from "@/lib/types";
 
 const initialState: FormActionState = {};
 
 export function PreferencesForm({
+  copy,
   preferences,
   returnToDashboard = false,
   saved = false,
 }: {
+  copy: Dictionary["preferences"];
   preferences: EventPreferences | null;
   returnToDashboard?: boolean;
   saved?: boolean;
@@ -65,10 +68,10 @@ export function PreferencesForm({
           id="events-preferences"
           className="font-display text-lg font-extrabold text-wine"
         >
-          Events
+          {copy.events}
         </h2>
         <p className="text-sm font-semibold text-ink">
-          Which events would you like to be invited to?
+          {copy.eventsQuestion}
         </p>
         <div className="grid gap-3">
           <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine/10 bg-blush p-4">
@@ -78,10 +81,10 @@ export function PreferencesForm({
             />
             <span>
               <span className="block text-sm font-semibold text-wine">
-                Saturday dinners
+                {copy.saturdayDinners}
               </span>
               <span className="block text-sm leading-6 text-muted">
-                Organized usually at 8pm in a restaurant.
+                {copy.saturdayDescription}
               </span>
             </span>
           </label>
@@ -92,10 +95,10 @@ export function PreferencesForm({
             />
             <span>
               <span className="block text-sm font-semibold text-wine">
-                Sunday brunches
+                {copy.sundayBrunches}
               </span>
               <span className="block text-sm leading-6 text-muted">
-                Organized in a cafe or brunch restaurant at 12pm.
+                {copy.sundayDescription}
               </span>
             </span>
           </label>
@@ -110,17 +113,17 @@ export function PreferencesForm({
               />
               <span>
                 <span className="block text-sm font-semibold text-wine">
-                  Other ideas?
+                  {copy.otherIdeas}
                 </span>
                 <span className="block text-sm leading-6 text-muted">
-                  Tell us what else you&apos;d be interested in.
+                  {copy.otherIdeasDescription}
                 </span>
               </span>
             </label>
             {showOtherEventIdeas ? (
               <div className="grid gap-2 pl-8">
                 <Label htmlFor="otherEventIdeas" className="sr-only">
-                  Other event ideas
+                  {copy.otherIdeas}
                 </Label>
                 <Textarea
                   id="otherEventIdeas"
@@ -129,7 +132,7 @@ export function PreferencesForm({
                   onChange={(event) =>
                     setOtherEventIdeasValue(event.target.value)
                   }
-                  placeholder="Tell us what else you'd be interested in."
+                  placeholder={copy.otherIdeasPlaceholder}
                 />
               </div>
             ) : null}
@@ -144,10 +147,10 @@ export function PreferencesForm({
           id="going-out-vibe"
           className="font-display text-lg font-extrabold text-wine"
         >
-          Going out vibe
+          {copy.vibe}
         </h2>
         <p className="text-sm font-semibold text-ink">
-          What kind of locations would you prefer for the events?
+          {copy.vibeQuestion}
         </p>
         <div className="grid gap-3">
           <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine/10 bg-blush p-4">
@@ -159,7 +162,7 @@ export function PreferencesForm({
               }
             />
             <span className="block text-sm font-semibold text-wine">
-              Somewhere affordable and relaxed
+              {copy.affordable}
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine/10 bg-blush p-4">
@@ -171,7 +174,7 @@ export function PreferencesForm({
               }
             />
             <span className="block text-sm font-semibold text-wine">
-              Michelin-guide territory
+              {copy.michelin}
             </span>
           </label>
         </div>
@@ -184,7 +187,7 @@ export function PreferencesForm({
           id="dietary-preferences"
           className="font-display text-lg font-extrabold text-wine"
         >
-          Dietary preferences
+          {copy.dietary}
         </h2>
         <div className="grid gap-3 rounded-lg border border-wine/10 bg-blush p-4">
           <label className="flex cursor-pointer items-start gap-3">
@@ -195,13 +198,13 @@ export function PreferencesForm({
               }
             />
             <span className="block text-sm font-semibold text-wine">
-              Anything we need to be aware of?
+              {copy.dietaryQuestion}
             </span>
           </label>
           {showDietaryPreferences ? (
             <div className="grid gap-2 pl-8">
               <Label htmlFor="dietary" className="sr-only">
-                Anything we need to be aware of?
+                {copy.dietaryQuestion}
               </Label>
               <Textarea
                 id="dietary"
@@ -210,7 +213,7 @@ export function PreferencesForm({
                 onChange={(event) =>
                   setDietaryRestrictionsValue(event.target.value)
                 }
-                placeholder="Allergies, vegetarian/vegan, or anything we should consider."
+                placeholder={copy.dietaryPlaceholder}
               />
             </div>
           ) : null}
@@ -224,7 +227,7 @@ export function PreferencesForm({
           id="hosting-preferences"
           className="font-display text-lg font-extrabold text-wine"
         >
-          Host preference
+          {copy.host}
         </h2>
         <div className="grid gap-3 rounded-lg border border-wine/10 bg-blush p-4">
           <label className="flex cursor-pointer items-start gap-3">
@@ -235,11 +238,10 @@ export function PreferencesForm({
             />
             <span>
               <span className="block text-sm font-semibold text-wine">
-                I am open to be the host
+                {copy.hostLabel}
               </span>
               <span className="mt-2 block text-sm leading-6 text-muted">
-                You can attend an event for free by opting to be the host.
-                You&apos;ll also benefit from all the attention ;)
+                {copy.hostDescription}
               </span>
             </span>
           </label>
@@ -248,7 +250,7 @@ export function PreferencesForm({
               <Dialog.Trigger asChild>
                 <Button type="button" variant="secondary" size="sm">
                   <Info className="h-4 w-4" />
-                  Learn more
+                  {copy.learnMore}
                 </Button>
               </Dialog.Trigger>
               <Dialog.Portal>
@@ -256,27 +258,12 @@ export function PreferencesForm({
                 <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine/10 bg-white p-5 shadow-2xl">
                   <div className="grid gap-2">
                     <Dialog.Title className="font-display text-xl font-extrabold text-wine">
-                      Being the host
+                      {copy.hostModalTitle}
                     </Dialog.Title>
                     <Dialog.Description className="grid gap-3 text-sm leading-6 text-muted">
-                      <span>
-                        Hosting the event is very easy, and it&apos;s fun, plus
-                        you get the spotlight and more attention, double plus
-                        you get your credit back after the event. Need we say
-                        more?!
-                      </span>
-                      <span>
-                        We want the events to be relaxed and fun, and the host
-                        will be the one initiating the conversational games we
-                        have prepared. We&apos;ll send you all the instructions
-                        in advance.
-                      </span>
-                      <span>
-                        Please note anyone can opt to be the host at the event
-                        and we aim to give everyone a chance. As soon as the
-                        event is confirmed, you&apos;ll be notified if you were
-                        elected to be the host.
-                      </span>
+                      {copy.hostModalBody.map((paragraph) => (
+                        <span key={paragraph}>{paragraph}</span>
+                      ))}
                     </Dialog.Description>
                   </div>
                   <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -286,7 +273,7 @@ export function PreferencesForm({
                         variant="secondary"
                         onClick={() => setWantsToHost(false)}
                       >
-                        I&apos;ll think about it
+                        {copy.thinkAboutIt}
                       </Button>
                     </Dialog.Close>
                     <Dialog.Close asChild>
@@ -294,7 +281,7 @@ export function PreferencesForm({
                         type="button"
                         onClick={() => setWantsToHost(true)}
                       >
-                        I&apos;m in!
+                        {copy.imIn}
                       </Button>
                     </Dialog.Close>
                   </div>
@@ -312,38 +299,38 @@ export function PreferencesForm({
           id="other-preferences"
           className="font-display text-lg font-extrabold text-wine"
         >
-          Other preferences?
+          {copy.otherPreferences}
         </h2>
         <p className="text-sm font-semibold text-ink">
-          What would make these events even better for you?
+          {copy.otherQuestion}
         </p>
         <Label htmlFor="otherPreferences" className="sr-only">
-          Other preferences
+          {copy.otherPreferences}
         </Label>
         <Textarea
           id="otherPreferences"
           name="other_preferences"
           defaultValue={otherPreferences}
-          placeholder="The best ideas come from members, and we genuinely try to accommodate them."
+          placeholder={copy.otherPlaceholder}
         />
       </section>
 
       <div className="pointer-events-none fixed inset-x-0 bottom-8 z-40 min-[901px]:left-[260px]">
         <div className="mx-auto flex w-full max-w-6xl justify-center px-4 sm:px-6 lg:px-8">
           <div className="pointer-events-auto flex min-w-0 flex-wrap items-center justify-center gap-3">
-            <SubmitButton pendingLabel="Saving preferences...">
+            <SubmitButton pendingLabel={copy.saving}>
               <Save className="h-4 w-4" />
-              Save preferences
+              {copy.save}
             </SubmitButton>
             <Button asChild variant="secondary">
               <Link href={returnToDashboard ? "/dashboard" : "/going-out"}>
-                Cancel
+                {copy.cancel}
               </Link>
             </Button>
             <ActionStatus
               error={state.error}
               ok={state.ok || saved}
-              successMessage="Preferences saved."
+              successMessage={copy.saved}
               toastKey={state}
             />
           </div>

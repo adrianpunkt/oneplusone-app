@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/ui/toast";
+import { getRequestLocaleFallback } from "@/lib/i18n/server";
+import { htmlLang } from "@/lib/i18n/locales";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,13 +23,15 @@ export const metadata: Metadata = {
   description: "Member portal for one plus one club.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getRequestLocaleFallback();
+
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang={htmlLang(locale)} className={`${geistSans.variable} ${geistMono.variable}`}>
       <body>
         <ToastProvider>{children}</ToastProvider>
       </body>

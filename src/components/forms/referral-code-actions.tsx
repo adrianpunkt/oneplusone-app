@@ -15,9 +15,31 @@ type CopyTarget = "code" | "url";
 
 type ReferralCodeActionsProps = {
   code: string | null;
+  copy: ReferralCopy;
 };
 
-export function ReferralCodeActions({ code }: ReferralCodeActionsProps) {
+type ReferralCopy = {
+  close: string;
+  codeCopied: string;
+  copied: string;
+  copy: string;
+  couldNotCopy: string;
+  inviteLink: string;
+  linkCopied: string;
+  opening: string;
+  referralCode: string;
+  share: string;
+  shareChannels: string;
+  shareDescription: string;
+  shareReferral: string;
+  shareTextPrefix: string;
+  shareTextSuffix: string;
+  shareTitle: string;
+  shareVia: string;
+  shareViaButton: string;
+};
+
+export function ReferralCodeActions({ code, copy }: ReferralCodeActionsProps) {
   const [copiedTarget, setCopiedTarget] = useState<CopyTarget | null>(null);
   const [sharing, setSharing] = useState(false);
   const copyTimeoutRef = useRef<number | null>(null);
@@ -32,8 +54,8 @@ export function ReferralCodeActions({ code }: ReferralCodeActionsProps) {
   if (!code) return null;
 
   const inviteUrl = `${INVITE_BASE_URL}/${encodeURIComponent(code)}`;
-  const shareTitle = "Join one plus one club";
-  const shareText = `Join one plus one club with my invite code ${code} and you'll get 1 additional credit for free.`;
+  const shareTitle = copy.shareTitle;
+  const shareText = `${copy.shareTextPrefix}${code}${copy.shareTextSuffix}`;
 
   async function copyToClipboard(
     value: string,
@@ -52,7 +74,7 @@ export function ReferralCodeActions({ code }: ReferralCodeActionsProps) {
     } catch {
       setCopiedTarget(null);
       showToast({
-        title: "Could not copy.",
+        title: copy.couldNotCopy,
         variant: "error",
       });
     }
@@ -90,16 +112,14 @@ export function ReferralCodeActions({ code }: ReferralCodeActionsProps) {
         type="button"
         variant="secondary"
         className={ACTION_BUTTON_CLASSNAME}
-        onClick={() =>
-          copyToClipboard(code, "code", "Referral code copied.")
-        }
+        onClick={() => copyToClipboard(code, "code", copy.codeCopied)}
       >
         {copiedTarget === "code" ? (
           <Check className={ACTION_ICON_CLASSNAME} />
         ) : (
           <Copy className={ACTION_ICON_CLASSNAME} />
         )}
-        {copiedTarget === "code" ? "Copied" : "Copy"}
+        {copiedTarget === "code" ? copy.copied : copy.copy}
       </Button>
       <Dialog.Root>
         <Dialog.Trigger asChild>
@@ -109,7 +129,7 @@ export function ReferralCodeActions({ code }: ReferralCodeActionsProps) {
             className={ACTION_BUTTON_CLASSNAME}
           >
             <Share2 className={ACTION_ICON_CLASSNAME} />
-            Share
+            {copy.share}
           </Button>
         </Dialog.Trigger>
         <Dialog.Portal>
@@ -117,10 +137,10 @@ export function ReferralCodeActions({ code }: ReferralCodeActionsProps) {
           <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-lg border border-wine/10 bg-white p-4 shadow-2xl sm:w-[calc(100vw-2rem)] sm:gap-5 sm:p-5">
             <div className="grid gap-2 pr-10">
               <Dialog.Title className="font-display text-xl font-extrabold text-wine">
-                Share your referral
+                {copy.shareReferral}
               </Dialog.Title>
               <Dialog.Description className="text-sm leading-6 text-muted">
-                Invite others and each of you gets 1 free credit.
+                {copy.shareDescription}
               </Dialog.Description>
             </div>
 
@@ -128,18 +148,18 @@ export function ReferralCodeActions({ code }: ReferralCodeActionsProps) {
               <InviteCopyRow
                 copied={copiedTarget === "url"}
                 compactValue
-                label="Invite link"
-                onCopy={() =>
-                  copyToClipboard(inviteUrl, "url", "Invite link copied.")
-                }
+                copy={copy.copy}
+                copiedLabel={copy.copied}
+                label={copy.inviteLink}
+                onCopy={() => copyToClipboard(inviteUrl, "url", copy.linkCopied)}
                 value={inviteUrl}
               />
               <InviteCopyRow
                 copied={copiedTarget === "code"}
-                label="Referral code"
-                onCopy={() =>
-                  copyToClipboard(code, "code", "Referral code copied.")
-                }
+                copy={copy.copy}
+                copiedLabel={copy.copied}
+                label={copy.referralCode}
+                onCopy={() => copyToClipboard(code, "code", copy.codeCopied)}
                 value={code}
               />
             </div>
@@ -147,7 +167,7 @@ export function ReferralCodeActions({ code }: ReferralCodeActionsProps) {
             <div className="grid gap-3 rounded-lg border border-wine/10 bg-white p-2 sm:p-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted">
-                  Share via
+                  {copy.shareVia}
                 </p>
                 <Button
                   type="button"
@@ -157,19 +177,19 @@ export function ReferralCodeActions({ code }: ReferralCodeActionsProps) {
                   size="sm"
                 >
                   <Share2 className="h-4 w-4" />
-                  {sharing ? "Opening..." : "Share via..."}
+                  {sharing ? copy.opening : copy.shareViaButton}
                 </Button>
               </div>
               <div className="grid gap-1">
                 <p className="text-sm leading-5 text-muted">
-                  Email, WhatsApp, Messages, and more.
+                  {copy.shareChannels}
                 </p>
               </div>
             </div>
 
             <Dialog.Close asChild>
               <Button
-                aria-label="Close referral sharing"
+                aria-label={copy.close}
                 className="absolute right-3 top-3 h-9 w-9 rounded-full p-0 text-muted hover:bg-blush hover:text-wine"
                 type="button"
                 variant="ghost"
@@ -216,13 +236,17 @@ async function writeClipboardText(value: string) {
 
 function InviteCopyRow({
   compactValue = false,
+  copy,
   copied,
+  copiedLabel,
   label,
   onCopy,
   value,
 }: {
   compactValue?: boolean;
+  copy: string;
   copied: boolean;
+  copiedLabel: string;
   label: string;
   onCopy: () => void;
   value: string;
@@ -245,7 +269,7 @@ function InviteCopyRow({
           ) : (
             <Copy className="h-4 w-4" />
           )}
-          {copied ? "Copied" : "Copy"}
+          {copied ? copiedLabel : copy}
         </Button>
       </div>
       <p

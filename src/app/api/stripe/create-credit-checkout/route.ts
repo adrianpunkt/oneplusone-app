@@ -3,6 +3,9 @@ import type Stripe from "stripe";
 import { z } from "zod";
 
 import { getOptionalMemberContext } from "@/lib/data/member";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { localizeText } from "@/lib/i18n/dynamic";
+import { getRequestLocaleFallback } from "@/lib/i18n/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
 import type { CreditProduct } from "@/lib/types";
@@ -15,28 +18,43 @@ export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
   const context = await getOptionalMemberContext();
+  const dictionary = getDictionary(
+    context?.locale || (await getRequestLocaleFallback()),
+  );
   if (!context) {
-    return NextResponse.json({ ok: false, error: "Login required." }, { status: 401 });
+    return NextResponse.json({ ok: false, error: dictionary.checkout.loginRequired }, { status: 401 });
   }
 
   const payload = payloadSchema.safeParse(await request.json().catch(() => null));
   if (!payload.success) {
-    return NextResponse.json({ ok: false, error: "Invalid credit product." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: dictionary.checkout.invalidProduct }, { status: 400 });
   }
 
   const supabase = await createSupabaseServerClient();
   const { data: product, error } = await supabase
     .from("credit_products")
-    .select("id,name,description,credits,price_amount_cents,currency,stripe_price_id,status,sort_order")
+    .select("id,name,description,localized_content,credits,price_amount_cents,currency,stripe_price_id,status,sort_order")
     .eq("id", payload.data.productId)
     .eq("status", "active")
     .maybeSingle<CreditProduct>();
 
   if (error || !product) {
-    return NextResponse.json({ ok: false, error: "Credit product was not found." }, { status: 404 });
+    return NextResponse.json({ ok: false, error: dictionary.checkout.productNotFound }, { status: 404 });
   }
 
   const origin = getCheckoutOrigin(request);
+  const productName = localizeText(
+    product.name,
+    product.localized_content,
+    context.locale,
+    "name",
+  );
+  const productDescription = localizeText(
+    product.description,
+    product.localized_content,
+    context.locale,
+    "description",
+  );
   const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = product.stripe_price_id
     ? {
         price: product.stripe_price_id,
@@ -48,8 +66,10 @@ export async function POST(request: NextRequest) {
           currency: product.currency,
           unit_amount: product.price_amount_cents,
           product_data: {
-            name: product.name,
-            description: product.description || `${product.credits} event credits`,
+            name: productName,
+            description:
+              productDescription ||
+              dictionary.credits.attendEvents(product.credits),
           },
         },
       };
@@ -57,6 +77,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
+      locale: context.locale,
       client_reference_id: context.member.id,
       customer_email: context.member.email || context.user.email || undefined,
       line_items: [lineItem],
@@ -79,7 +100,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!session.url) {
-      return NextResponse.json({ ok: false, error: "Could not start checkout." }, { status: 502 });
+      return NextResponse.json({ ok: false, error: dictionary.checkout.couldNotStart }, { status: 502 });
     }
 
     return NextResponse.json({ ok: true, url: session.url });
@@ -90,7 +111,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         ok: false,
-        error: paymentNotConfigured ? "Payment is not configured yet." : "Could not start checkout.",
+        error: paymentNotConfigured
+          ? dictionary.checkout.paymentNotConfigured
+          : dictionary.checkout.couldNotStart,
       },
       { status: paymentNotConfigured ? 500 : 502 },
     );

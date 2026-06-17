@@ -25,6 +25,9 @@ import {
   getInvitations,
   getPreferences,
 } from "@/lib/data/portal";
+import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
+import { localizeText } from "@/lib/i18n/dynamic";
+import type { Locale } from "@/lib/i18n/locales";
 import type { EventAttendee, EventInvitation, EventRecord } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 
@@ -100,8 +103,23 @@ function sortPastEvents<T extends { events?: EventRecord | null }>(items: T[]) {
   );
 }
 
-function statusLabel(status: string) {
-  return status.replaceAll("_", " ");
+const statusLabels: Record<Locale, Record<string, string>> = {
+  en: {},
+  es: {
+    attended: "asistido",
+    cancelled: "cancelado",
+    confirmed: "confirmado",
+    declined: "rechazado",
+    expired: "caducado",
+    host: "host",
+    invited: "invitado",
+    no_show: "no asistió",
+    waitlisted: "en lista de espera",
+  },
+};
+
+function statusLabel(status: string, locale: Locale) {
+  return statusLabels[locale][status] || status.replaceAll("_", " ");
 }
 
 function eventStatusClassName(status: string) {
@@ -123,49 +141,69 @@ function eventStatusClassName(status: string) {
 
 function EventStatusText({
   label,
+  locale,
   status,
 }: {
   label?: string;
+  locale: Locale;
   status: string;
 }) {
   return (
     <p
       className={`text-xs font-semibold uppercase ${eventStatusClassName(status)}`}
     >
-      {label || statusLabel(status)}
+      {label || statusLabel(status, locale)}
     </p>
   );
 }
 
-function pendingInvitationStatusLabel(invitation: EventInvitation) {
+function pendingInvitationStatusLabel(
+  invitation: EventInvitation,
+  dictionary: Dictionary,
+  locale: Locale,
+) {
   if (invitation.status === "waitlisted") {
-    return invitation.responded_at ? "on waitlist" : "waitlist available";
+    return invitation.responded_at
+      ? dictionary.goingOut.status.onWaitlist
+      : dictionary.goingOut.status.waitlistAvailable;
   }
 
   if (
     (invitation.status === "declined" || invitation.status === "cancelled") &&
     !invitation.confirmed_at
   ) {
-    return "cannot make it";
+    return dictionary.goingOut.status.cannotMakeIt;
   }
 
-  return statusLabel(invitation.status);
+  return statusLabel(invitation.status, locale);
 }
 
-function upcomingEventStatusLabel(item: UpcomingEvent) {
+function upcomingEventStatusLabel(
+  item: UpcomingEvent,
+  dictionary: Dictionary,
+  locale: Locale,
+) {
   if (item.status === "waitlisted" && item.invitation?.responded_at) {
-    return "on waitlist";
+    return dictionary.goingOut.status.onWaitlist;
   }
 
-  return statusLabel(item.status);
+  return statusLabel(item.status, locale);
 }
 
-function eventTitle(event: EventRecord | null | undefined) {
-  return event?.title || "Event";
+function eventTitle(
+  event: EventRecord | null | undefined,
+  dictionary: Dictionary,
+  locale: Locale,
+) {
+  return localizeText(event?.title, event?.localized_content, locale, "title") || dictionary.common.event;
 }
 
-function waitlistCalendarTitle(event: EventRecord | null | undefined) {
-  const title = eventTitle(event);
+function waitlistCalendarTitle(
+  event: EventRecord | null | undefined,
+  dictionary: Dictionary,
+  locale: Locale,
+) {
+  const title = eventTitle(event, dictionary, locale);
   return title.toUpperCase().startsWith("WAITLIST")
     ? title
     : `WAITLIST ${title}`;
@@ -198,8 +236,10 @@ function searchParamValue(value: string | string[] | undefined) {
 }
 
 function WaitlistConfirmation({
+  dictionary,
   status,
 }: {
+  dictionary: Dictionary;
   status: WaitlistConfirmationStatus | null;
 }) {
   if (!status) return null;
@@ -222,21 +262,20 @@ function WaitlistConfirmation({
                 className="font-display text-2xl font-extrabold leading-tight text-wine"
                 id="waitlist-confirmation-title"
               >
-                You are on the waitlist!
+                {dictionary.goingOut.waitlistModalTitle}
               </h2>
               <div className="grid gap-2 text-sm leading-6 text-muted">
-                <p>As soon as a seat opens up, we&apos;ll send you an email.</p>
+                <p>{dictionary.goingOut.waitlistModalBody1}</p>
                 <p>
-                  <span className="font-semibold text-wine">IMPORTANT:</span>{" "}
-                  Everyone on the waitlist gets notified, and you will need to
-                  confirm your attendance once in order to secure your seat.
+                  <span className="font-semibold text-wine">{dictionary.goingOut.important}</span>{" "}
+                  {dictionary.goingOut.waitlistModalImportant}
                 </p>
               </div>
             </div>
           </div>
           <div className="flex justify-end">
             <Button asChild>
-              <Link href="/going-out">Got it</Link>
+              <Link href="/going-out">{dictionary.goingOut.gotIt}</Link>
             </Button>
           </div>
         </div>
@@ -249,31 +288,42 @@ function WaitlistConfirmation({
 
 function EventMeta({
   calendarTitle,
+  dictionary,
   event,
+  locale,
   showCalendar = false,
 }: {
   calendarTitle?: string;
+  dictionary: Dictionary;
   event: EventRecord | null | undefined;
+  locale: Locale;
   showCalendar?: boolean;
 }) {
   const displayLocation = eventDisplayLocation(event);
+  const eventDescription = localizeText(
+    event?.description || event?.member_notes,
+    event?.localized_content,
+    locale,
+    "description",
+  );
 
   return (
     <div className="grid gap-2 text-sm font-semibold text-muted">
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-2">
           <CalendarDays className="h-4 w-4 text-lipstick" />
-          {formatDateTime(event?.starts_at)}
+          {formatDateTime(event?.starts_at, locale)}
         </span>
         {showCalendar && event?.starts_at ? (
           <AddToCalendarButton
+            copy={dictionary.calendar}
             event={{
-              description: event.description || event.member_notes,
+              description: eventDescription,
               endsAt: event.ends_at,
               id: event.id,
               location: eventCalendarLocation(event),
               startsAt: event.starts_at,
-              title: calendarTitle || eventTitle(event),
+              title: calendarTitle || eventTitle(event, dictionary, locale),
             }}
           />
         ) : null}
@@ -343,12 +393,16 @@ function EventSection({
 
 function CollapsibleEventSection({
   children,
-  count,
+  countLabel,
+  expandLabel,
+  hideLabel,
   icon: Icon,
   title,
 }: {
   children: ReactNode;
-  count: number;
+  countLabel: string;
+  expandLabel: string;
+  hideLabel: string;
   icon: LucideIcon;
   title: string;
 }) {
@@ -362,12 +416,12 @@ function CollapsibleEventSection({
               {title}
             </span>
             <span className="text-sm font-semibold text-muted">
-              {count === 1 ? "1 event" : `${count} events`}
+              {countLabel}
             </span>
           </span>
           <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-wine/10 bg-white px-3 text-xs font-semibold text-wine shadow-sm">
-            <span className="group-open:hidden">Expand</span>
-            <span className="hidden group-open:inline">Hide</span>
+            <span className="group-open:hidden">{expandLabel}</span>
+            <span className="hidden group-open:inline">{hideLabel}</span>
           </span>
         </summary>
         <CardContent className="grid gap-3">{children}</CardContent>
@@ -377,9 +431,13 @@ function CollapsibleEventSection({
 }
 
 function PendingInvitationCard({
+  dictionary,
   invitation,
+  locale,
 }: {
+  dictionary: Dictionary;
   invitation: EventInvitation;
+  locale: Locale;
 }) {
   const isWaitlistAvailable =
     invitation.status === "waitlisted" && !invitation.responded_at;
@@ -404,27 +462,38 @@ function PendingInvitationCard({
       <div className="grid min-w-0 gap-2">
         <div className="grid gap-1">
           <EventStatusText
-            label={pendingInvitationStatusLabel(invitation)}
+            label={pendingInvitationStatusLabel(invitation, dictionary, locale)}
+            locale={locale}
             status={invitation.status}
           />
           <h2 className="font-display text-lg font-extrabold text-wine">
-            {eventTitle(invitation.events)}
+            {eventTitle(invitation.events, dictionary, locale)}
           </h2>
         </div>
         <EventMeta
+          dictionary={dictionary}
           calendarTitle={
-            isWaitlist ? waitlistCalendarTitle(invitation.events) : undefined
+            isWaitlist ? waitlistCalendarTitle(invitation.events, dictionary, locale) : undefined
           }
           event={invitation.events}
+          locale={locale}
           showCalendar={hasAction}
         />
       </div>
-      {hasAction ? <InvitationDecisionForms invitation={invitation} /> : null}
+      {hasAction ? <InvitationDecisionForms copy={dictionary.actions} invitation={invitation} /> : null}
     </article>
   );
 }
 
-function UpcomingEventCard({ item }: { item: UpcomingEvent }) {
+function UpcomingEventCard({
+  dictionary,
+  item,
+  locale,
+}: {
+  dictionary: Dictionary;
+  item: UpcomingEvent;
+  locale: Locale;
+}) {
   const isWaitlisted =
     item.status === "waitlisted" && Boolean(item.invitation?.responded_at);
 
@@ -433,36 +502,40 @@ function UpcomingEventCard({ item }: { item: UpcomingEvent }) {
       <div className="grid min-w-0 gap-2">
         <div className="grid gap-1">
           <EventStatusText
-            label={upcomingEventStatusLabel(item)}
+            label={upcomingEventStatusLabel(item, dictionary, locale)}
+            locale={locale}
             status={item.status}
           />
           <h2 className="font-display text-lg font-extrabold text-wine">
-            {eventTitle(item.event)}
+            {eventTitle(item.event, dictionary, locale)}
           </h2>
           {isWaitlisted ? (
             <p className="text-sm font-semibold text-ocean">
-              We&apos;ll let you know in case anyone cancels.
+              {dictionary.goingOut.waitlistNote}
             </p>
           ) : null}
         </div>
         <EventMeta
+          dictionary={dictionary}
           calendarTitle={
-            isWaitlisted ? waitlistCalendarTitle(item.event) : undefined
+            isWaitlisted ? waitlistCalendarTitle(item.event, dictionary, locale) : undefined
           }
           event={item.event}
+          locale={locale}
           showCalendar
         />
       </div>
       <div className="flex flex-wrap items-center gap-2 lg:justify-end">
         {isWaitlisted && item.invitation ? (
           <CancelInvitationForm
+            copy={dictionary.actions}
             context="waitlist"
             invitationId={item.invitation.id}
           />
         ) : null}
         <Button asChild variant="secondary">
           <Link href={`/events/${item.eventId}`}>
-            Details
+            {dictionary.common.details}
             <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
@@ -471,26 +544,36 @@ function UpcomingEventCard({ item }: { item: UpcomingEvent }) {
   );
 }
 
-function PastEventCard({ attendee }: { attendee: EventAttendee }) {
+function PastEventCard({
+  attendee,
+  dictionary,
+  locale,
+}: {
+  attendee: EventAttendee;
+  dictionary: Dictionary;
+  locale: Locale;
+}) {
   return (
     <Link
       href={`/events/${attendee.event_id}`}
       className="grid gap-2 rounded-lg border border-wine/10 bg-blush p-4 transition hover:border-lipstick/25 hover:bg-white"
     >
       <div className="grid gap-1">
-        <EventStatusText status={attendee.status} />
+        <EventStatusText locale={locale} status={attendee.status} />
         <h2 className="font-display text-lg font-extrabold text-wine">
-          {eventTitle(attendee.events)}
+          {eventTitle(attendee.events, dictionary, locale)}
         </h2>
       </div>
-      <EventMeta event={attendee.events} />
+      <EventMeta dictionary={dictionary} event={attendee.events} locale={locale} />
     </Link>
   );
 }
 
 function PreferencesStrip({
+  dictionary,
   preferences,
 }: {
+  dictionary: Dictionary;
   preferences: Awaited<ReturnType<typeof getPreferences>>;
 }) {
   const extraPreferences: Record<string, unknown> =
@@ -524,33 +607,33 @@ function PreferencesStrip({
     <section className="flex flex-col gap-3 rounded-lg border border-wine/10 bg-white/88 p-4 shadow-[0_14px_35px_rgba(68,10,18,0.05)] sm:flex-row sm:items-center sm:justify-between">
       <div className="grid gap-2">
         <p className="font-display text-base font-extrabold text-wine">
-          Going-out preferences
+          {dictionary.goingOut.preferencesTitle}
         </p>
         <div className="flex flex-wrap gap-2">
           {preferences?.prefers_saturday_dinner ? (
-            <Badge>Saturday dinner</Badge>
+            <Badge>{dictionary.goingOut.saturdayDinner}</Badge>
           ) : null}
           {preferences?.prefers_sunday_brunch ? (
-            <Badge>Sunday brunch</Badge>
+            <Badge>{dictionary.goingOut.sundayBrunch}</Badge>
           ) : null}
-          {hasOtherEventIdeas ? <Badge>Other event ideas</Badge> : null}
+          {hasOtherEventIdeas ? <Badge>{dictionary.goingOut.otherEventIdeas}</Badge> : null}
           {hasLocationPreferences ? (
-            <Badge variant="wine">Location preferences</Badge>
+            <Badge variant="wine">{dictionary.goingOut.locationPreferences}</Badge>
           ) : null}
           {hasDietaryPreferences ? (
-            <Badge variant="wine">Dietary preferences</Badge>
+            <Badge variant="wine">{dictionary.goingOut.dietaryPreferences}</Badge>
           ) : null}
           {preferences?.wants_to_host ? (
-            <Badge variant="ocean">Open to host</Badge>
+            <Badge variant="ocean">{dictionary.goingOut.openToHost}</Badge>
           ) : null}
           {hasOtherPreferences ? (
-            <Badge variant="wine">Other preferences</Badge>
+            <Badge variant="wine">{dictionary.goingOut.otherPreferences}</Badge>
           ) : null}
-          {!hasAnyPreference ? <Badge variant="muted">Not set</Badge> : null}
+          {!hasAnyPreference ? <Badge variant="muted">{dictionary.goingOut.notSet}</Badge> : null}
         </div>
       </div>
       <Button asChild variant="secondary" size="sm" className="w-fit">
-        <Link href="/preferences">Update preferences</Link>
+        <Link href="/preferences">{dictionary.goingOut.updatePreferences}</Link>
       </Button>
     </section>
   );
@@ -559,7 +642,8 @@ function PreferencesStrip({
 export default async function GoingOutPage({
   searchParams,
 }: GoingOutPageProps) {
-  const { member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const { preferences: preferencesParam, waitlist } = await searchParams;
   const preferencesSaved = searchParamValue(preferencesParam) === "saved";
   const waitlistConfirmation = waitlistConfirmationStatus(waitlist);
@@ -626,13 +710,13 @@ export default async function GoingOutPage({
     <>
       <section className="grid gap-2">
         <h1 className="font-display text-3xl font-black text-wine sm:text-4xl">
-          Going-out
+          {dictionary.goingOut.title}
         </h1>
       </section>
 
       <RouteToast
         clearSearchParams={["preferences"]}
-        title="Preferences saved."
+        title={dictionary.goingOut.preferencesSaved}
         toastKey={preferencesSaved ? "preferences-saved" : null}
       />
       <RouteToast
@@ -641,57 +725,71 @@ export default async function GoingOutPage({
         }
         description={
           waitlistConfirmation === "joined"
-            ? "We will email you if a seat opens up."
-            : "You can rejoin later if it is still available."
+            ? dictionary.goingOut.waitlistJoinedDescription
+            : dictionary.goingOut.waitlistCancelledDescription
         }
         title={
           waitlistConfirmation === "joined"
-            ? "You are on the waitlist."
-            : "You're off the waitlist."
+            ? dictionary.goingOut.waitlistJoinedTitle
+            : dictionary.goingOut.waitlistCancelledTitle
         }
         toastKey={
           waitlistConfirmation ? `waitlist-${waitlistConfirmation}` : null
         }
       />
-      <WaitlistConfirmation status={waitlistConfirmation} />
+      <WaitlistConfirmation dictionary={dictionary} status={waitlistConfirmation} />
 
-      <PreferencesStrip preferences={preferences} />
+      <PreferencesStrip dictionary={dictionary} preferences={preferences} />
 
       <section className="grid gap-4">
-        <EventSection icon={Inbox} title="New invitations">
+        <EventSection icon={Inbox} title={dictionary.goingOut.newInvitations}>
           {pendingInvitations.length ? (
             pendingInvitations.map((invitation) => (
               <PendingInvitationCard
+                dictionary={dictionary}
                 key={invitation.id}
                 invitation={invitation}
+                locale={locale}
               />
             ))
           ) : (
             <EmptyEventState
-              title="We're finding your people..."
-              body="As soon as enough members share your intentions, you'll be invited to an event together."
+              title={dictionary.goingOut.noInvitationsTitle}
+              body={dictionary.goingOut.noInvitationsBody}
               ctaHref="/my-story"
-              ctaLabel="Click here in case you need to update your story"
+              ctaLabel={dictionary.goingOut.updateStoryCta}
             />
           )}
         </EventSection>
 
         {upcomingEvents.length ? (
-          <EventSection icon={CalendarDays} title="Upcoming events">
+          <EventSection icon={CalendarDays} title={dictionary.goingOut.upcomingEvents}>
             {upcomingEvents.map((item) => (
-              <UpcomingEventCard key={item.key} item={item} />
+              <UpcomingEventCard
+                dictionary={dictionary}
+                key={item.key}
+                item={item}
+                locale={locale}
+              />
             ))}
           </EventSection>
         ) : null}
 
         {pastEvents.length > 1 ? (
           <CollapsibleEventSection
-            count={pastEvents.length}
+            countLabel={dictionary.goingOut.eventCount(pastEvents.length)}
+            expandLabel={dictionary.common.expand}
+            hideLabel={dictionary.common.hide}
             icon={History}
-            title="Past events"
+            title={dictionary.goingOut.pastEvents}
           >
             {pastEvents.map((attendee) => (
-              <PastEventCard key={attendee.id} attendee={attendee} />
+              <PastEventCard
+                dictionary={dictionary}
+                key={attendee.id}
+                attendee={attendee}
+                locale={locale}
+              />
             ))}
           </CollapsibleEventSection>
         ) : null}

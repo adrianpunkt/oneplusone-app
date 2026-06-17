@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { requireMemberContext } from "@/lib/data/member";
+import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
+import { localizeDbError } from "@/lib/i18n/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { messageSchema } from "@/lib/validators/story";
 
@@ -22,8 +24,12 @@ type LatestMessageRow = {
   created_at: string;
 };
 
-async function markConversationMessagesRead(conversationId: string, memberId: string) {
-  if (!conversationId) return { error: "Conversation was not found." };
+async function markConversationMessagesRead(
+  conversationId: string,
+  memberId: string,
+  dictionary: Dictionary,
+) {
+  if (!conversationId) return { error: dictionary.actionErrors.conversationMissing };
 
   const supabase = await createSupabaseServerClient();
   const [{ data: participantData, error: participantError }, { data: messageData, error: messageError }] =
@@ -43,9 +49,9 @@ async function markConversationMessagesRead(conversationId: string, memberId: st
         .maybeSingle(),
     ]);
 
-  if (participantError) return { error: participantError.message };
-  if (messageError) return { error: messageError.message };
-  if (!participantData) return { error: "Conversation was not found." };
+  if (participantError) return { error: localizeDbError(participantError.message, dictionary) };
+  if (messageError) return { error: localizeDbError(messageError.message, dictionary) };
+  if (!participantData) return { error: dictionary.actionErrors.conversationMissing };
 
   const participant = participantData as ParticipantReadRow;
   const latestMessage = messageData ? (messageData as LatestMessageRow) : null;
@@ -65,7 +71,7 @@ async function markConversationMessagesRead(conversationId: string, memberId: st
       .eq("conversation_id", conversationId)
       .eq("member_id", memberId);
 
-    if (error) return { error: error.message };
+    if (error) return { error: localizeDbError(error.message, dictionary) };
     changed = true;
   }
 
@@ -78,7 +84,7 @@ async function markConversationMessagesRead(conversationId: string, memberId: st
     .is("read_at", null)
     .select("id");
 
-  if (notificationError) return { error: notificationError.message };
+  if (notificationError) return { error: localizeDbError(notificationError.message, dictionary) };
 
   return {
     changed: changed || Boolean(readNotifications?.length),
@@ -90,9 +96,10 @@ export async function startConversationAction(
   _previousState: MessageActionState,
   formData: FormData,
 ): Promise<MessageActionState> {
-  await requireMemberContext();
+  const { locale } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const parsed = messageSchema.safeParse({ body: formData.get("body") });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message || "Invalid message." };
+  if (!parsed.success) return { error: dictionary.actionErrors.shortMessage };
 
   const eventId = String(formData.get("event_id") || "");
   const recipientMemberId = String(formData.get("recipient_member_id") || "");
@@ -103,7 +110,7 @@ export async function startConversationAction(
     p_body: parsed.data.body,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: localizeDbError(error.message, dictionary) };
 
   revalidatePath("/messages");
   revalidatePath(`/events/${eventId}`);
@@ -114,9 +121,10 @@ export async function sendMessageAction(
   _previousState: MessageActionState,
   formData: FormData,
 ): Promise<MessageActionState> {
-  await requireMemberContext();
+  const { locale } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const parsed = messageSchema.safeParse({ body: formData.get("body") });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message || "Invalid message." };
+  if (!parsed.success) return { error: dictionary.actionErrors.shortMessage };
 
   const conversationId = String(formData.get("conversation_id") || "");
   const supabase = await createSupabaseServerClient();
@@ -125,7 +133,7 @@ export async function sendMessageAction(
     p_body: parsed.data.body,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: localizeDbError(error.message, dictionary) };
 
   revalidatePath("/messages");
   revalidatePath(`/messages/${conversationId}`);
@@ -135,8 +143,9 @@ export async function sendMessageAction(
 export async function markConversationReadAction(
   conversationId: string,
 ): Promise<MessageActionState> {
-  const { member } = await requireMemberContext();
-  const result = await markConversationMessagesRead(conversationId, member.id);
+  const { locale, member } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
+  const result = await markConversationMessagesRead(conversationId, member.id, dictionary);
 
   if (result.error) return { error: result.error };
 

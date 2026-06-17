@@ -1,6 +1,12 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+import type { Locale } from "@/lib/i18n/locales";
+import {
+  formatCurrency as formatLocalizedCurrency,
+  formatDateTime as formatLocalizedDateTime,
+} from "@/lib/i18n/format";
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -16,20 +22,12 @@ export function safeInternalPath(value: string | null | undefined, fallback = "/
   }
 }
 
-export function formatDateTime(value: string | null | undefined) {
-  if (!value) return "TBC";
-
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
+export function formatDateTime(value: string | null | undefined, locale: Locale = "en") {
+  return formatLocalizedDateTime(value, locale);
 }
 
-export function formatCurrency(amountCents: number, currency = "eur") {
-  return new Intl.NumberFormat("en", {
-    style: "currency",
-    currency,
-  }).format(amountCents / 100);
+export function formatCurrency(amountCents: number, currency = "eur", locale: Locale = "en") {
+  return formatLocalizedCurrency(amountCents, currency, locale);
 }
 
 export function initials(name: string | null | undefined) {

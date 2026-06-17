@@ -5,16 +5,20 @@ import { Button, type ButtonProps } from "@/components/ui/button";
 
 export function SignOutButton({
   className,
+  label = "Sign out",
   size = "sm",
+  variant = "ghost",
 }: {
   className?: string;
+  label?: string;
   size?: ButtonProps["size"];
+  variant?: ButtonProps["variant"];
 }) {
   return (
     <form action={signOutAction}>
-      <Button className={className} variant="ghost" size={size}>
+      <Button className={className} variant={variant} size={size}>
         <LogOut className="h-4 w-4" />
-        Sign out
+        {label}
       </Button>
     </form>
   );

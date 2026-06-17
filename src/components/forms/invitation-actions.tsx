@@ -18,14 +18,38 @@ import type { EventInvitation } from "@/lib/types";
 
 const initialState: EventActionState = {};
 
+export type InvitationActionCopy = {
+  cancel: string;
+  cancelEventDescription: string;
+  cancelEventTitle: string;
+  cancelWaitlist: string;
+  cancelWaitlistDescription: string;
+  cancelWaitlistTitle: string;
+  cancelling: string;
+  cannotMakeIt: string;
+  confirmSeat: string;
+  confirming: string;
+  eventCancelled: string;
+  joinWaitlist: string;
+  joining: string;
+  keepIt: string;
+  responseSaved: string;
+  seatConfirmed: string;
+  updating: string;
+  waitlistCancelled: string;
+  waitlistJoined: string;
+};
+
 type InvitationDecisionTarget = Pick<
   EventInvitation,
   "confirmed_at" | "id" | "responded_at" | "status"
 >;
 
 export function ConfirmInvitationForm({
+  copy,
   invitationId,
 }: {
+  copy: InvitationActionCopy;
   invitationId: string;
 }) {
   const [state, action] = useActionState(confirmInvitationAction, initialState);
@@ -33,14 +57,14 @@ export function ConfirmInvitationForm({
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="invitation_id" value={invitationId} />
-      <SubmitButton pendingLabel="Confirming...">
+      <SubmitButton pendingLabel={copy.confirming}>
         <CheckCircle2 className="h-4 w-4" />
-        Confirm seat
+        {copy.confirmSeat}
       </SubmitButton>
       <ActionStatus
         error={state.error}
         ok={state.ok}
-        successMessage="Seat confirmed."
+        successMessage={copy.seatConfirmed}
         toastKey={state}
       />
     </form>
@@ -49,20 +73,22 @@ export function ConfirmInvitationForm({
 
 export function CancelInvitationForm({
   context = "event",
+  copy,
   invitationId,
 }: {
   context?: "event" | "waitlist";
+  copy: InvitationActionCopy;
   invitationId: string;
 }) {
   const [state, action] = useActionState(cancelInvitationAction, initialState);
   const [open, setOpen] = useState(false);
   const isWaitlist = context === "waitlist";
-  const triggerLabel = isWaitlist ? "Cancel waitlist" : "Cancel";
-  const title = isWaitlist ? "Cancel waitlist?" : "Cancel this event?";
+  const triggerLabel = isWaitlist ? copy.cancelWaitlist : copy.cancel;
+  const title = isWaitlist ? copy.cancelWaitlistTitle : copy.cancelEventTitle;
   const description = isWaitlist
-    ? "This will remove you from the waitlist. You can rejoin later if it is still available."
-    : "This will remove your current response for this event. You can rejoin the waitlist later if it is still available.";
-  const submitLabel = isWaitlist ? "Cancel waitlist" : "Cancel";
+    ? copy.cancelWaitlistDescription
+    : copy.cancelEventDescription;
+  const submitLabel = isWaitlist ? copy.cancelWaitlist : copy.cancel;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -92,12 +118,12 @@ export function CancelInvitationForm({
               <div className="flex flex-wrap justify-end gap-2">
                 <Dialog.Close asChild>
                   <Button type="button" variant="secondary">
-                    Keep it
+                    {copy.keepIt}
                   </Button>
                 </Dialog.Close>
                 <SubmitButton
                   variant="destructive"
-                  pendingLabel="Cancelling..."
+                  pendingLabel={copy.cancelling}
                 >
                   <XCircle className="h-4 w-4" />
                   {submitLabel}
@@ -109,27 +135,33 @@ export function CancelInvitationForm({
       </Dialog.Root>
       <ActionStatus
         ok={state.ok}
-        successMessage={isWaitlist ? "Waitlist cancelled." : "Event cancelled."}
+        successMessage={isWaitlist ? copy.waitlistCancelled : copy.eventCancelled}
         toastKey={state}
       />
     </div>
   );
 }
 
-export function JoinWaitlistForm({ invitationId }: { invitationId: string }) {
+export function JoinWaitlistForm({
+  copy,
+  invitationId,
+}: {
+  copy: InvitationActionCopy;
+  invitationId: string;
+}) {
   const [state, action] = useActionState(joinWaitlistAction, initialState);
 
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="invitation_id" value={invitationId} />
-      <SubmitButton pendingLabel="Joining...">
+      <SubmitButton pendingLabel={copy.joining}>
         <CheckCircle2 className="h-4 w-4" />
-        Join waitlist
+        {copy.joinWaitlist}
       </SubmitButton>
       <ActionStatus
         error={state.error}
         ok={state.ok}
-        successMessage="Waitlist joined."
+        successMessage={copy.waitlistJoined}
         toastKey={state}
       />
     </form>
@@ -137,8 +169,10 @@ export function JoinWaitlistForm({ invitationId }: { invitationId: string }) {
 }
 
 export function DeclineInvitationForm({
+  copy,
   invitationId,
 }: {
+  copy: InvitationActionCopy;
   invitationId: string;
 }) {
   const [state, action] = useActionState(declineInvitationAction, initialState);
@@ -146,14 +180,14 @@ export function DeclineInvitationForm({
   return (
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="invitation_id" value={invitationId} />
-      <SubmitButton variant="secondary" pendingLabel="Updating...">
+      <SubmitButton variant="secondary" pendingLabel={copy.updating}>
         <XCircle className="h-4 w-4" />
-        Cannot make it
+        {copy.cannotMakeIt}
       </SubmitButton>
       <ActionStatus
         error={state.error}
         ok={state.ok}
-        successMessage="Response saved."
+        successMessage={copy.responseSaved}
         toastKey={state}
       />
     </form>
@@ -161,8 +195,10 @@ export function DeclineInvitationForm({
 }
 
 export function InvitationDecisionForms({
+  copy,
   invitation,
 }: {
+  copy: InvitationActionCopy;
   invitation: InvitationDecisionTarget;
 }) {
   const isWaitlistAvailable =
@@ -176,7 +212,7 @@ export function InvitationDecisionForms({
   if (invitation.status === "confirmed") {
     return (
       <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-        <CancelInvitationForm invitationId={invitation.id} />
+        <CancelInvitationForm copy={copy} invitationId={invitation.id} />
       </div>
     );
   }
@@ -190,13 +226,13 @@ export function InvitationDecisionForms({
     return (
       <div className="flex flex-wrap items-center gap-2 lg:justify-end">
         {invitation.status === "invited" ? (
-          <ConfirmInvitationForm invitationId={invitation.id} />
+          <ConfirmInvitationForm copy={copy} invitationId={invitation.id} />
         ) : null}
         {isWaitlistAvailable || canRejoinWaitlist ? (
-          <JoinWaitlistForm invitationId={invitation.id} />
+          <JoinWaitlistForm copy={copy} invitationId={invitation.id} />
         ) : null}
         {isWaitlistAvailable || isOnWaitlist ? (
-          <DeclineInvitationForm invitationId={invitation.id} />
+          <DeclineInvitationForm copy={copy} invitationId={invitation.id} />
         ) : null}
       </div>
     );

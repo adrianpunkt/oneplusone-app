@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { saveProfileAction, type FormActionState } from "@/lib/actions/profile";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { ProfileRegistration } from "@/lib/types";
 import { cn, storyValue } from "@/lib/utils";
 
@@ -45,11 +46,21 @@ type ProfileImageConfig = {
   displayName: string;
   hasProfile: boolean;
 };
+type ProfileCopy = Dictionary["profile"];
+type ProfileImageUploaderCopy = Dictionary["imageUploader"];
+type StoryAutocompleteCopy = Dictionary["autocomplete"];
 
 const DirtyCheckContext = createContext<(() => void) | null>(null);
+const ProfileCopyContext = createContext<ProfileCopy | null>(null);
 
 function useDirtyCheck() {
   return useContext(DirtyCheckContext);
+}
+
+function useProfileCopy() {
+  const copy = useContext(ProfileCopyContext);
+  if (!copy) throw new Error("Profile copy is missing.");
+  return copy;
 }
 
 function serializeForm(form: HTMLFormElement) {
@@ -269,6 +280,22 @@ const dealBreakerOptions: Option[] = [
 
 function optionValues(values: readonly string[]) {
   return values.map((value) => ({ value, label: value }));
+}
+
+function localizedOptions(options: Option[], copy: ProfileCopy) {
+  return options.map((option) => ({
+    ...option,
+    label:
+      option.value === noneDealBreaker
+        ? copy.options.noneDealBreaker
+        : copy.options.labels[
+            option.label as keyof typeof copy.options.labels
+          ] ||
+          copy.options.labels[
+            option.value as keyof typeof copy.options.labels
+          ] ||
+          option.label,
+  }));
 }
 
 function storyArray(story: Record<string, unknown>, key: string) {
@@ -648,6 +675,7 @@ function InlineSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const checkDirty = useDirtyCheck();
+  const copy = useProfileCopy();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLSpanElement>(null);
   const listRef = useRef<HTMLSpanElement>(null);
@@ -820,7 +848,7 @@ function InlineSelect({
                 onClick={() => closeList()}
                 type="button"
               >
-                Close
+                {copy.select.close}
               </button>
             </span>
             <span
@@ -864,7 +892,7 @@ function InlineSelect({
                 })
               ) : (
                 <span className="px-3 py-4 text-sm font-semibold text-muted">
-                  No options available.
+                  {copy.select.noOptions}
                 </span>
               )}
             </span>
@@ -899,6 +927,7 @@ function DealBreakerPicker({
   const otherDetailsRef = useRef<HTMLTextAreaElement | null>(null);
   const shouldFocusOtherDetailsRef = useRef(false);
   const checkDirty = useDirtyCheck();
+  const copy = useProfileCopy();
   const selectedOptions = selectedValues
     .map((value) => options.find((option) => option.value === value))
     .filter((option): option is Option => Boolean(option));
@@ -941,7 +970,7 @@ function DealBreakerPicker({
 
   if (mode === "read") {
     if (!selectedOptions.length)
-      return <ReadValue empty>deal-breakers</ReadValue>;
+      return <ReadValue empty>{copy.placeholders.dealBreakers}</ReadValue>;
 
     return (
       <span className="inline">
@@ -950,7 +979,7 @@ function DealBreakerPicker({
           <span key={option.value}>
             {index > 0
               ? index === selectedOptions.length - 1
-                ? " and "
+                ? ` ${copy.and} `
                 : ", "
               : null}
             <span className="font-semibold text-lipstick">{option.label}</span>
@@ -1006,11 +1035,11 @@ function DealBreakerPicker({
         <span key={option.value}>
           {index > 0
             ? index === selectedOptions.length - 1
-              ? " and "
+              ? ` ${copy.and} `
               : ", "
             : null}
           <button
-            aria-label={`Edit deal-breakers, currently includes ${option.label}`}
+            aria-label={`${copy.dealBreakers.editCurrentPrefix} ${option.label}`}
             className="inline max-w-full cursor-pointer border-0 bg-transparent px-0 font-semibold leading-tight text-lipstick underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] transition hover:text-wine hover:decoration-solid focus-visible:bg-lipstick/8 focus-visible:outline-none"
             onClick={() => setIsOpen(true)}
             type="button"
@@ -1028,7 +1057,7 @@ function DealBreakerPicker({
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        <span className="sr-only">Add deal-breaker</span>
+        <span className="sr-only">{copy.dealBreakers.add}</span>
         <Plus
           className="h-[0.52em] w-[0.52em]"
           aria-hidden="true"
@@ -1055,14 +1084,14 @@ function DealBreakerPicker({
                 id={popupTitleId}
                 className="min-w-0 text-sm font-semibold leading-tight text-muted"
               >
-                Choose up to 5 deal-breakers
+                {copy.dealBreakers.choose}
               </span>
               <button
                 className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold leading-tight text-lipstick underline underline-offset-4 transition hover:text-wine"
                 onClick={closePicker}
                 type="button"
               >
-                Done
+                {copy.select.close}
               </button>
             </span>
             <span
@@ -1100,14 +1129,14 @@ function DealBreakerPicker({
                     className="text-sm font-semibold leading-tight text-wine"
                     htmlFor={`${popupId}-other-details`}
                   >
-                    What else?
+                    {copy.dealBreakers.whatElse}
                   </label>
                   <textarea
-                    aria-label="Other deal-breaker"
+                    aria-label={copy.fields.otherDealBreaker}
                     className="min-h-24 w-full resize-y rounded-md border border-lipstick/25 bg-white px-3 py-2 text-sm font-semibold leading-6 text-ink shadow-none outline-none placeholder:text-faint focus:border-lipstick focus:bg-white"
                     id={`${popupId}-other-details`}
                     onChange={handleOtherDetailsChange}
-                    placeholder="Tell us more"
+                    placeholder={copy.dealBreakers.tellUsMore}
                     ref={otherDetailsRef}
                     rows={3}
                     value={otherDetails}
@@ -1116,7 +1145,7 @@ function DealBreakerPicker({
               ) : null}
             </span>
             <span className="border-t border-wine/10 px-4 py-3 text-sm font-semibold leading-6 text-muted">
-              {selectedValues.length} of 5 selected.
+              {selectedValues.length} {copy.dealBreakers.selectedSuffix}
             </span>
           </span>
         </>
@@ -1125,16 +1154,18 @@ function DealBreakerPicker({
   );
 }
 
-function MissingStory() {
+function MissingStory({ copy }: { copy: ProfileCopy }) {
   return (
     <div className="rounded-lg border border-lipstick/15 bg-lipstick/8 p-4 text-sm font-semibold leading-6 text-wine">
-      No submitted story is linked to this account yet. Log in with the email
-      used on the website story flow, or submit your story there first.
+      {copy.missing}
     </div>
   );
 }
 
 function StoryNarrative({
+  autocompleteCopy,
+  copy,
+  imageUploaderCopy,
   isDirty = false,
   mode,
   onCancel,
@@ -1143,6 +1174,9 @@ function StoryNarrative({
   profileImage,
   state,
 }: {
+  autocompleteCopy: StoryAutocompleteCopy;
+  copy: ProfileCopy;
+  imageUploaderCopy: ProfileImageUploaderCopy;
   isDirty?: boolean;
   mode: Mode;
   onCancel?: () => void;
@@ -1187,7 +1221,7 @@ function StoryNarrative({
     mode === "read" || Boolean(storyValue(story, "profile.anything_else")),
   );
 
-  if (!profile) return <MissingStory />;
+  if (!profile) return <MissingStory copy={copy} />;
 
   const showGenderDetails = gender === "other";
   const showOrientationDetails = orientation === "Other";
@@ -1210,11 +1244,39 @@ function StoryNarrative({
   const anythingElse = storyValue(story, "profile.anything_else");
   const heightConnector =
     ageMatters === "No, not really" && heightMatters === "No, not really"
-      ? " either"
+      ? copy.sentences.heightEither
       : ageMatters === "Yes" && heightMatters === "Yes"
-        ? ", too"
+        ? copy.sentences.heightToo
         : "";
   const showSaveActions = mode === "edit" && (isDirty || Boolean(state?.error));
+  const localizedGenderOptions = localizedOptions(genderOptions, copy);
+  const localizedOrientationOptions = localizedOptions(orientationOptions, copy);
+  const localizedHomeBaseOptions = localizedOptions(homeBaseOptions, copy);
+  const localizedGeographyOptions = localizedOptions(geographyOptions, copy);
+  const localizedRelocationOptions = localizedOptions(relocationOptions, copy);
+  const localizedMattersOptions = localizedOptions(mattersOptions, copy);
+  const localizedRelationshipStatusOptions = localizedOptions(
+    relationshipStatusOptions,
+    copy,
+  );
+  const localizedRelationshipOptions = localizedOptions(relationshipOptions, copy);
+  const localizedChildrenOptions = localizedOptions(childrenOptions, copy);
+  const localizedReligionOptions = localizedOptions(religionOptions, copy);
+  const localizedAlignmentOptions = localizedOptions(alignmentOptions, copy);
+  const localizedFaithOptions = localizedOptions(faithOptions, copy);
+  const localizedPoliticalImportanceOptions = localizedOptions(
+    politicalImportanceOptions,
+    copy,
+  );
+  const localizedPoliticsOptions = localizedOptions(politicsOptions, copy);
+  const localizedFinancialImportanceOptions = localizedOptions(
+    financialImportanceOptions,
+    copy,
+  );
+  const localizedFinancialOptions = localizedOptions(financialOptions, copy);
+  const localizedFitnessOptions = localizedOptions(fitnessOptions, copy);
+  const localizedRhythmOptions = localizedOptions(rhythmOptions, copy);
+  const localizedDealBreakerOptions = localizedOptions(dealBreakerOptions, copy);
 
   function toggleDealBreaker(value: string) {
     if (mode === "read") return;
@@ -1232,9 +1294,10 @@ function StoryNarrative({
   }
 
   return (
-    <div className={cn("min-w-0 space-y-10", showSaveActions && "pb-28")}>
+    <ProfileCopyContext.Provider value={copy}>
+      <div className={cn("min-w-0 space-y-10", showSaveActions && "pb-28")}>
       <StoryChapter
-        eyebrow="Introduction"
+        eyebrow={copy.chapterIntro.eyebrow}
         media={
           profileImage ? (
             <div
@@ -1243,6 +1306,7 @@ function StoryNarrative({
             >
               <ProfileImageUploader
                 className="w-full max-w-[11rem] justify-self-center md:justify-self-start"
+                copy={imageUploaderCopy}
                 currentImageUrl={profileImage.currentImageUrl}
                 displayName={profileImage.displayName}
                 hasProfile={profileImage.hasProfile}
@@ -1250,90 +1314,90 @@ function StoryNarrative({
             </div>
           ) : undefined
         }
-        title="Hello"
-        description="Great to meet you! Let's skip the small talk."
+        title={copy.chapterIntro.title}
+        description={copy.chapterIntro.description}
       />
 
       <Divider />
 
       <StoryChapter
-        eyebrow="Chapter One"
-        title="Who You Are"
-        description="The basics that come up in the first 5 minutes of any interaction with someone new"
+        eyebrow={copy.chapterOne.eyebrow}
+        title={copy.chapterOne.title}
+        description={copy.chapterOne.description}
       >
         <p>
-          I am
+          {copy.sentences.iAm}
           <InlineSelect
-            label="Age"
+            label={copy.fields.age}
             mode={mode}
             name="profile.age"
             options={optionValues(ageOptions)}
             defaultValue={storyValue(story, "profile.age")}
-            placeholder="age"
+            placeholder={copy.placeholders.age}
           />
-          years old and my height is
+          {copy.sentences.yearsOldHeight}
           <InlineSelect
-            label="Height"
+            label={copy.fields.height}
             mode={mode}
             name="profile.height"
             options={optionValues(heightOptions)}
             defaultValue={storyValue(story, "profile.height")}
-            placeholder="height"
+            placeholder={copy.placeholders.height}
           />
-          cm. I move through the world as
+          {copy.sentences.cmMoveAs}
           <InlineSelect
-            label="Gender"
+            label={copy.fields.gender}
             mode={mode}
             name="profile.gender"
-            options={genderOptions}
+            options={localizedGenderOptions}
             value={mode === "edit" ? gender : undefined}
             defaultValue={gender}
             onChange={setGender}
-            placeholder="gender"
+            placeholder={copy.placeholders.gender}
           />
           {showGenderDetails ? (
             <>
-              , which I would describe as
+              {copy.sentences.genderDescribe}
               <InlineText
-                label="Gender details"
+                label={copy.fields.genderDetails}
                 mode={mode}
                 name="profile.gender.details"
                 defaultValue={storyValue(story, "profile.gender.details")}
-                placeholder="tell us more"
+                placeholder={copy.placeholders.tellUsMore}
               />
-              ; my pronouns are
+              {copy.sentences.pronounsAre}
               <InlineText
-                label="Pronouns"
+                label={copy.fields.pronouns}
                 mode={mode}
                 name="profile.gender.pronouns"
                 defaultValue={storyValue(story, "profile.gender.pronouns")}
-                placeholder="pronouns"
+                placeholder={copy.placeholders.pronouns}
               />
             </>
           ) : null}
-          . The way I love is
+          {copy.sentences.wayILoveIs}
           <InlineSelect
-            label="Sexual orientation"
+            label={copy.fields.orientation}
             mode={mode}
             name="profile.sexual_orientation"
-            options={orientationOptions}
+            options={localizedOrientationOptions}
             value={mode === "edit" ? orientation : undefined}
             defaultValue={orientation}
             onChange={setOrientation}
-            placeholder="sexuality"
+            placeholder={copy.placeholders.sexuality}
           />
           {showOrientationDetails ? (
             <>
-              , or more specifically
+              {copy.sentences.orientationSpecific}
               <InlineText
-                label="Orientation details"
+                label={copy.fields.orientationDetails}
                 mode={mode}
                 name="profile.sexual_orientation.details"
                 defaultValue={storyValue(
                   story,
                   "profile.sexual_orientation.details",
                 )}
-                placeholder="tell us more"
+                placeholder={copy.placeholders.tellUsMore}
               />
             </>
           ) : null}
@@ -1341,56 +1405,58 @@ function StoryNarrative({
         </p>
 
         <p>
-          I am currently
+          {copy.sentences.currentHome}
           <InlineSelect
-            label="Living situation"
+            label={copy.fields.living}
             mode={mode}
             name="profile.home_base"
-            options={homeBaseOptions}
+            options={localizedHomeBaseOptions}
             defaultValue={storyValue(story, "profile.home_base")}
-            placeholder="living situation"
+            placeholder={copy.placeholders.living}
           />
-          and I could meet a group for dinner or brunch in
+          {copy.sentences.meetGroupIn}
           <StoryAutocompleteField
+            copy={autocompleteCopy}
             kind="city"
-            label="Cities where I could meet a group for dinner or brunch"
+            label={copy.fields.cities}
             mode={mode}
             name="profile.event_location"
             onDirty={onDirty}
             defaultValue={storyValue(story, "profile.event_location")}
-            placeholder="cities"
+            placeholder={copy.placeholders.cities}
           />
-          . I&apos;m open to dating
+          {copy.sentences.openDating}
           <InlineSelect
-            label="Dating geography"
+            label={copy.fields.geography}
             mode={mode}
             name="profile.geographic_setup"
-            options={geographyOptions}
+            options={localizedGeographyOptions}
             defaultValue={storyValue(story, "profile.geographic_setup")}
-            placeholder="geography"
+            placeholder={copy.placeholders.geography}
           />
-          , and relocating is
+          {copy.sentences.relocatingIs}
           <InlineSelect
-            label="Relocation"
+            label={copy.fields.relocation}
             mode={mode}
             name="profile.relocation"
-            options={relocationOptions}
+            options={localizedRelocationOptions}
             defaultValue={storyValue(story, "profile.relocation")}
-            placeholder="relocation"
+            placeholder={copy.placeholders.relocation}
           />
           .
         </p>
 
         <p>
-          The languages I am comfortable speaking on a date are
+          {copy.sentences.languagesAre}
           <StoryAutocompleteField
+            copy={autocompleteCopy}
             kind="language"
-            label="Languages I am comfortable speaking on a date"
+            label={copy.fields.languages}
             mode={mode}
             name="profile.date_languages"
             onDirty={onDirty}
             defaultValue={storyValue(story, "profile.date_languages")}
-            placeholder="languages"
+            placeholder={copy.placeholders.languages}
           />
           .
         </p>
@@ -1399,29 +1465,29 @@ function StoryNarrative({
       <Divider />
 
       <StoryChapter
-        eyebrow="Chapter Two"
-        title="What You're Looking For"
-        description="The obvious things people tend to clash over, so no one wastes time on a bad fit."
+        eyebrow={copy.chapterTwo.eyebrow}
+        title={copy.chapterTwo.title}
+        description={copy.chapterTwo.description}
       >
         <p>
-          The age of my partner
+          {copy.sentences.partnerAge}
           <InlineSelect
-            label="Age importance"
+            label={copy.fields.ageImportance}
             mode={mode}
             name="profile.age_matters"
-            options={mattersOptions}
+            options={localizedMattersOptions}
             value={mode === "edit" ? ageMatters : undefined}
             defaultValue={ageMatters}
             onChange={setAgeMatters}
-            placeholder="__"
+            placeholder={copy.placeholders.blank}
           />
-          to me
+          {copy.sentences.toMe}
           {showAgeRange ? (
             <>
               {" "}
-              and the range that feels right is from
+              {copy.sentences.ageRangeFrom}
               <InlineSelect
-                label="Minimum preferred age"
+                label={copy.fields.minAge}
                 mode={mode}
                 name="profile.age_matters.preferred_range.min"
                 options={optionValues(ageOptions)}
@@ -1429,11 +1495,11 @@ function StoryNarrative({
                   story,
                   "profile.age_matters.preferred_range.min",
                 )}
-                placeholder="min"
+                placeholder={copy.placeholders.min}
               />
-              to
+              {copy.sentences.to}
               <InlineSelect
-                label="Maximum preferred age"
+                label={copy.fields.maxAge}
                 mode={mode}
                 name="profile.age_matters.preferred_range.max"
                 options={optionValues(ageOptions)}
@@ -1441,28 +1507,28 @@ function StoryNarrative({
                   story,
                   "profile.age_matters.preferred_range.max",
                 )}
-                placeholder="max"
+                placeholder={copy.placeholders.max}
               />
-              years old
+              {copy.sentences.yearsOld}
             </>
           ) : null}
-          . Their height
+          {copy.sentences.theirHeight}
           <InlineSelect
-            label="Height importance"
+            label={copy.fields.heightImportance}
             mode={mode}
             name="profile.height_important"
-            options={mattersOptions}
+            options={localizedMattersOptions}
             value={mode === "edit" ? heightMatters : undefined}
             defaultValue={heightMatters}
             onChange={setHeightMatters}
-            placeholder="__"
+            placeholder={copy.placeholders.blank}
           />
-          to me{heightConnector}
+          {copy.sentences.toMe}{heightConnector}
           {showHeightRange ? (
             <>
-              , somewhere between
+              {copy.sentences.heightRangeFrom}
               <InlineSelect
-                label="Minimum preferred height"
+                label={copy.fields.minHeight}
                 mode={mode}
                 name="profile.height_important.preferred_range.min"
                 options={optionValues(heightOptions)}
@@ -1470,11 +1536,11 @@ function StoryNarrative({
                   story,
                   "profile.height_important.preferred_range.min",
                 )}
-                placeholder="min"
+                placeholder={copy.placeholders.min}
               />
-              cm and
+              {copy.sentences.cmAnd}
               <InlineSelect
-                label="Maximum preferred height"
+                label={copy.fields.maxHeight}
                 mode={mode}
                 name="profile.height_important.preferred_range.max"
                 options={optionValues(heightOptions)}
@@ -1482,45 +1548,45 @@ function StoryNarrative({
                   story,
                   "profile.height_important.preferred_range.max",
                 )}
-                placeholder="max"
+                placeholder={copy.placeholders.max}
               />
-              cm works for me
+              {copy.sentences.cmWorks}
             </>
           ) : null}
           .
         </p>
 
         <p>
-          To set the stage honestly, my current relationship status is
+          {copy.sentences.relationshipStatus}
           <InlineSelect
-            label="Relationship status"
+            label={copy.fields.relationshipStatus}
             mode={mode}
             name="profile.relationship_status"
-            options={relationshipStatusOptions}
+            options={localizedRelationshipStatusOptions}
             defaultValue={storyValue(story, "profile.relationship_status")}
-            placeholder="__"
+            placeholder={copy.placeholders.blank}
           />
-          . What I am genuinely open to right now is
+          {copy.sentences.openToNow}
           <InlineSelect
-            label="Relationship type"
+            label={copy.fields.relationshipType}
             mode={mode}
             name="profile.available_relationships"
-            options={relationshipOptions}
+            options={localizedRelationshipOptions}
             defaultValue={storyValue(story, "profile.available_relationships")}
-            placeholder="__"
+            placeholder={copy.placeholders.blank}
           />
           .
         </p>
 
         <p>
-          When it comes to children, the truth is
+          {copy.sentences.childrenTruth}
           <InlineSelect
-            label="Children"
+            label={copy.fields.children}
             mode={mode}
             name="profile.children_position"
-            options={childrenOptions}
+            options={localizedChildrenOptions}
             defaultValue={storyValue(story, "profile.children_position")}
-            placeholder="__"
+            placeholder={copy.placeholders.blank}
           />
           .
         </p>
@@ -1529,64 +1595,64 @@ function StoryNarrative({
       <Divider />
 
       <StoryChapter
-        eyebrow="Chapter Three"
-        title="Your Values and Lifestyle"
-        description="The topics that usually come up later in a relationship, when a mismatch can cost real time and energy."
+        eyebrow={copy.chapterThree.eyebrow}
+        title={copy.chapterThree.title}
+        description={copy.chapterThree.description}
       >
         <p>
-          My relationship with religion or spirituality is
+          {copy.sentences.religionIs}
           <InlineSelect
-            label="Religion or spirituality"
+            label={copy.fields.religion}
             mode={mode}
             name="profile.religion_identity"
-            options={religionOptions}
+            options={localizedReligionOptions}
             value={mode === "edit" ? religion : undefined}
             defaultValue={religion}
             onChange={setReligion}
-            placeholder="religion"
+            placeholder={copy.placeholders.religion}
           />
           .
           {showReligionAlignment ? (
             <>
               {" "}
-              And in a partner, sharing those views is
+              {copy.sentences.sharingViews}
               <InlineSelect
-                label="Religious alignment"
+                label={copy.fields.religiousAlignment}
                 mode={mode}
                 name="profile.religion_alignment_importance"
-                options={alignmentOptions}
+                options={localizedAlignmentOptions}
                 value={mode === "edit" ? religionAlignment : undefined}
                 defaultValue={religionAlignment}
                 onChange={setReligionAlignment}
-                placeholder="religion"
+                placeholder={copy.placeholders.religion}
               />
               .
               {showFaith ? (
                 <>
                   {" "}
-                  Specifically, my faith is
+                  {copy.sentences.faithIs}
                   <InlineSelect
-                    label="Specific faith"
+                    label={copy.fields.faith}
                     mode={mode}
                     name="profile.religion_identity.central_religion"
-                    options={faithOptions}
+                    options={localizedFaithOptions}
                     value={mode === "edit" ? faith : undefined}
                     defaultValue={faith}
                     onChange={setFaith}
-                    placeholder="religion"
+                    placeholder={copy.placeholders.religion}
                   />
                   {showFaithDetails ? (
                     <>
-                      , described as
+                      {copy.sentences.describedAs}
                       <InlineText
-                        label="Faith details"
+                        label={copy.fields.faithDetails}
                         mode={mode}
                         name="profile.religion_identity.central_religion.details"
                         defaultValue={storyValue(
                           story,
                           "profile.religion_identity.central_religion.details",
                         )}
-                        placeholder="describe it"
+                        placeholder={copy.placeholders.describeIt}
                         wide
                       />
                     </>
@@ -1599,56 +1665,56 @@ function StoryNarrative({
         </p>
 
         <p>
-          Being on the same political side as my partner is
+          {copy.sentences.politicsAlignment}
           <InlineSelect
-            label="Political alignment"
+            label={copy.fields.politicsImportance}
             mode={mode}
             name="profile.political_alignment_importance"
-            options={politicalImportanceOptions}
+            options={localizedPoliticalImportanceOptions}
             value={mode === "edit" ? politicalImportance : undefined}
             defaultValue={politicalImportance}
             onChange={setPoliticalImportance}
-            placeholder="politics"
+            placeholder={copy.placeholders.politics}
           />
           .
           {showPolitics ? (
             <>
               {" "}
-              On the political spectrum, I lean
+              {copy.sentences.politicsLean}
               <InlineSelect
-                label="Political worldview"
+                label={copy.fields.politics}
                 mode={mode}
                 name="profile.politics_worldview"
-                options={politicsOptions}
+                options={localizedPoliticsOptions}
                 defaultValue={storyValue(story, "profile.politics_worldview")}
-                placeholder="politics"
+                placeholder={copy.placeholders.politics}
               />
               .
             </>
           ) : null}{" "}
-          Our money habits on earning, spending and saving need to align
+          {copy.sentences.moneyAlignment}
           <InlineSelect
-            label="Financial alignment"
+            label={copy.fields.financeImportance}
             mode={mode}
             name="profile.financial_alignment_importance"
-            options={financialImportanceOptions}
+            options={localizedFinancialImportanceOptions}
             value={mode === "edit" ? financialImportance : undefined}
             defaultValue={financialImportance}
             onChange={setFinancialImportance}
-            placeholder="money"
+            placeholder={copy.placeholders.money}
           />
           .
           {showFinancialPhilosophy ? (
             <>
               {" "}
-              When it comes to my own money, I tend to
+              {copy.sentences.moneyTendTo}
               <InlineSelect
-                label="Financial philosophy"
+                label={copy.fields.finance}
                 mode={mode}
                 name="profile.financial_philosophy"
-                options={financialOptions}
+                options={localizedFinancialOptions}
                 defaultValue={storyValue(story, "profile.financial_philosophy")}
-                placeholder="money"
+                placeholder={copy.placeholders.money}
               />
               .
             </>
@@ -1656,23 +1722,23 @@ function StoryNarrative({
         </p>
 
         <p>
-          Fitness and physical health show up in my life as
+          {copy.sentences.fitnessIs}
           <InlineSelect
-            label="Fitness and health"
+            label={copy.fields.fitness}
             mode={mode}
             name="profile.fitness_priority"
-            options={fitnessOptions}
+            options={localizedFitnessOptions}
             defaultValue={storyValue(story, "profile.fitness_priority")}
-            placeholder="fitness"
+            placeholder={copy.placeholders.fitness}
           />
-          . And the daily rhythm that suits me is
+          {copy.sentences.rhythmIs}
           <InlineSelect
-            label="Daily rhythm"
+            label={copy.fields.rhythm}
             mode={mode}
             name="profile.lifestyle_pace"
-            options={rhythmOptions}
+            options={localizedRhythmOptions}
             defaultValue={storyValue(story, "profile.lifestyle_pace")}
-            placeholder="rhythm"
+            placeholder={copy.placeholders.rhythm}
           />
           .
         </p>
@@ -1681,20 +1747,19 @@ function StoryNarrative({
       <Divider />
 
       <StoryChapter
-        eyebrow="Chapter Four"
-        title="Your Deal-Breakers"
-        description="They call them deal-breakers, we call them life-savers. They (almost) always cause painful endings."
+        eyebrow={copy.chapterFour.eyebrow}
+        title={copy.chapterFour.title}
+        description={copy.chapterFour.description}
       >
         <div className="min-w-0 max-w-full space-y-4">
           <p>
-            I learned a few things over the years, and these are my
-            deal-breakers:
+            {copy.sentences.dealBreakersIntro}
             <DealBreakerPicker
               mode={mode}
               onOtherDetailsChange={setDealBreakerDetails}
               onToggle={toggleDealBreaker}
               otherDetails={dealBreakerDetails}
-              options={dealBreakerOptions}
+              options={localizedDealBreakerOptions}
               selectedValues={dealBreakers}
             />
             .
@@ -1709,14 +1774,14 @@ function StoryNarrative({
           ))}
           {showDealBreakerDetails ? (
             <p>
-              The other thing I won&apos;t tolerate is
+              {copy.sentences.otherDealBreaker}
               <InlineLongText
                 editWidthClassName="w-[min(36rem,calc(100%-15rem))]"
-                label="Other deal-breaker"
+                label={copy.fields.otherDealBreaker}
                 mode={mode}
                 name="profile.deal_breakers.details"
                 onValueChange={setDealBreakerDetails}
-                placeholder="what else?"
+                placeholder={copy.placeholders.whatElse}
                 value={dealBreakerDetails}
               />
             </p>
@@ -1737,23 +1802,23 @@ function StoryNarrative({
               onClick={() => setShowAnythingElse(true)}
               type="button"
             >
-              Anything else we forgot to mention?
+              {copy.sentences.anythingElsePrompt}
             </button>
           </>
         ) : (
           <div className={cn("space-y-3", storyTextClass)}>
             <p className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-2">
-              <span className="pt-[0.1em] leading-normal">P.S.</span>
+              <span className="pt-[0.1em] leading-normal">{copy.ps}</span>
               <InlineLongText
                 containerClassName="mx-0 block min-w-0 align-top"
                 displayClassName="block w-full leading-normal"
                 editClassName="block w-full align-top"
                 editWidthClassName="w-full"
-                label="Anything else"
+                label={copy.fields.anythingElse}
                 mode={mode}
                 name="profile.anything_else"
                 defaultValue={anythingElse}
-                placeholder="tell us more"
+                placeholder={copy.placeholders.anythingElse}
                 readClassName="mx-0 block min-w-0 px-0 leading-normal"
               />
             </p>
@@ -1763,27 +1828,27 @@ function StoryNarrative({
 
       <Divider />
 
-      <StoryChapter eyebrow="About the Author" title="Written By">
+      <StoryChapter eyebrow={copy.author.eyebrow} title={copy.author.title}>
         <p>
-          My first name is
+          {copy.sentences.firstName}
           <InlineLongText
             editWidthClassName="w-[min(24rem,calc(100%-9rem))]"
-            label="First name"
+            label={copy.fields.firstName}
             mode={mode}
             name="profile.first_name"
             defaultValue={storyValue(story, "profile.first_name")}
-            placeholder="your name"
+            placeholder={copy.placeholders.firstName}
             singleLine
           />
-          and I can receive notifications at
+          {copy.sentences.notifications}
           <InlineLongText
-            label="Email"
+            label={copy.fields.email}
             mode={mode}
             name="profile.email"
             defaultValue={
               storyValue(story, "profile.email") || profile.contact_email || ""
             }
-            placeholder="your email"
+            placeholder={copy.placeholders.email}
             singleLine
           />
           .
@@ -1794,43 +1859,63 @@ function StoryNarrative({
         <div className="pointer-events-none fixed inset-x-0 bottom-8 z-40 min-[901px]:left-[260px]">
           <div className="mx-auto flex w-full max-w-6xl justify-center px-4 sm:px-6 lg:px-8">
             <div className="pointer-events-auto flex min-w-0 flex-wrap items-center gap-3">
-              <SubmitButton pendingLabel="Saving your story...">
+              <SubmitButton pendingLabel={copy.actions.saving}>
                 <Save className="h-4 w-4" />
-                Save story
+                {copy.actions.save}
               </SubmitButton>
               <Button onClick={onCancel} type="button" variant="secondary">
-                Cancel
+                {copy.actions.cancel}
               </Button>
               <ActionStatus
                 error={state?.error}
                 ok={state?.ok}
-                successMessage="Story saved."
+                successMessage={copy.storySaved}
                 toastKey={state}
               />
             </div>
           </div>
         </div>
       ) : null}
-    </div>
+      </div>
+    </ProfileCopyContext.Provider>
   );
 }
 
 export function ProfileStory({
+  autocompleteCopy,
+  copy,
+  imageUploaderCopy,
   profile,
   profileImage,
 }: {
+  autocompleteCopy: StoryAutocompleteCopy;
+  copy: ProfileCopy;
+  imageUploaderCopy: ProfileImageUploaderCopy;
   profile: ProfileRegistration | null;
   profileImage?: ProfileImageConfig;
 }) {
   return (
-    <StoryNarrative mode="read" profile={profile} profileImage={profileImage} />
+    <StoryNarrative
+      autocompleteCopy={autocompleteCopy}
+      copy={copy}
+      imageUploaderCopy={imageUploaderCopy}
+      mode="read"
+      profile={profile}
+      profileImage={profileImage}
+    />
   );
 }
 
 export function ProfileForm({
+  autocompleteCopy,
+  copy,
+  imageUploaderCopy,
   profile,
   profileImage,
 }: {
+  autocompleteCopy: StoryAutocompleteCopy;
+  copy: ProfileCopy;
+  imageUploaderCopy: ProfileImageUploaderCopy;
   profile: ProfileRegistration | null;
   profileImage?: ProfileImageConfig;
 }) {
@@ -1878,7 +1963,7 @@ export function ProfileForm({
     setIsDirty(false);
     showToast({
       duration: 2600,
-      title: "Changes discarded.",
+      title: copy.actions.discarded,
       variant: "info",
     });
 
@@ -1887,9 +1972,9 @@ export function ProfileForm({
       suppressDirtyChecksRef.current = false;
       updateDirtyState();
     }, 0);
-  }, [showToast, state, updateDirtyState]);
+  }, [copy.actions.discarded, showToast, state, updateDirtyState]);
 
-  if (!profile) return <MissingStory />;
+  if (!profile) return <MissingStory copy={copy} />;
 
   const visibleState = state === dismissedActionState ? initialState : state;
 
@@ -1903,7 +1988,10 @@ export function ProfileForm({
         ref={formRef}
       >
         <StoryNarrative
+          autocompleteCopy={autocompleteCopy}
+          copy={copy}
           key={formResetKey}
+          imageUploaderCopy={imageUploaderCopy}
           isDirty={isDirty}
           mode="edit"
           onCancel={handleCancel}

@@ -6,6 +6,7 @@ export type Member = {
   membership_status: "pending" | "active" | "cancelled";
   membership_source: string | null;
   membership_granted_at: string | null;
+  preferred_locale: "en" | "es" | null;
   referral_code_id: string | null;
   user_id: string | null;
 };
@@ -15,6 +16,7 @@ export type ProfileRegistration = {
   user_id: string;
   status: "started" | "submitted";
   profile_json: JsonObject;
+  locale: "en" | "es";
   contact_email: string | null;
   submitted_at: string | null;
   updated_at: string;
@@ -34,6 +36,7 @@ export type CreditProduct = {
   id: string;
   name: string;
   description: string | null;
+  localized_content: JsonObject;
   credits: number;
   price_amount_cents: number;
   currency: string;
@@ -57,6 +60,7 @@ export type EventRecord = {
   id: string;
   title: string;
   description: string | null;
+  localized_content: JsonObject;
   event_format: "dinner" | "brunch" | "other";
   status: "draft" | "inviting" | "confirmed" | "completed" | "cancelled";
   starts_at: string;
@@ -130,6 +134,7 @@ export type NotificationRecord = {
   title: string;
   body: string | null;
   href: string | null;
+  localized_content: JsonObject | null;
   read_at: string | null;
   created_at: string;
 };

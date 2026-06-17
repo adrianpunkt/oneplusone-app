@@ -7,18 +7,37 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { MemberNavIcon } from "@/components/app/member-nav-icon";
-import { MessageHeartIcon, messageNotificationTooltip } from "@/components/app/message-heart-icon";
+import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { isPathInSection, meActivePaths, navSections } from "@/components/app/nav-sections";
+import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { Button } from "@/components/ui/button";
+import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 
+type NavLabels = {
+  closeMenu: string;
+  dashboard: string;
+  goingOut: string;
+  messages: string;
+  myStory: string;
+  openMenu: string;
+};
+
 export function MobileMenu({
+  currentLocale,
   displayName,
   imageUrl,
+  languageLabel,
+  labels,
+  messageTooltip,
   unreadCount,
 }: {
+  currentLocale: Locale;
   displayName: string;
   imageUrl: string;
+  languageLabel: string;
+  labels: NavLabels;
+  messageTooltip?: string;
   unreadCount: number;
 }) {
   const [open, setOpen] = useState(false);
@@ -100,18 +119,26 @@ export function MobileMenu({
       aria-modal="true"
       style={{ height: `calc(100dvh - ${menuTop}px)`, top: menuTop }}
     >
+      <LanguageSwitcher
+        activeClassName="bg-white text-wine shadow-sm"
+        ariaLabel={languageLabel}
+        buttonClassName="h-9 min-w-12 rounded-md text-sm"
+        className="absolute right-5 top-5 rounded-lg border-wine/15 bg-white/45 p-0.5 shadow-sm"
+        currentLocale={currentLocale}
+        inactiveClassName="text-wine/70 hover:bg-white/60 hover:text-wine"
+      />
       <div className="grid h-full place-items-center pb-20">
         <nav className="grid w-full max-w-sm gap-3">
           {navSections.map((item) => {
             const isActive = isPathInSection(pathname, item.activePaths);
             const isMessages = item.href === "/messages";
-            const messageTooltip =
-              isMessages && unreadCount > 0 ? messageNotificationTooltip(unreadCount) : undefined;
+            const label = labels[item.labelKey];
+            const itemMessageTooltip = isMessages && unreadCount > 0 ? messageTooltip : undefined;
 
             return (
               <Link
                 aria-current={isActive ? "page" : undefined}
-                aria-label={messageTooltip ? `${item.label}. ${messageTooltip}` : undefined}
+                aria-label={itemMessageTooltip ? `${label}. ${itemMessageTooltip}` : undefined}
                 className={cn(
                   "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-white hover:text-lipstick",
                   isActive ? "bg-white text-lipstick shadow-sm" : "text-wine",
@@ -129,7 +156,7 @@ export function MobileMenu({
                 ) : (
                   <item.icon className="h-6 w-6 shrink-0" />
                 )}
-                <span>{item.label}</span>
+                <span>{label}</span>
               </Link>
             );
           })}
@@ -149,7 +176,7 @@ export function MobileMenu({
               displayName={displayName}
               imageUrl={imageUrl}
             />
-            <span>My Story</span>
+            <span>{labels.myStory}</span>
           </Link>
         </nav>
       </div>
@@ -161,7 +188,7 @@ export function MobileMenu({
       <Button
         aria-controls="mobile-menu"
         aria-expanded={open}
-        aria-label={open ? "Close menu" : "Open menu"}
+        aria-label={open ? labels.closeMenu : labels.openMenu}
         className="hover:translate-y-0 hover:shadow-none"
         onClick={open ? closeMenu : openMenu}
         ref={triggerRef}

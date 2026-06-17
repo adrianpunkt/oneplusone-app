@@ -13,10 +13,19 @@ import {
 
 const initialState: MessageActionState = {};
 
+export type StartConversationCopy = {
+  firstMessagePlaceholder: string;
+  firstMessageSent: string;
+  sendFirst: string;
+  sending: string;
+};
+
 export function StartConversationForm({
+  copy,
   eventId,
   recipientMemberId,
 }: {
+  copy: StartConversationCopy;
   eventId: string;
   recipientMemberId: string;
 }) {
@@ -29,18 +38,18 @@ export function StartConversationForm({
       <Textarea
         name="body"
         maxLength={2000}
-        placeholder="Write one thoughtful first message..."
+        placeholder={copy.firstMessagePlaceholder}
         required
       />
       <div className="flex flex-wrap items-center gap-2">
-        <SubmitButton pendingLabel="Sending...">
+        <SubmitButton pendingLabel={copy.sending}>
           <MessageCircle className="h-4 w-4" />
-          Send first message
+          {copy.sendFirst}
         </SubmitButton>
         <ActionStatus
           error={state.error}
           ok={state.ok}
-          successMessage="First message sent."
+          successMessage={copy.firstMessageSent}
           toastKey={state}
         />
       </div>

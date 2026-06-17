@@ -2,6 +2,7 @@ import { PreferencesForm } from "@/components/forms/preferences-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireMemberContext } from "@/lib/data/member";
 import { getPreferences } from "@/lib/data/portal";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,8 @@ function searchParamValue(value: string | string[] | undefined) {
 export default async function PreferencesPage({
   searchParams,
 }: PreferencesPageProps) {
-  const { member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const { from, saved } = await searchParams;
   const preferences = await getPreferences(member.id);
   const returnToDashboard = searchParamValue(from) === "dashboard";
@@ -28,12 +30,13 @@ export default async function PreferencesPage({
     <>
       <section className="grid gap-2">
         <h1 className="font-display text-3xl font-black text-wine">
-          Going-out preferences
+          {dictionary.preferences.title}
         </h1>
       </section>
       <Card>
         <CardContent className="pt-5">
           <PreferencesForm
+            copy={dictionary.preferences}
             preferences={preferences}
             returnToDashboard={returnToDashboard}
             saved={saved === "1"}

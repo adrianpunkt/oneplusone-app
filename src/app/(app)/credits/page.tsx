@@ -16,6 +16,8 @@ import {
   getCreditProducts,
   getReferralCode,
 } from "@/lib/data/portal";
+import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
+import { localizeText } from "@/lib/i18n/dynamic";
 import type { CreditProduct } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
@@ -29,7 +31,8 @@ type CreditsPageProps = {
 };
 
 export default async function CreditsPage({ searchParams }: CreditsPageProps) {
-  const { member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const { purchase, session_id: sessionId } = await searchParams;
   const checkoutResult =
     purchase === "success"
@@ -47,12 +50,13 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
     <>
       <section className="grid gap-2">
         <h1 className="font-display text-3xl font-black text-wine">
-          Credits
+          {dictionary.credits.title}
         </h1>
       </section>
 
-      <PurchaseStatus purchase={purchase} result={checkoutResult} />
+      <PurchaseStatus dictionary={dictionary} purchase={purchase} result={checkoutResult} />
       <PurchaseToast
+        dictionary={dictionary}
         purchase={purchase}
         result={checkoutResult}
         sessionId={sessionId}
@@ -62,24 +66,52 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Gift className="h-5 w-5 text-lipstick" />
-            Invite others to join the club
+            {dictionary.credits.inviteTitle}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3">
           <p className="grid gap-1 text-lg leading-8 text-muted">
-            <span>Know someone who would like to join the club?</span>
+            <span>{dictionary.credits.inviteLine1}</span>
             <span>
-              Send them your code so{" "}
-              <span className="text-lipstick">they get 1 extra credit</span>{" "}
-              when they join, and{" "}
-              <span className="text-lipstick">you get 1 extra credit</span>.
+              {dictionary.credits.inviteLine2Prefix}{" "}
+              <span className="text-lipstick">{dictionary.credits.inviteTheyGet}</span>{" "}
+              {dictionary.credits.inviteLine2Middle}{" "}
+              <span className="text-lipstick">{dictionary.credits.inviteYouGet}</span>.
             </span>
           </p>
           <div className="flex flex-col gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0 px-2 py-2 font-mono text-2xl font-black tracking-widest break-all text-wine sm:px-3 sm:text-3xl">
-              {referralCode || "Available after membership is active"}
+              {referralCode || dictionary.credits.referralUnavailable}
             </div>
-            <ReferralCodeActions code={referralCode} />
+            <ReferralCodeActions
+              code={referralCode}
+              copy={{
+                close: dictionary.referral.close,
+                codeCopied: dictionary.referral.codeCopied,
+                copied: dictionary.common.copied,
+                copy: dictionary.common.copy,
+                couldNotCopy: dictionary.referral.couldNotCopy,
+                inviteLink: dictionary.referral.inviteLink,
+                linkCopied: dictionary.referral.linkCopied,
+                opening: dictionary.referral.opening,
+                referralCode: dictionary.referral.referralCode,
+                share: dictionary.referral.share,
+                shareChannels: dictionary.referral.shareChannels,
+                shareDescription: dictionary.referral.shareDescription,
+                shareReferral: dictionary.referral.shareReferral,
+                shareTextPrefix:
+                  locale === "es"
+                    ? "Únete a one plus one club con mi código "
+                    : "Join one plus one club with my invite code ",
+                shareTextSuffix:
+                  locale === "es"
+                    ? " y recibirás 1 crédito adicional gratis."
+                    : " and you'll get 1 additional credit for free.",
+                shareTitle: dictionary.referral.shareTitle,
+                shareVia: dictionary.referral.shareVia,
+                shareViaButton: dictionary.referral.shareViaButton,
+              }}
+            />
           </div>
         </CardContent>
       </Card>
@@ -88,31 +120,40 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-lipstick" />
-            Buy more credits
+            {dictionary.credits.buyTitle}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3 sm:grid-cols-3">
           {productPricing.map(
-            ({ product, discountPercent, label, perCreditAmountCents }) => (
+            ({ product, discountPercent, labelKey, perCreditAmountCents }) => (
               <div
                 key={product.id}
                 className="flex min-h-full flex-col gap-4 rounded-lg border border-wine/10 bg-blush p-4 text-wine"
               >
                 <div className="flex h-7 items-start">
-                  {label ? (
+                  {labelKey ? (
                     <span
                       className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold uppercase tracking-wide text-white ${
-                        label === "MOST POPULAR" ? "bg-lipstick" : "bg-ocean"
+                        labelKey === "mostPopular" ? "bg-lipstick" : "bg-ocean"
                       }`}
                     >
-                      {label}
+                      {labelKey === "mostPopular"
+                        ? dictionary.credits.mostPopular
+                        : dictionary.credits.maxSavings}
                     </span>
                   ) : null}
                 </div>
                 <div>
-                  <p className="text-sm font-extrabold text-wine">{product.name}</p>
+                  <p className="text-sm font-extrabold text-wine">
+                    {localizeText(product.name, product.localized_content, locale, "name")}
+                  </p>
                   <p className="mt-1 text-xs leading-5 text-muted">
-                    {formatCreditProductDescription(product.credits)}
+                    {localizeText(
+                      product.description,
+                      product.localized_content,
+                      locale,
+                      "description",
+                    ) || formatCreditProductDescription(product.credits, dictionary)}
                   </p>
                 </div>
                 <div className="mt-auto grid gap-1">
@@ -121,36 +162,45 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
                       {formatCurrency(
                         product.price_amount_cents,
                         product.currency,
+                        locale,
                       )}
                     </p>
                     <span className="inline-flex h-6 items-center rounded-full bg-white px-2.5 text-xs font-semibold uppercase tracking-wide text-muted ring-1 ring-wine/10">
                       {discountPercent > 0
-                        ? `Save ${discountPercent}%`
-                        : "Base"}
+                        ? dictionary.credits.save(discountPercent)
+                        : dictionary.credits.base}
                     </span>
                   </div>
                   <p className="text-xs font-medium text-muted">
-                    {formatCurrency(perCreditAmountCents, product.currency)} per
-                    credit
+                    {dictionary.credits.perCredit(formatCurrency(perCreditAmountCents, product.currency, locale))}
                   </p>
                 </div>
-                <CreditCheckoutButton productId={product.id} />
+                <CreditCheckoutButton
+                  copy={{
+                    buy: dictionary.checkout.buy,
+                    couldNotStart: dictionary.checkout.couldNotStart,
+                    opening: dictionary.checkout.opening,
+                  }}
+                  productId={product.id}
+                />
               </div>
             ),
           )}
         </CardContent>
       </Card>
 
-      <CreditHistorySection entries={ledger} />
+      <CreditHistorySection dictionary={dictionary} entries={ledger} locale={locale} />
     </>
   );
 }
 
 function PurchaseToast({
+  dictionary,
   purchase,
   result,
   sessionId,
 }: {
+  dictionary: Dictionary;
   purchase?: string;
   result: CreditCheckoutSyncResult | null;
   sessionId?: string;
@@ -159,7 +209,7 @@ function PurchaseToast({
     return (
       <RouteToast
         clearSearchParams={["purchase", "session_id"]}
-        title="Checkout cancelled."
+        title={dictionary.credits.checkoutCancelledToast}
         toastKey="purchase-cancelled"
         variant="info"
       />
@@ -174,10 +224,10 @@ function PurchaseToast({
         clearSearchParams={["purchase", "session_id"]}
         description={
           result.credits
-            ? `${result.credits} credit${result.credits === 1 ? "" : "s"} added to your balance.`
-            : "Credits added to your balance."
+            ? dictionary.credits.creditsAdded(result.credits)
+            : dictionary.credits.creditsAdded()
         }
-        title="Payment confirmed."
+        title={dictionary.credits.paymentConfirmed}
         toastKey={`purchase-completed-${sessionId || "checkout"}`}
       />
     );
@@ -186,8 +236,8 @@ function PurchaseToast({
   if (result?.status === "pending") {
     return (
       <RouteToast
-        description="Your credits will appear when Stripe confirms the payment."
-        title="Payment is still processing."
+        description={dictionary.credits.paymentPendingToastBody}
+        title={dictionary.credits.paymentPendingTitle}
         toastKey={`purchase-pending-${sessionId || "checkout"}`}
         variant="info"
       />
@@ -196,16 +246,16 @@ function PurchaseToast({
 
   return (
     <RouteToast
-      description={result?.error || "We could not verify this checkout session yet."}
-      title="Payment needs review."
+      description={result?.error || dictionary.credits.paymentReviewBody}
+      title={dictionary.credits.paymentReviewTitle}
       toastKey={`purchase-review-${sessionId || "checkout"}`}
       variant="error"
     />
   );
 }
 
-function formatCreditProductDescription(credits: number) {
-  return `Attend ${credits} event${credits === 1 ? "" : "s"}`;
+function formatCreditProductDescription(credits: number, dictionary: Dictionary) {
+  return dictionary.credits.attendEvents(credits);
 }
 
 function getCreditProductPricing(products: CreditProduct[]) {
@@ -234,7 +284,7 @@ function getCreditProductPricing(products: CreditProduct[]) {
       perCreditAmountCents,
       discountPercent,
       isPreferred: false,
-      label: product.credits === 3 ? "MOST POPULAR" : null,
+      labelKey: product.credits === 3 ? "mostPopular" : null,
     };
   });
 
@@ -260,15 +310,17 @@ function getCreditProductPricing(products: CreditProduct[]) {
     return {
       ...product,
       isPreferred,
-      label: isPreferred ? "MAX SAVINGS" : product.label,
+      labelKey: isPreferred ? "maxSavings" : product.labelKey,
     };
   });
 }
 
 function PurchaseStatus({
+  dictionary,
   purchase,
   result,
 }: {
+  dictionary: Dictionary;
   purchase?: string;
   result: CreditCheckoutSyncResult | null;
 }) {
@@ -277,8 +329,8 @@ function PurchaseStatus({
       <div className="flex items-start gap-3 rounded-lg border border-wine/10 bg-white p-4 text-sm leading-6 text-muted">
         <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-muted" />
         <div>
-          <p className="font-semibold text-wine">Checkout cancelled</p>
-          <p>No credits were purchased.</p>
+          <p className="font-semibold text-wine">{dictionary.credits.checkoutCancelledTitle}</p>
+          <p>{dictionary.credits.checkoutCancelledDescription}</p>
         </div>
       </div>
     );
@@ -302,12 +354,9 @@ function PurchaseStatus({
           style={{ filter: "brightness(0) invert(1)" }}
         />
         <div>
-          <p className="font-semibold text-blush">PAYMENT CONFIRMED</p>
+          <p className="font-semibold text-blush">{dictionary.credits.paymentConfirmedCaps}</p>
           <p className="text-white/88">
-            {result.credits
-              ? `${result.credits} credit${result.credits === 1 ? "" : "s"} `
-              : "Credits "}
-            added to your balance.
+            {dictionary.credits.creditsAdded(result.credits)}
           </p>
         </div>
       </div>
@@ -319,8 +368,8 @@ function PurchaseStatus({
       <div className="flex items-start gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-4 text-sm leading-6 text-lipstick">
         <CreditCard className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
-          <p className="font-semibold">Payment is still processing</p>
-          <p>Your credits will appear here when Stripe confirms the payment.</p>
+          <p className="font-semibold">{dictionary.credits.paymentPendingTitle}</p>
+          <p>{dictionary.credits.paymentPendingBody}</p>
         </div>
       </div>
     );
@@ -330,9 +379,9 @@ function PurchaseStatus({
     <div className="flex items-start gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-4 text-sm leading-6 text-lipstick">
       <XCircle className="mt-0.5 h-5 w-5 shrink-0" />
       <div>
-        <p className="font-semibold">Payment needs review</p>
+        <p className="font-semibold">{dictionary.credits.paymentReviewTitle}</p>
         <p>
-          {result?.error || "We could not verify this checkout session yet."}
+          {result?.error || dictionary.credits.paymentReviewBody}
         </p>
       </div>
     </div>

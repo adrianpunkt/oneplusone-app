@@ -16,6 +16,7 @@ import { Camera, ImagePlus, Pencil, Trash2, X } from "lucide-react";
 import { ActionStatus } from "@/components/forms/action-status";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { cn, initials } from "@/lib/utils";
 
 type Point = {
@@ -54,12 +55,54 @@ const thumbnailSize = 192;
 const minZoom = 1;
 const maxZoom = 3;
 
-function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
+type ProfileImageUploaderCopy = Dictionary["imageUploader"];
+
+const defaultUploaderCopy: ProfileImageUploaderCopy = {
+  cancel: "Cancel",
+  chooseFirst: "Choose a profile image first.",
+  choosePhoto: "Choose photo",
+  chooseValidThumbnail: "Choose a valid profile thumbnail.",
+  closePreview: "Close preview",
+  couldNotPrepare: "Could not prepare this image.",
+  couldNotRemove: "Could not remove this photo.",
+  couldNotSave: "Could not save this image.",
+  crop: "Crop profile image",
+  croppedTooLarge: "The cropped image is too large.",
+  deleteDescription: "This will remove your profile photo from your story.",
+  deletePhoto: "Delete photo",
+  deleteTitle: "Delete photo?",
+  deleting: "Deleting...",
+  editPhoto: "Edit profile photo",
+  photoAlt: "Profile photo",
+  photoSaved: "Photo saved.",
+  previewAlt: "Profile photo preview",
+  previewDescription: "Larger preview of the current profile photo.",
+  previewPhoto: "Preview profile photo",
+  previewTitle: "Profile photo preview",
+  removePhoto: "Remove photo",
+  removingPhoto: "Removing photo",
+  replacePhoto: "Replace photo",
+  save: "Save",
+  submitStoryFirst: "Submit your story before uploading a profile photo.",
+  underSize: "Choose an image under 12 MB.",
+  useImage: "Use a WEBP, JPG, or PNG image.",
+  useThumbnail: "Use a WEBP, JPG, or PNG thumbnail.",
+  thumbnailTooLarge: "The thumbnail image is too large.",
+  zoom: "Zoom",
+  zoomAria: "Zoom profile image",
+};
+
+function canvasToBlob(
+  canvas: HTMLCanvasElement,
+  type: string,
+  quality: number,
+  errorMessage: string,
+) {
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
         if (blob) resolve(blob);
-        else reject(new Error("Could not prepare this image."));
+        else reject(new Error(errorMessage));
       },
       type,
       quality,
@@ -75,6 +118,7 @@ function extensionForType(type: string) {
 
 export function ProfileImageUploader({
   className,
+  copy = defaultUploaderCopy,
   currentImageUrl,
   displayName,
   hasProfile,
@@ -82,6 +126,7 @@ export function ProfileImageUploader({
   showSuccessStatus = true,
 }: {
   className?: string;
+  copy?: ProfileImageUploaderCopy;
   currentImageUrl: string;
   displayName: string;
   hasProfile: boolean;
@@ -213,12 +258,12 @@ export function ProfileImageUploader({
     if (!file) return;
 
     if (!acceptedImageTypes.has(file.type)) {
-      setError("Use a WEBP, JPG, or PNG image.");
+      setError(copy.useImage);
       return;
     }
 
     if (file.size > maxSourceBytes) {
-      setError("Choose an image under 12 MB.");
+      setError(copy.underSize);
       return;
     }
 
@@ -270,7 +315,7 @@ export function ProfileImageUploader({
   async function prepareCrop(size = outputSize, quality = 0.9) {
     const image = imageRef.current;
     if (!image || !cropMetrics || !stageSize) {
-      throw new Error("Choose a profile image first.");
+      throw new Error(copy.chooseFirst);
     }
 
     const canvas = document.createElement("canvas");
@@ -278,7 +323,7 @@ export function ProfileImageUploader({
     canvas.width = size;
 
     const context = canvas.getContext("2d");
-    if (!context) throw new Error("Could not prepare this image.");
+    if (!context) throw new Error(copy.couldNotPrepare);
 
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, size, size);
@@ -292,8 +337,13 @@ export function ProfileImageUploader({
       cropMetrics.height * ratio,
     );
 
-    const blob = await canvasToBlob(canvas, "image/webp", quality).catch(() =>
-      canvasToBlob(canvas, "image/jpeg", quality),
+    const blob = await canvasToBlob(
+      canvas,
+      "image/webp",
+      quality,
+      copy.couldNotPrepare,
+    ).catch(() =>
+      canvasToBlob(canvas, "image/jpeg", quality, copy.couldNotPrepare),
     );
     return new File([blob], `profile-image-${size}.${extensionForType(blob.type)}`, {
       type: blob.type || "image/jpeg",
@@ -321,15 +371,15 @@ export function ProfileImageUploader({
       const payload = (await response.json().catch(() => null)) as UploadResponse | null;
 
       if (!payload) {
-        throw new Error("Could not save this image.");
+        throw new Error(copy.couldNotSave);
       }
 
       if (!payload.ok) {
-        throw new Error(payload.error || "Could not save this image.");
+        throw new Error(payload.error || copy.couldNotSave);
       }
 
       if (!response.ok) {
-        throw new Error("Could not save this image.");
+        throw new Error(copy.couldNotSave);
       }
 
       setUploadedImageUrl(payload.imageUrl);
@@ -339,7 +389,7 @@ export function ProfileImageUploader({
       router.refresh();
       onUploadComplete?.(payload.imageUrl);
     } catch (uploadError) {
-      setError(uploadError instanceof Error ? uploadError.message : "Could not save this image.");
+      setError(uploadError instanceof Error ? uploadError.message : copy.couldNotSave);
     } finally {
       setIsUploading(false);
     }
@@ -367,15 +417,15 @@ export function ProfileImageUploader({
       const payload = (await response.json().catch(() => null)) as DeleteResponse | null;
 
       if (!payload) {
-        throw new Error("Could not remove this photo.");
+        throw new Error(copy.couldNotRemove);
       }
 
       if (!payload.ok) {
-        throw new Error(payload.error || "Could not remove this photo.");
+        throw new Error(payload.error || copy.couldNotRemove);
       }
 
       if (!response.ok) {
-        throw new Error("Could not remove this photo.");
+        throw new Error(copy.couldNotRemove);
       }
 
       setUploadedImageUrl("");
@@ -384,7 +434,7 @@ export function ProfileImageUploader({
       setOk(true);
       router.refresh();
     } catch (removeError) {
-      setError(removeError instanceof Error ? removeError.message : "Could not remove this photo.");
+      setError(removeError instanceof Error ? removeError.message : copy.couldNotRemove);
     } finally {
       setIsRemoving(false);
     }
@@ -392,18 +442,18 @@ export function ProfileImageUploader({
 
   const displayInitials = initials(displayName);
   const imageUrl = isImageRemoved ? "" : uploadedImageUrl || currentImageUrl;
-  const chooseImageLabel = imageUrl ? "Replace photo" : "Choose photo";
+  const chooseImageLabel = imageUrl ? copy.replacePhoto : copy.choosePhoto;
   const isBusy = isUploading || isRemoving;
 
   function renderExistingImageActions() {
     return (
       <>
         <Button
-          aria-label={isRemoving ? "Removing photo" : "Remove photo"}
+          aria-label={isRemoving ? copy.removingPhoto : copy.removePhoto}
           className="h-9 w-9 rounded-full p-0 text-lipstick hover:bg-lipstick hover:text-white"
           disabled={!hasProfile || isBusy}
           onClick={requestRemoveImage}
-          title="Remove photo"
+          title={copy.removePhoto}
           type="button"
           variant="ghost"
         >
@@ -429,7 +479,7 @@ export function ProfileImageUploader({
     return (
       <div className="absolute inset-0 z-30 grid grid-cols-2 overflow-hidden bg-wine/18 backdrop-blur-[1px] sm:hidden">
         <button
-          aria-label={isRemoving ? "Removing photo" : "Remove photo"}
+          aria-label={isRemoving ? copy.removingPhoto : copy.removePhoto}
           className="flex items-start justify-center border-r border-white/70 bg-white/55 pt-[28%] text-lipstick transition hover:bg-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/45 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!hasProfile || isBusy}
           onClick={requestRemoveImage}
@@ -467,7 +517,7 @@ export function ProfileImageUploader({
 
       {selectedUrl ? (
         <div
-          aria-label="Crop profile image"
+          aria-label={copy.crop}
           className={cn(
             "relative aspect-square w-full touch-none overflow-hidden rounded-xl border-2 border-lipstick/70 bg-mist shadow-inner",
             isBusy ? "cursor-wait" : "cursor-grab active:cursor-grabbing",
@@ -502,13 +552,13 @@ export function ProfileImageUploader({
           <div className="group relative aspect-square overflow-hidden rounded-xl border-2 border-lipstick/70 bg-mist shadow-inner">
             <Dialog.Trigger asChild>
               <button
-                aria-label="Preview profile photo"
+                aria-label={copy.previewPhoto}
                 className="absolute inset-0 cursor-zoom-in border-0 bg-transparent p-0"
                 ref={previewTriggerRef}
                 type="button"
               >
                 <img
-                  alt="Profile photo"
+                  alt={copy.photoAlt}
                   className="h-full w-full object-cover"
                   loading="eager"
                   src={imageUrl}
@@ -516,7 +566,7 @@ export function ProfileImageUploader({
               </button>
             </Dialog.Trigger>
             <button
-              aria-label="Edit profile photo"
+              aria-label={copy.editPhoto}
               aria-expanded={isImageActionMenuOpen}
               className="absolute bottom-2 right-2 z-40 grid h-8 w-8 place-items-center rounded-full border border-white/80 bg-white/95 text-wine shadow-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/35 sm:hidden"
               disabled={!hasProfile || isBusy}
@@ -552,19 +602,19 @@ export function ProfileImageUploader({
               onCloseAutoFocus={handlePreviewCloseAutoFocus}
             >
               <Dialog.Title className="sr-only">
-                Profile photo preview
+                {copy.previewTitle}
               </Dialog.Title>
               <Dialog.Description className="sr-only">
-                Larger preview of the current profile photo.
+                {copy.previewDescription}
               </Dialog.Description>
               <img
-                alt="Profile photo preview"
+                alt={copy.previewAlt}
                 className="h-full w-full object-cover"
                 src={imageUrl}
               />
               <Dialog.Close asChild>
                 <Button
-                  aria-label="Close preview"
+                  aria-label={copy.closePreview}
                   className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/95 p-0 text-wine shadow-sm hover:bg-white"
                   type="button"
                   variant="ghost"
@@ -599,9 +649,9 @@ export function ProfileImageUploader({
       {selectedUrl ? (
         <>
           <div className="grid gap-2">
-            <Label htmlFor="profile-image-zoom">Zoom</Label>
+            <Label htmlFor="profile-image-zoom">{copy.zoom}</Label>
             <input
-              aria-label="Zoom profile image"
+              aria-label={copy.zoomAria}
               className="h-2 w-full accent-lipstick"
               disabled={isBusy}
               id="profile-image-zoom"
@@ -624,7 +674,7 @@ export function ProfileImageUploader({
               onClick={uploadImage}
               type="button"
             >
-              Save
+              {copy.save}
             </Button>
             <Button
               className="whitespace-nowrap px-4"
@@ -633,7 +683,7 @@ export function ProfileImageUploader({
               type="button"
               variant="ghost"
             >
-              Cancel
+              {copy.cancel}
             </Button>
           </div>
         </>
@@ -641,7 +691,7 @@ export function ProfileImageUploader({
 
       {!hasProfile ? (
         <p className="text-sm font-semibold leading-6 text-muted">
-          Submit your story before uploading a profile photo.
+          {copy.submitStoryFirst}
         </p>
       ) : null}
       <Dialog.Root
@@ -655,10 +705,10 @@ export function ProfileImageUploader({
           <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[min(calc(100vw-2rem),24rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine/10 bg-white p-5 shadow-2xl">
             <div className="grid gap-2">
               <Dialog.Title className="font-display text-2xl font-extrabold text-wine">
-                Delete photo?
+                {copy.deleteTitle}
               </Dialog.Title>
               <Dialog.Description className="text-sm font-medium leading-6 text-muted">
-                This will remove your profile photo from your story.
+                {copy.deleteDescription}
               </Dialog.Description>
             </div>
             <div className="flex flex-wrap justify-end gap-2">
@@ -668,7 +718,7 @@ export function ProfileImageUploader({
                   type="button"
                   variant="ghost"
                 >
-                  Cancel
+                  {copy.cancel}
                 </Button>
               </Dialog.Close>
               <Button
@@ -677,7 +727,7 @@ export function ProfileImageUploader({
                 onClick={removeImage}
                 type="button"
               >
-                {isRemoving ? "Deleting..." : "Delete photo"}
+                {isRemoving ? copy.deleting : copy.deletePhoto}
               </Button>
             </div>
           </Dialog.Content>
@@ -686,7 +736,7 @@ export function ProfileImageUploader({
       <ActionStatus
         error={error}
         ok={showSuccessStatus && ok}
-        successMessage="Photo saved."
+        successMessage={copy.photoSaved}
         toastKey={error || uploadedImageUrl || ok}
       />
     </div>

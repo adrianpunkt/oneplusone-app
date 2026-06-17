@@ -3,6 +3,8 @@ import {
   type DashboardChecklistStep,
 } from "@/components/app/dashboard-checklist";
 import { RouteToast } from "@/components/app/route-toast";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { requireMemberContext } from "@/lib/data/member";
 import {
   getPreferences,
@@ -28,6 +30,7 @@ function searchParamValue(value: string | string[] | undefined) {
 }
 
 function onboardingSteps({
+  dictionary,
   hasConfirmedSeat,
   hasEarnedCredits,
   hasFirstInvitation,
@@ -36,6 +39,7 @@ function onboardingSteps({
   hasReachedOut,
   hasRepeated,
 }: {
+  dictionary: Dictionary;
   hasConfirmedSeat: boolean;
   hasEarnedCredits: boolean;
   hasFirstInvitation: boolean;
@@ -44,55 +48,55 @@ function onboardingSteps({
   hasReachedOut: boolean;
   hasRepeated: boolean;
 }): DashboardChecklistStep[] {
+  const copy = dictionary.dashboard.steps;
+
   return [
     {
-      title: "Join the club",
-      description: "You already completed the most important step.",
+      title: copy.join.title,
+      description: copy.join.description,
       href: "/my-story",
       checked: true,
     },
     {
-      title: "Update your going-out preferences",
-      description: "Tell us what would make a great night out for you.",
+      title: copy.preferences.title,
+      description: copy.preferences.description,
       href: "/preferences?from=dashboard",
       checked: hasPreferences,
     },
     {
       action: "profileImage",
-      title: "Upload a photo",
-      description: "Add a profile photo so others can recognize you.",
+      title: copy.photo.title,
+      description: copy.photo.description,
       href: "/my-story",
       checked: hasPhoto,
     },
     {
-      title: "Earn more credits",
-      description:
-        "Learn how you can get credits and attend events for free.",
+      title: copy.credits.title,
+      description: copy.credits.description,
       href: "/credits",
       checked: hasEarnedCredits,
     },
     {
-      title: "Get invited to the first event",
-      description:
-        "Watch out for your first invitation. First come, first served, otherwise you can join the waitlist.",
+      title: copy.invitation.title,
+      description: copy.invitation.description,
       href: "/going-out",
       checked: hasFirstInvitation,
     },
     {
-      title: "Confirm your seat",
-      description: "Make sure you confirm to secure a seat.",
+      title: copy.confirm.title,
+      description: copy.confirm.description,
       href: "/going-out",
       checked: hasConfirmedSeat,
     },
     {
-      title: "Reach out to the others",
-      description: "Met someone you clicked with? Send them a message.",
+      title: copy.reachOut.title,
+      description: copy.reachOut.description,
       href: "/messages",
       checked: hasReachedOut,
     },
     {
-      title: "Repeat",
-      description: "Had a great time? Come again!",
+      title: copy.repeat.title,
+      description: copy.repeat.description,
       href: "/going-out",
       checked: hasRepeated,
     },
@@ -102,7 +106,8 @@ function onboardingSteps({
 export default async function DashboardPage({
   searchParams,
 }: DashboardPageProps) {
-  const { member, profile } = await requireMemberContext();
+  const { locale, member, profile } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const { preferences: preferencesParam } = await searchParams;
   const preferencesSaved = searchParamValue(preferencesParam) === "saved";
   const [
@@ -130,22 +135,30 @@ export default async function DashboardPage({
     <>
       <RouteToast
         clearSearchParams={["preferences"]}
-        title="Preferences saved."
+        title={dictionary.dashboard.preferencesSaved}
         toastKey={preferencesSaved ? "dashboard-preferences-saved" : null}
       />
 
       <section className="grid min-h-[calc(100dvh-7.5rem)] content-center gap-5 md:min-h-[calc(100dvh-3rem)]">
         <h1 className="font-display text-3xl font-black text-wine sm:text-4xl">
-          Welcome to the club
+          {dictionary.dashboard.title}
         </h1>
 
         <DashboardChecklist
+          copy={{
+            closePhotoUploader: dictionary.dashboard.closePhotoUploader,
+            complete: dictionary.dashboard.complete,
+            incomplete: dictionary.dashboard.incomplete,
+            photoSaved: dictionary.dashboard.photoSaved,
+          }}
+          imageUploaderCopy={dictionary.imageUploader}
           profileImage={{
             currentImageUrl,
             displayName,
             hasProfile: Boolean(profile),
           }}
           steps={onboardingSteps({
+            dictionary,
             hasConfirmedSeat,
             hasEarnedCredits,
             hasFirstInvitation,

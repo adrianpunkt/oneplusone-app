@@ -2,10 +2,13 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand-logo";
-import { MessageHeartIcon, messageNotificationTooltip } from "@/components/app/message-heart-icon";
+import { LanguageSwitcher } from "@/components/app/language-switcher";
+import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { MobileMenu } from "@/components/app/mobile-menu";
 import { SectionNav } from "@/components/app/section-nav";
 import { SignOutButton } from "@/components/app/sign-out-button";
+import type { Dictionary } from "@/lib/i18n/dictionaries";
+import type { Locale } from "@/lib/i18n/locales";
 import { profileImageThumbnailUrl } from "@/lib/profile-image";
 import type { Member, NotificationRecord, ProfileRegistration } from "@/lib/types";
 import { cn, storyValue } from "@/lib/utils";
@@ -48,18 +51,18 @@ function CreditBalanceLink({
   ariaLabel,
   className,
   creditBalance,
+  creditLabel,
 }: {
   ariaLabel: string;
   className?: string;
   creditBalance: number;
+  creditLabel: string;
 }) {
-  const creditLabel = creditBalance === 1 ? "credit" : "credits";
-
   return (
     <Link
       aria-label={ariaLabel}
       className={cn(
-        "-ml-1.5 flex h-8 min-w-12 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-lipstick/25 bg-white py-0 pl-1.5 pr-2.5 text-sm font-semibold text-lipstick shadow-sm transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35 focus-visible:ring-offset-2",
+        "-ml-1.5 inline-flex h-8 min-w-12 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-lipstick/25 bg-white py-0 pl-1.5 pr-2.5 text-sm font-semibold text-lipstick shadow-sm transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35 focus-visible:ring-offset-2",
         className,
       )}
       href="/credits"
@@ -84,12 +87,16 @@ function CreditBalanceLink({
 export function AppShell({
   children,
   creditBalance,
+  dictionary,
+  locale,
   member,
   notifications,
   profile,
 }: {
   children: React.ReactNode;
   creditBalance: number;
+  dictionary: Dictionary;
+  locale: Locale;
   member: Member;
   notifications: NotificationRecord[];
   profile: ProfileRegistration | null;
@@ -98,25 +105,66 @@ export function AppShell({
   const displayName = memberDisplayName(member, profile);
   const imageUrl = profileImageThumbnailUrl(profile?.profile_json);
   const notificationHref = notifications[0]?.href || "/messages";
-  const creditAriaLabel = `You have ${creditBalance} ${creditBalance === 1 ? "credit" : "credits"}`;
-  const notificationTooltip = unreadCount > 0 ? messageNotificationTooltip(unreadCount) : "";
+  const creditLabel = creditBalance === 1 ? dictionary.common.credit : dictionary.common.credits;
+  const creditAriaLabel =
+    locale === "es"
+      ? `Tienes ${creditBalance} ${creditLabel}`
+      : `You have ${creditBalance} ${creditLabel}`;
+  const notificationTooltip =
+    unreadCount > 0 ? dictionary.messages.notificationTooltip(unreadCount) : "";
+  const navLabels = {
+    dashboard: dictionary.nav.dashboard,
+    goingOut: dictionary.nav.goingOut,
+    messages: dictionary.nav.messages,
+    myStory: dictionary.nav.myStory,
+  };
+  const mobileNavLabels = {
+    ...navLabels,
+    closeMenu: dictionary.nav.closeMenu,
+    openMenu: dictionary.nav.openMenu,
+  };
 
   return (
     <div className="min-h-screen app-grid">
       <aside className="sticky top-0 hidden h-screen border-r border-wine/10 bg-white/84 p-4 backdrop-blur md:block">
         <div className="flex h-full flex-col gap-5">
-          <Link href="/dashboard" className="rounded-lg p-2" aria-label="one plus one club dashboard">
+          <Link href="/dashboard" className="rounded-lg p-2" aria-label={dictionary.nav.dashboardAria}>
             <BrandLogo className="w-36" priority />
           </Link>
 
-          <div className="flex w-full items-center justify-between px-4">
-            <CreditBalanceLink ariaLabel={creditAriaLabel} creditBalance={creditBalance} />
+          <div className="px-4">
+            <CreditBalanceLink
+              ariaLabel={creditAriaLabel}
+              creditBalance={creditBalance}
+              creditLabel={creditLabel}
+            />
           </div>
 
-          <SectionNav displayName={displayName} imageUrl={imageUrl} unreadCount={unreadCount} />
+          <SectionNav
+            displayName={displayName}
+            imageUrl={imageUrl}
+            labels={navLabels}
+            messageTooltip={notificationTooltip}
+            unreadCount={unreadCount}
+          />
 
-          <div className="mt-auto px-2">
-            <SignOutButton className="w-full justify-start" size="default" />
+          <div className="mt-auto flex items-center justify-between gap-4 px-0">
+            <div className="min-w-0">
+              <SignOutButton
+                className="h-9 justify-center border-wine/10 bg-white px-3 text-xs font-black text-wine shadow-sm hover:translate-y-0 hover:bg-lipstick/8 hover:text-lipstick hover:shadow-sm"
+                label={dictionary.common.signOut}
+                size="sm"
+                variant="secondary"
+              />
+            </div>
+            <LanguageSwitcher
+              activeClassName="bg-lipstick text-white"
+              ariaLabel={dictionary.common.language}
+              buttonClassName="h-8 min-w-9"
+              className="h-9 rounded-lg"
+              currentLocale={locale}
+              inactiveClassName="text-wine hover:bg-lipstick/8 hover:text-lipstick"
+            />
           </div>
         </div>
       </aside>
@@ -127,7 +175,7 @@ export function AppShell({
             <Link
               href="/dashboard"
               className="flex items-center"
-              aria-label="one plus one club dashboard"
+              aria-label={dictionary.nav.dashboardAria}
             >
               <BrandLogo className="w-28" priority />
             </Link>
@@ -139,8 +187,20 @@ export function AppShell({
                   tooltip={notificationTooltip}
                 />
               ) : null}
-              <CreditBalanceLink ariaLabel={creditAriaLabel} creditBalance={creditBalance} />
-              <MobileMenu displayName={displayName} imageUrl={imageUrl} unreadCount={unreadCount} />
+              <CreditBalanceLink
+                ariaLabel={creditAriaLabel}
+                creditBalance={creditBalance}
+                creditLabel={creditLabel}
+              />
+              <MobileMenu
+                currentLocale={locale}
+                displayName={displayName}
+                imageUrl={imageUrl}
+                languageLabel={dictionary.common.language}
+                labels={mobileNavLabels}
+                messageTooltip={notificationTooltip}
+                unreadCount={unreadCount}
+              />
             </div>
           </div>
         </header>

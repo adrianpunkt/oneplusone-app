@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireMemberContext } from "@/lib/data/member";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { localizeDbError } from "@/lib/i18n/errors";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { EventInvitation } from "@/lib/types";
@@ -33,14 +35,15 @@ export async function confirmInvitationAction(
   _previousState: EventActionState,
   formData: FormData,
 ): Promise<EventActionState> {
-  await requireMemberContext();
+  const { locale } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const invitationId = String(formData.get("invitation_id") || "");
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc("confirm_event_invitation", {
     p_invitation_id: invitationId,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: localizeDbError(error.message, dictionary) };
 
   revalidatePath("/events");
   revalidatePath("/going-out");
@@ -53,11 +56,12 @@ export async function joinWaitlistAction(
   _previousState: EventActionState,
   formData: FormData,
 ): Promise<EventActionState> {
-  const { member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const invitationId = String(formData.get("invitation_id") || "");
   const supabase = await createSupabaseServerClient();
 
-  if (!invitationId) return { error: "Invitation was not found." };
+  if (!invitationId) return { error: dictionary.actionErrors.invitationMissing };
 
   const { data: invitation, error: invitationError } = await supabase
     .from("event_invitations")
@@ -66,13 +70,13 @@ export async function joinWaitlistAction(
     .eq("member_id", member.id)
     .maybeSingle<InvitationResponseLookup>();
 
-  if (invitationError) return { error: invitationError.message };
-  if (!invitation) return { error: "Invitation was not found." };
+  if (invitationError) return { error: localizeDbError(invitationError.message, dictionary) };
+  if (!invitation) return { error: dictionary.actionErrors.invitationMissing };
   if (
     invitation.confirmed_at ||
     !["waitlisted", "declined", "cancelled"].includes(invitation.status)
   ) {
-    return { error: "This waitlist is no longer available." };
+    return { error: dictionary.actionErrors.waitlistUnavailable };
   }
 
   let serviceClient: ReturnType<typeof getSupabaseServiceClient>;
@@ -80,7 +84,7 @@ export async function joinWaitlistAction(
   try {
     serviceClient = getSupabaseServiceClient();
   } catch {
-    return { error: "Event responses are not configured yet." };
+    return { error: dictionary.actionErrors.eventResponsesNotConfigured };
   }
 
   const now = new Date().toISOString();
@@ -99,9 +103,9 @@ export async function joinWaitlistAction(
     .select("id")
     .maybeSingle<{ id: string }>();
 
-  if (updateError) return { error: updateError.message };
+  if (updateError) return { error: localizeDbError(updateError.message, dictionary) };
   if (!updatedInvitation)
-    return { error: "This waitlist is no longer available." };
+    return { error: dictionary.actionErrors.waitlistUnavailable };
 
   revalidateEventMutationPaths(invitation.event_id);
   redirect("/going-out?waitlist=joined");
@@ -111,11 +115,12 @@ export async function declineInvitationAction(
   _previousState: EventActionState,
   formData: FormData,
 ): Promise<EventActionState> {
-  const { member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const invitationId = String(formData.get("invitation_id") || "");
   const supabase = await createSupabaseServerClient();
 
-  if (!invitationId) return { error: "Invitation was not found." };
+  if (!invitationId) return { error: dictionary.actionErrors.invitationMissing };
 
   const { data: invitation, error: invitationError } = await supabase
     .from("event_invitations")
@@ -124,13 +129,13 @@ export async function declineInvitationAction(
     .eq("member_id", member.id)
     .maybeSingle<InvitationResponseLookup>();
 
-  if (invitationError) return { error: invitationError.message };
-  if (!invitation) return { error: "Invitation was not found." };
+  if (invitationError) return { error: localizeDbError(invitationError.message, dictionary) };
+  if (!invitation) return { error: dictionary.actionErrors.invitationMissing };
   if (
     invitation.confirmed_at ||
     !["invited", "waitlisted"].includes(invitation.status)
   ) {
-    return { error: "This invitation can no longer be declined here." };
+    return { error: dictionary.actionErrors.invitationDeclineUnavailable };
   }
 
   let serviceClient: ReturnType<typeof getSupabaseServiceClient>;
@@ -138,7 +143,7 @@ export async function declineInvitationAction(
   try {
     serviceClient = getSupabaseServiceClient();
   } catch {
-    return { error: "Event responses are not configured yet." };
+    return { error: dictionary.actionErrors.eventResponsesNotConfigured };
   }
 
   const now = new Date().toISOString();
@@ -157,9 +162,9 @@ export async function declineInvitationAction(
     .select("id")
     .maybeSingle<{ id: string }>();
 
-  if (updateError) return { error: updateError.message };
+  if (updateError) return { error: localizeDbError(updateError.message, dictionary) };
   if (!updatedInvitation)
-    return { error: "This invitation can no longer be declined here." };
+    return { error: dictionary.actionErrors.invitationDeclineUnavailable };
 
   revalidateEventMutationPaths(invitation.event_id);
   return { ok: true };
@@ -169,11 +174,12 @@ export async function cancelInvitationAction(
   _previousState: EventActionState,
   formData: FormData,
 ): Promise<EventActionState> {
-  const { member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const invitationId = String(formData.get("invitation_id") || "");
   const supabase = await createSupabaseServerClient();
 
-  if (!invitationId) return { error: "Invitation was not found." };
+  if (!invitationId) return { error: dictionary.actionErrors.invitationMissing };
 
   const { data: invitation, error: invitationError } = await supabase
     .from("event_invitations")
@@ -182,8 +188,8 @@ export async function cancelInvitationAction(
     .eq("member_id", member.id)
     .maybeSingle<InvitationCancellationLookup>();
 
-  if (invitationError) return { error: invitationError.message };
-  if (!invitation) return { error: "Invitation was not found." };
+  if (invitationError) return { error: localizeDbError(invitationError.message, dictionary) };
+  if (!invitation) return { error: dictionary.actionErrors.invitationMissing };
 
   if (invitation.status === "waitlisted") {
     let serviceClient: ReturnType<typeof getSupabaseServiceClient>;
@@ -191,7 +197,7 @@ export async function cancelInvitationAction(
     try {
       serviceClient = getSupabaseServiceClient();
     } catch {
-      return { error: "Event cancellations are not configured yet." };
+      return { error: dictionary.actionErrors.eventCancellationsNotConfigured };
     }
 
     const now = new Date().toISOString();
@@ -210,9 +216,9 @@ export async function cancelInvitationAction(
         .select("id")
         .maybeSingle<{ id: string }>();
 
-    if (updateError) return { error: updateError.message };
+    if (updateError) return { error: localizeDbError(updateError.message, dictionary) };
     if (!cancelledInvitation)
-      return { error: "This invitation can no longer be cancelled." };
+      return { error: dictionary.actionErrors.invitationCancelUnavailable };
 
     revalidateEventMutationPaths(invitation.event_id);
     redirect("/going-out?waitlist=cancelled");
@@ -220,7 +226,7 @@ export async function cancelInvitationAction(
 
   if (invitation.status !== "confirmed") {
     return {
-      error: "Only confirmed or waitlisted invitations can be cancelled here.",
+      error: dictionary.actionErrors.confirmedOrWaitlistedOnly,
     };
   }
 
@@ -228,7 +234,7 @@ export async function cancelInvitationAction(
     p_invitation_id: invitationId,
   });
 
-  if (error) return { error: error.message };
+  if (error) return { error: localizeDbError(error.message, dictionary) };
 
   revalidateEventMutationPaths(invitation.event_id);
   return { ok: true };

@@ -1,6 +1,7 @@
 import { RouteToast } from "@/components/app/route-toast";
 import { ProfileForm } from "@/components/forms/profile-form";
 import { requireMemberContext } from "@/lib/data/member";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { profileImageUrl } from "@/lib/profile-image";
 import { storyValue } from "@/lib/utils";
 
@@ -13,7 +14,8 @@ type MyStoryPageProps = {
 };
 
 export default async function MyStoryPage({ searchParams }: MyStoryPageProps) {
-  const { member, profile } = await requireMemberContext();
+  const { locale, member, profile } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const { saved } = await searchParams;
   const firstName = storyValue(profile?.profile_json, "profile.first_name");
   const imageUrl = profileImageUrl(profile?.profile_json);
@@ -23,18 +25,21 @@ export default async function MyStoryPage({ searchParams }: MyStoryPageProps) {
     <article className="grid w-full min-w-0 gap-6">
       <header>
         <h1 className="font-display text-3xl font-black text-wine sm:text-4xl">
-          My story
+          {dictionary.profile.title}
         </h1>
       </header>
 
       <RouteToast
         clearSearchParams={["saved"]}
-        title="Story saved."
+        title={dictionary.profile.storySaved}
         toastKey={saved === "1" ? "story-saved" : null}
       />
 
       <div className="min-w-0 overflow-hidden rounded-lg border border-wine/10 bg-white px-4 py-8 shadow-[0_18px_45px_rgba(68,10,18,0.07)] sm:px-8 sm:py-10">
         <ProfileForm
+          autocompleteCopy={dictionary.autocomplete}
+          copy={dictionary.profile}
+          imageUploaderCopy={dictionary.imageUploader}
           profile={profile}
           profileImage={{
             currentImageUrl: imageUrl,

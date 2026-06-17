@@ -291,7 +291,7 @@ export async function getCreditProducts() {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("credit_products")
-    .select("id,name,description,credits,price_amount_cents,currency,stripe_price_id,status,sort_order")
+    .select("id,name,description,localized_content,credits,price_amount_cents,currency,stripe_price_id,status,sort_order")
     .eq("status", "active")
     .order("sort_order", { ascending: true });
 
@@ -391,7 +391,7 @@ export async function getInvitations(memberId: string) {
   const { data } = await supabase
     .from("event_invitations")
     .select(
-      "id,event_id,member_id,status,invited_at,responded_at,confirmed_at,cancelled_at,notes,events(id,title,description,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
+      "id,event_id,member_id,status,invited_at,responded_at,confirmed_at,cancelled_at,notes,events(id,title,description,localized_content,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
     )
     .eq("member_id", memberId)
     .order("invited_at", { ascending: false });
@@ -406,7 +406,7 @@ export async function getAttendedEvents(memberId: string) {
   const { data } = await supabase
     .from("event_attendees")
     .select(
-      "id,event_id,member_id,invitation_id,status,is_host,events(id,title,description,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
+      "id,event_id,member_id,invitation_id,status,is_host,events(id,title,description,localized_content,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
     )
     .eq("member_id", memberId)
     .order("created_at", { ascending: false });
@@ -444,7 +444,7 @@ export async function getConversations(
   const { data } = await supabase
     .from("conversations")
     .select(
-      "id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at,events(id,title,description,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
+      "id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at,events(id,title,description,localized_content,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
     )
     .or(`initiated_by_member_id.eq.${memberId},recipient_member_id.eq.${memberId}`)
     .order("updated_at", { ascending: false });
@@ -472,7 +472,7 @@ export async function getConversation(conversationId: string, memberId: string) 
     supabase
       .from("conversations")
       .select(
-        "id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at,events(id,title,description,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
+        "id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at,events(id,title,description,localized_content,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
       )
       .eq("id", conversationId)
       .maybeSingle(),
@@ -501,7 +501,7 @@ export async function getUnreadNotifications(memberId: string) {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("notifications")
-    .select("id,member_id,type,title,body,href,read_at,created_at")
+    .select("id,member_id,type,title,body,href,localized_content,read_at,created_at")
     .eq("member_id", memberId)
     .eq("type", "message")
     .is("read_at", null)

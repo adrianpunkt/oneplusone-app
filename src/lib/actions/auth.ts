@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getRequestLocaleFallback } from "@/lib/i18n/server";
 import { safeInternalPath } from "@/lib/utils";
 import { emailSchema, otpCodeSchema } from "@/lib/validators/story";
 
@@ -17,13 +19,14 @@ export type AuthActionState = {
 };
 
 async function findActiveMemberByEmail(email: string) {
+  const dictionary = getDictionary(await getRequestLocaleFallback());
   let serviceClient: ReturnType<typeof getSupabaseServiceClient>;
 
   try {
     serviceClient = getSupabaseServiceClient();
   } catch {
     return {
-      error: "Member access is not configured yet. Add the Supabase service key first.",
+      error: dictionary.authErrors.memberAccess,
       member: null,
     };
   }
@@ -37,7 +40,7 @@ async function findActiveMemberByEmail(email: string) {
 
   if (error) {
     return {
-      error: "We could not check your membership right now. Please try again.",
+      error: dictionary.authErrors.checkMembership,
       member: null,
     };
   }
@@ -49,11 +52,12 @@ export async function requestOtpAction(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const dictionary = getDictionary(await getRequestLocaleFallback());
   const parsedEmail = emailSchema.safeParse(formData.get("email"));
   const next = safeInternalPath(String(formData.get("next") || "/dashboard"));
 
   if (!parsedEmail.success) {
-    return { error: "Enter a valid email address." };
+    return { error: dictionary.authErrors.validEmail };
   }
 
   const email = parsedEmail.data.trim().toLowerCase();
@@ -76,7 +80,7 @@ export async function requestOtpAction(
   try {
     supabase = await createSupabaseServerClient();
   } catch {
-    return { error: "Supabase is not configured yet. Add .env.local first." };
+    return { error: dictionary.authErrors.supabase };
   }
 
   const redirectTo = `${origin}/auth/callback?next=${encodeURIComponent(next)}`;
@@ -94,7 +98,7 @@ export async function requestOtpAction(
       email,
       error:
         error.message === "Error sending magic link email"
-          ? "We could not send the login email. Check the Supabase email provider for opo-dev."
+          ? dictionary.authErrors.loginEmail
           : error.message,
     };
   }
@@ -106,18 +110,19 @@ export async function verifyOtpAction(
   _previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
+  const dictionary = getDictionary(await getRequestLocaleFallback());
   const parsedEmail = emailSchema.safeParse(formData.get("email"));
   const parsedToken = otpCodeSchema.safeParse(formData.get("code"));
   const next = safeInternalPath(String(formData.get("next") || "/dashboard"));
 
   if (!parsedEmail.success) {
-    return { error: "Enter the email address we sent the code to.", sent: true };
+    return { error: dictionary.authErrors.emailForCode, sent: true };
   }
 
   const email = parsedEmail.data.trim().toLowerCase();
 
   if (!parsedToken.success) {
-    return { email, error: "Enter the code from your email.", next, sent: true };
+    return { email, error: dictionary.authErrors.codeFromEmail, next, sent: true };
   }
 
   const { error: memberLookupError, member } = await findActiveMemberByEmail(email);
@@ -131,7 +136,7 @@ export async function verifyOtpAction(
   try {
     supabase = await createSupabaseServerClient();
   } catch {
-    return { email, error: "Supabase is not configured yet. Add .env.local first.", next, sent: true };
+    return { email, error: dictionary.authErrors.supabase, next, sent: true };
   }
 
   const { error } = await supabase.auth.verifyOtp({
@@ -141,7 +146,7 @@ export async function verifyOtpAction(
   });
 
   if (error) {
-    return { email, error: "That code did not work. Check the code or request a new one.", next, sent: true };
+    return { email, error: dictionary.authErrors.invalidCode, next, sent: true };
   }
 
   await supabase.rpc("link_member_for_current_user");

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireMemberContext } from "@/lib/data/member";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { localizeDbError } from "@/lib/i18n/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import {
   preferencesSchema,
@@ -46,10 +48,11 @@ export async function saveProfileAction(
   _previousState: FormActionState,
   formData: FormData,
 ): Promise<FormActionState> {
-  const { profile } = await requireMemberContext();
+  const { locale, profile } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
 
   if (!profile) {
-    return { error: "No submitted story is linked to this account yet." };
+    return { error: dictionary.actionErrors.noStory };
   }
 
   const existingProfileJson = profile.profile_json || {};
@@ -68,7 +71,7 @@ export async function saveProfileAction(
   const parsed = profileFieldSchema.safeParse(fields);
 
   if (!parsed.success) {
-    return { error: "Some story fields need attention." };
+    return { error: dictionary.profile.validation };
   }
 
   const nextProfile = {
@@ -92,7 +95,7 @@ export async function saveProfileAction(
     .eq("id", profile.id);
 
   if (error) {
-    return { error: error.message };
+    return { error: localizeDbError(error.message, dictionary) };
   }
 
   revalidatePath("/my-story");
@@ -104,7 +107,8 @@ export async function savePreferencesAction(
   _previousState: FormActionState,
   formData: FormData,
 ): Promise<FormActionState> {
-  const { member } = await requireMemberContext();
+  const { locale, member } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
   const returnToDashboard = formData.get("return_to") === "dashboard";
   const parsed = preferencesSchema.safeParse({
     prefersSaturdayDinner: checkboxValue(formData, "prefers_saturday_dinner"),
@@ -128,7 +132,7 @@ export async function savePreferencesAction(
   });
 
   if (!parsed.success) {
-    return { error: "Some preference fields are too long." };
+    return { error: dictionary.actionErrors.preferenceTooLong };
   }
 
   const supabase = await createSupabaseServerClient();
@@ -165,7 +169,7 @@ export async function savePreferencesAction(
   });
 
   if (error) {
-    return { error: error.message };
+    return { error: localizeDbError(error.message, dictionary) };
   }
 
   revalidatePath("/preferences");

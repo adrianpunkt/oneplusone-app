@@ -3,6 +3,9 @@ import { randomUUID } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getOptionalMemberContext } from "@/lib/data/member";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { localizeDbError } from "@/lib/i18n/errors";
+import { getRequestLocaleFallback } from "@/lib/i18n/server";
 import {
   isMemberProfileImagePath,
   PROFILE_IMAGES_BUCKET,
@@ -23,6 +26,10 @@ const maxThumbnailUploadBytes = 256 * 1024;
 
 export const runtime = "nodejs";
 
+async function getRouteDictionary() {
+  return getDictionary(await getRequestLocaleFallback());
+}
+
 function memberImagePaths(memberId: string, paths: Array<string | null | undefined>) {
   return Array.from(
     new Set(
@@ -36,13 +43,17 @@ function memberImagePaths(memberId: string, paths: Array<string | null | undefin
 
 export async function POST(request: NextRequest) {
   const context = await getOptionalMemberContext();
+  const dictionary = context
+    ? getDictionary(context.locale)
+    : await getRouteDictionary();
+  const copy = dictionary.imageUploader;
   if (!context) {
-    return NextResponse.json({ ok: false, error: "Login required." }, { status: 401 });
+    return NextResponse.json({ ok: false, error: dictionary.checkout.loginRequired }, { status: 401 });
   }
 
   if (!context.profile) {
     return NextResponse.json(
-      { ok: false, error: "No submitted story is linked to this account yet." },
+      { ok: false, error: dictionary.actionErrors.noStory },
       { status: 400 },
     );
   }
@@ -52,12 +63,12 @@ export async function POST(request: NextRequest) {
   const thumbnail = formData?.get("thumbnail");
 
   if (!(image instanceof File)) {
-    return NextResponse.json({ ok: false, error: "Choose a profile image first." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: copy.chooseFirst }, { status: 400 });
   }
 
   if (thumbnail !== undefined && thumbnail !== null && !(thumbnail instanceof File)) {
     return NextResponse.json(
-      { ok: false, error: "Choose a valid profile thumbnail." },
+      { ok: false, error: copy.chooseValidThumbnail },
       { status: 400 },
     );
   }
@@ -65,14 +76,14 @@ export async function POST(request: NextRequest) {
   const extension = acceptedTypes.get(image.type);
   if (!extension) {
     return NextResponse.json(
-      { ok: false, error: "Use a WEBP, JPG, or PNG image." },
+      { ok: false, error: copy.useImage },
       { status: 400 },
     );
   }
 
   if (image.size > maxUploadBytes) {
     return NextResponse.json(
-      { ok: false, error: "The cropped image is too large." },
+      { ok: false, error: copy.croppedTooLarge },
       { status: 400 },
     );
   }
@@ -81,14 +92,14 @@ export async function POST(request: NextRequest) {
   const thumbnailExtension = thumbnailImage ? acceptedTypes.get(thumbnailImage.type) : extension;
   if (!thumbnailExtension) {
     return NextResponse.json(
-      { ok: false, error: "Use a WEBP, JPG, or PNG thumbnail." },
+      { ok: false, error: copy.useThumbnail },
       { status: 400 },
     );
   }
 
   if (thumbnailImage && thumbnailImage.size > maxThumbnailUploadBytes) {
     return NextResponse.json(
-      { ok: false, error: "The thumbnail image is too large." },
+      { ok: false, error: copy.thumbnailTooLarge },
       { status: 400 },
     );
   }
@@ -164,7 +175,10 @@ export async function POST(request: NextRequest) {
     await supabase.storage
       .from(PROFILE_IMAGES_BUCKET)
       .remove(memberImagePaths(context.member.id, [storagePath, thumbnailStoragePath]));
-    return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: localizeDbError(updateError.message, dictionary) },
+      { status: 500 },
+    );
   }
 
   const nextStoragePaths = new Set([storagePath, thumbnailStoragePath]);
@@ -182,13 +196,16 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   const context = await getOptionalMemberContext();
+  const dictionary = context
+    ? getDictionary(context.locale)
+    : await getRouteDictionary();
   if (!context) {
-    return NextResponse.json({ ok: false, error: "Login required." }, { status: 401 });
+    return NextResponse.json({ ok: false, error: dictionary.checkout.loginRequired }, { status: 401 });
   }
 
   if (!context.profile) {
     return NextResponse.json(
-      { ok: false, error: "No submitted story is linked to this account yet." },
+      { ok: false, error: dictionary.actionErrors.noStory },
       { status: 400 },
     );
   }
@@ -222,7 +239,10 @@ export async function DELETE() {
     .eq("user_id", context.user.id);
 
   if (updateError) {
-    return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: localizeDbError(updateError.message, dictionary) },
+      { status: 500 },
+    );
   }
 
   const previousPaths = memberImagePaths(context.member.id, [

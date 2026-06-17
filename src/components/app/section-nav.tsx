@@ -4,18 +4,29 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { MemberNavIcon } from "@/components/app/member-nav-icon";
-import { MessageHeartIcon, messageNotificationTooltip } from "@/components/app/message-heart-icon";
+import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { isPathInSection, meActivePaths, navSections } from "@/components/app/nav-sections";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+type NavLabels = {
+  dashboard: string;
+  goingOut: string;
+  messages: string;
+  myStory: string;
+};
+
 export function SectionNav({
   displayName,
   imageUrl,
+  labels,
+  messageTooltip,
   unreadCount,
 }: {
   displayName: string;
   imageUrl: string;
+  labels: NavLabels;
+  messageTooltip?: string;
   unreadCount: number;
 }) {
   const pathname = usePathname();
@@ -25,8 +36,8 @@ export function SectionNav({
       {navSections.map((item) => {
         const isActive = isPathInSection(pathname, item.activePaths);
         const isMessages = item.href === "/messages";
-        const messageTooltip =
-          isMessages && unreadCount > 0 ? messageNotificationTooltip(unreadCount) : undefined;
+        const label = labels[item.labelKey];
+        const itemMessageTooltip = isMessages && unreadCount > 0 ? messageTooltip : undefined;
 
         return (
           <Button
@@ -42,7 +53,7 @@ export function SectionNav({
           >
             <Link
               aria-current={isActive ? "page" : undefined}
-              aria-label={messageTooltip ? `${item.label}. ${messageTooltip}` : undefined}
+              aria-label={itemMessageTooltip ? `${label}. ${itemMessageTooltip}` : undefined}
               href={item.href}
             >
               {isMessages ? (
@@ -50,14 +61,14 @@ export function SectionNav({
                   className={cn("h-6 w-6", unreadCount > 0 ? "text-lipstick" : "text-current")}
                   count={unreadCount}
                   iconClassName="h-6 w-6"
-                  tooltip={messageTooltip}
+                  tooltip={itemMessageTooltip}
                 />
               ) : (
                 <span className="grid h-6 w-6 shrink-0 place-items-center">
                   <item.icon className="h-4 w-4" />
                 </span>
               )}
-              {item.label}
+              {label}
             </Link>
           </Button>
         );
@@ -83,7 +94,7 @@ export function SectionNav({
               imageUrl={imageUrl}
             />
           </span>
-          My Story
+          {labels.myStory}
         </Link>
       </Button>
     </nav>

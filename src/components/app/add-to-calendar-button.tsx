@@ -14,6 +14,13 @@ type CalendarEvent = {
   title: string;
 };
 
+export type CalendarCopy = {
+  add: string;
+  apple: string;
+  defaultDescription: string;
+  google: string;
+};
+
 function parseEventDates(startsAt: string | null | undefined, endsAt: string | null | undefined) {
   if (!startsAt) return null;
 
@@ -45,11 +52,11 @@ function escapeIcsValue(value: string) {
     .replace(/;/g, "\\;");
 }
 
-function eventDescription(event: CalendarEvent) {
-  return event.description || "one plus one club event";
+function eventDescription(event: CalendarEvent, copy: CalendarCopy) {
+  return event.description || copy.defaultDescription;
 }
 
-function downloadAppleCalendarEvent(event: CalendarEvent) {
+function downloadAppleCalendarEvent(event: CalendarEvent, copy: CalendarCopy) {
   const dates = parseEventDates(event.startsAt, event.endsAt);
   if (!dates) return;
 
@@ -65,7 +72,7 @@ function downloadAppleCalendarEvent(event: CalendarEvent) {
     `DTSTART:${calendarDate(dates.start)}`,
     `DTEND:${calendarDate(dates.end)}`,
     `SUMMARY:${escapeIcsValue(event.title)}`,
-    `DESCRIPTION:${escapeIcsValue(eventDescription(event))}`,
+    `DESCRIPTION:${escapeIcsValue(eventDescription(event, copy))}`,
     event.location ? `LOCATION:${escapeIcsValue(event.location)}` : "",
     "END:VEVENT",
     "END:VCALENDAR",
@@ -83,7 +90,7 @@ function downloadAppleCalendarEvent(event: CalendarEvent) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function openGoogleCalendarEvent(event: CalendarEvent) {
+function openGoogleCalendarEvent(event: CalendarEvent, copy: CalendarCopy) {
   const dates = parseEventDates(event.startsAt, event.endsAt);
   if (!dates) return;
 
@@ -91,23 +98,29 @@ function openGoogleCalendarEvent(event: CalendarEvent) {
   url.searchParams.set("action", "TEMPLATE");
   url.searchParams.set("text", event.title);
   url.searchParams.set("dates", `${calendarDate(dates.start)}/${calendarDate(dates.end)}`);
-  url.searchParams.set("details", eventDescription(event));
+  url.searchParams.set("details", eventDescription(event, copy));
   if (event.location) url.searchParams.set("location", event.location);
 
   window.open(url.toString(), "_blank", "noopener,noreferrer");
 }
 
-export function AddToCalendarButton({ event }: { event: CalendarEvent }) {
+export function AddToCalendarButton({
+  copy,
+  event,
+}: {
+  copy: CalendarCopy;
+  event: CalendarEvent;
+}) {
   const [open, setOpen] = useState(false);
   const hasDate = Boolean(event.startsAt);
 
   function addToAppleCalendar() {
-    downloadAppleCalendarEvent(event);
+    downloadAppleCalendarEvent(event, copy);
     setOpen(false);
   }
 
   function addToGoogleCalendar() {
-    openGoogleCalendarEvent(event);
+    openGoogleCalendarEvent(event, copy);
     setOpen(false);
   }
 
@@ -123,7 +136,7 @@ export function AddToCalendarButton({ event }: { event: CalendarEvent }) {
         variant="secondary"
       >
         <CalendarPlus className="h-4 w-4" />
-        Add to calendar
+        {copy.add}
       </Button>
       {open ? (
         <div
@@ -136,7 +149,7 @@ export function AddToCalendarButton({ event }: { event: CalendarEvent }) {
             role="menuitem"
             type="button"
           >
-            Apple Calendar
+            {copy.apple}
           </button>
           <button
             className="rounded-md px-3 py-2 text-left text-sm font-semibold text-wine hover:bg-blush focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35"
@@ -144,7 +157,7 @@ export function AddToCalendarButton({ event }: { event: CalendarEvent }) {
             role="menuitem"
             type="button"
           >
-            Google Calendar
+            {copy.google}
           </button>
         </div>
       ) : null}

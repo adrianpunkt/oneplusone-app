@@ -12,21 +12,46 @@ import { useToast } from "@/components/ui/toast";
 const initialState: AuthActionState = {};
 const joinUrl = "https://oneplusoneclub.com/story";
 
-function LoginIntro() {
+export type LoginFormCopy = {
+  checking: string;
+  codePlaceholder: string;
+  codeSentToast: string;
+  email: string;
+  emailCode: string;
+  emailPlaceholder: string;
+  introBody: string;
+  introTitle: string;
+  joinClub: string;
+  login: string;
+  notRegisteredBody: string;
+  notRegisteredTitle: string;
+  sendLoginCode: string;
+  sendNewCode: string;
+  sending: string;
+  sentCodePrefix: string;
+  sentCodeSuffix: string;
+};
+
+function LoginIntro({ copy }: { copy: LoginFormCopy }) {
   return (
     <div className="grid gap-2">
       <h1 className="font-display text-2xl font-extrabold leading-tight text-wine">
-        Welcome back
+        {copy.introTitle}
       </h1>
       <p className="text-sm leading-6 text-muted">
-        Use the email from your story to login to the <b>one plus one app</b>. We will send you a
-        private code to login.
+        {copy.introBody}
       </p>
     </div>
   );
 }
 
-export function LoginForm({ next = "/dashboard" }: { next?: string }) {
+export function LoginForm({
+  copy,
+  next = "/dashboard",
+}: {
+  copy: LoginFormCopy;
+  next?: string;
+}) {
   const [hideVerifyError, setHideVerifyError] = useState(false);
   const { showToast } = useToast();
   const [requestState, requestAction, requestPending] = useActionState(
@@ -53,31 +78,31 @@ export function LoginForm({ next = "/dashboard" }: { next?: string }) {
 
     showToast({
       description: requestState.email,
-      title: "Login code sent.",
+      title: copy.codeSentToast,
     });
-  }, [requestState, showToast]);
+  }, [copy.codeSentToast, requestState, showToast]);
 
   if (notRegistered) {
     return (
       <div className="grid gap-4">
-        <LoginIntro />
+        <LoginIntro copy={copy} />
         <form action={requestAction} className="grid gap-4">
           <input type="hidden" name="next" value={next} />
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{copy.email}</Label>
             <Input
               id="email"
               name="email"
               type="email"
               autoComplete="email"
-              placeholder="you@example.com"
+              placeholder={copy.emailPlaceholder}
               defaultValue={email}
               required
             />
           </div>
           <Button disabled={requestPending} size="lg">
             <Mail className="h-4 w-4" />
-            {requestPending ? "Checking..." : "Send login code"}
+            {requestPending ? copy.checking : copy.sendLoginCode}
           </Button>
         </form>
         <div className="grid gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-4 text-sm leading-6 text-wine">
@@ -86,15 +111,15 @@ export function LoginForm({ next = "/dashboard" }: { next?: string }) {
               <UserPlus className="h-4 w-4" />
             </span>
             <div>
-              <p className="font-semibold">We could not find an active membership for that email.</p>
+              <p className="font-semibold">{copy.notRegisteredTitle}</p>
               <p className="text-wine/70">
-                If you want to join one plus one club, click the button below.
+                {copy.notRegisteredBody}
               </p>
             </div>
           </div>
           <Button asChild variant="secondary">
             <a href={joinUrl}>
-              Join the club
+              {copy.joinClub}
               <ExternalLink className="h-4 w-4" />
             </a>
           </Button>
@@ -114,22 +139,22 @@ export function LoginForm({ next = "/dashboard" }: { next?: string }) {
           <input type="hidden" name="email" value={email} />
           <input type="hidden" name="next" value={activeNext} />
           <p className="rounded-lg border border-ocean/15 bg-ocean/8 p-3 text-sm font-semibold leading-6 text-ocean">
-            We sent a login code to {email}.
+            {copy.sentCodePrefix}{email}{copy.sentCodeSuffix}
           </p>
           <div className="grid gap-2">
-            <Label htmlFor="code">Email code</Label>
+            <Label htmlFor="code">{copy.emailCode}</Label>
             <Input
               id="code"
               name="code"
               inputMode="numeric"
               autoComplete="one-time-code"
-              placeholder="Enter the code"
+              placeholder={copy.codePlaceholder}
               required
             />
           </div>
           <Button disabled={verifyPending} size="lg">
             <KeyRound className="h-4 w-4" />
-            {verifyPending ? "Checking..." : "Login"}
+            {verifyPending ? copy.checking : copy.login}
           </Button>
           {codeStepError ? (
             <p className="text-sm font-semibold text-lipstick" role="status">
@@ -150,7 +175,7 @@ export function LoginForm({ next = "/dashboard" }: { next?: string }) {
             type="submit"
           >
             <RotateCcw className="h-4 w-4 transition-transform duration-150 group-hover:-rotate-45" />
-            {requestPending ? "Sending..." : "Send a new code"}
+            {requestPending ? copy.sending : copy.sendNewCode}
           </button>
         </form>
       </div>
@@ -159,24 +184,24 @@ export function LoginForm({ next = "/dashboard" }: { next?: string }) {
 
   return (
     <div className="grid gap-4">
-      <LoginIntro />
+      <LoginIntro copy={copy} />
       <form action={requestAction} className="grid gap-4">
         <input type="hidden" name="next" value={next} />
         <div className="grid gap-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{copy.email}</Label>
           <Input
             id="email"
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder={copy.emailPlaceholder}
             defaultValue={email}
             required
           />
         </div>
         <Button disabled={requestPending} size="lg">
           <Mail className="h-4 w-4" />
-          {requestPending ? "Sending..." : "Send login code"}
+          {requestPending ? copy.sending : copy.sendLoginCode}
         </Button>
         {requestState.error ? (
           <p className="text-sm font-semibold text-lipstick" role="status">

@@ -17,7 +17,20 @@ import { sendMessageAction, type MessageActionState } from "@/lib/actions/messag
 const initialState: MessageActionState = {};
 const maxComposerRows = 5;
 
-export function SendMessageForm({ conversationId }: { conversationId: string }) {
+export type SendMessageCopy = {
+  messageSent: string;
+  sendMessage: string;
+  sending: string;
+  writePlaceholder: string;
+};
+
+export function SendMessageForm({
+  conversationId,
+  copy,
+}: {
+  conversationId: string;
+  copy: SendMessageCopy;
+}) {
   const [state, action] = useActionState(sendMessageAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -70,17 +83,17 @@ export function SendMessageForm({ conversationId }: { conversationId: string }) 
           name="body"
           onKeyDown={submitWithShortcut}
           onInput={resizeComposer}
-          placeholder="Write a message..."
+          placeholder={copy.writePlaceholder}
           ref={textareaRef}
           required
           rows={1}
         />
         <SubmitButton
-          aria-label="Send message"
+          aria-label={copy.sendMessage}
           className="absolute bottom-2 right-3 h-10 w-10 rounded-full p-0 shadow-sm"
           pendingLabel={<Send className="h-4 w-4" />}
           size="icon"
-          title="Send message"
+          title={copy.sendMessage}
         >
           <Send className="h-4 w-4" />
         </SubmitButton>
@@ -88,7 +101,7 @@ export function SendMessageForm({ conversationId }: { conversationId: string }) 
       <ActionStatus
         error={state.error}
         ok={state.ok}
-        successMessage="Message sent."
+        successMessage={copy.messageSent}
         toastKey={state}
       />
     </form>
