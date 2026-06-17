@@ -4,10 +4,20 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import { markConversationReadAction } from "@/lib/actions/messages";
-import { createSupabaseBrowserClient } from "@/lib/supabase/client";
+import {
+  createSupabaseBrowserClient,
+  type SupabaseBrowserConfig,
+} from "@/lib/supabase/client";
 
-export function MessageThreadRefresh({ conversationId }: { conversationId: string }) {
+export function MessageThreadRefresh({
+  conversationId,
+  supabaseConfig,
+}: {
+  conversationId: string;
+  supabaseConfig: SupabaseBrowserConfig;
+}) {
   const router = useRouter();
+  const { supabaseAnonKey, supabaseUrl } = supabaseConfig;
 
   useEffect(() => {
     let active = true;
@@ -21,7 +31,10 @@ export function MessageThreadRefresh({ conversationId }: { conversationId: strin
 
     void markReadAndRefresh();
 
-    const supabase = createSupabaseBrowserClient();
+    const supabase = createSupabaseBrowserClient({
+      supabaseAnonKey,
+      supabaseUrl,
+    });
     const channel = supabase
       .channel(`messages:${conversationId}`)
       .on(
@@ -42,7 +55,7 @@ export function MessageThreadRefresh({ conversationId }: { conversationId: strin
       active = false;
       void supabase.removeChannel(channel);
     };
-  }, [conversationId, router]);
+  }, [conversationId, router, supabaseAnonKey, supabaseUrl]);
 
   return null;
 }

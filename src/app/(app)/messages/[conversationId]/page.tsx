@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { requireMemberContext } from "@/lib/data/member";
 import { getConversation } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { requirePublicSupabaseEnv } from "@/lib/supabase/server";
 import { cn, formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -22,6 +23,7 @@ export default async function ConversationPage({
   const { locale, member } = await requireMemberContext();
   const dictionary = getDictionary(locale);
   const { conversation, messages } = await getConversation(conversationId, member.id);
+  const supabaseConfig = requirePublicSupabaseEnv();
 
   if (!conversation) notFound();
 
@@ -33,7 +35,10 @@ export default async function ConversationPage({
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-[81px] z-10 px-0 pb-0 md:left-[260px] md:top-0 md:px-6 md:py-6 lg:px-8">
-      <MessageThreadRefresh conversationId={conversation.id} />
+      <MessageThreadRefresh
+        conversationId={conversation.id}
+        supabaseConfig={supabaseConfig}
+      />
       <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-0 md:gap-2">
         <section className="flex min-h-[3.25rem] min-w-0 shrink-0 items-center gap-2 border-b border-wine/10 bg-white/95 px-4 py-1.5 shadow-[0_8px_22px_rgba(68,10,18,0.05)] backdrop-blur sm:px-6 md:rounded-lg md:border md:px-3">
           <Link

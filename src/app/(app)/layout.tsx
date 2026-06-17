@@ -4,6 +4,7 @@ import { requireMemberContext } from "@/lib/data/member";
 import { getCreditBalance, getUnreadNotifications } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeNotification } from "@/lib/i18n/dynamic";
+import { requirePublicSupabaseEnv } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export default async function PortalLayout({
 }) {
   const { locale, member, profile } = await requireMemberContext();
   const dictionary = getDictionary(locale);
+  const supabaseConfig = requirePublicSupabaseEnv();
   const [creditBalance, notifications] = await Promise.all([
     getCreditBalance(member.id),
     getUnreadNotifications(member.id),
@@ -28,7 +30,7 @@ export default async function PortalLayout({
       notifications={notifications.map((notification) => localizeNotification(notification, locale))}
       profile={profile}
     >
-      <NotificationRefresh memberId={member.id} />
+      <NotificationRefresh memberId={member.id} supabaseConfig={supabaseConfig} />
       {children}
     </AppShell>
   );
