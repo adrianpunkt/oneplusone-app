@@ -4,6 +4,9 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-06-17",
   "compatibility_flags": ["nodejs_compat"],
+  "build": {
+    "command": "npx opennextjs-cloudflare build"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -31,6 +34,9 @@
       ],
       "vars": {
         "NEXT_PUBLIC_APP_URL": "https://dev-app.oneplusoneclub.com"
+      },
+      "build": {
+        "command": "npx opennextjs-cloudflare build --env dev"
       }
     }
   }
