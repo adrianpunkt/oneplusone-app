@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 import { z } from "zod";
 
+import { isLocalOrigin, resolveAppOrigin } from "@/lib/app-origin";
 import { getOptionalMemberContext } from "@/lib/data/member";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
@@ -124,19 +125,5 @@ function getCheckoutOrigin(request: NextRequest) {
   const requestOrigin = request.nextUrl.origin;
   if (isLocalOrigin(requestOrigin)) return requestOrigin;
 
-  const configuredUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (configuredUrl) {
-    try {
-      return new URL(configuredUrl).origin;
-    } catch {
-      console.error("Ignoring invalid NEXT_PUBLIC_APP_URL for Stripe Checkout");
-    }
-  }
-
-  return requestOrigin;
-}
-
-function isLocalOrigin(origin: string) {
-  const hostname = new URL(origin).hostname;
-  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  return resolveAppOrigin(requestOrigin);
 }

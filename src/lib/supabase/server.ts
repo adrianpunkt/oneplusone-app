@@ -1,17 +1,10 @@
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
-import { getRuntimeEnv } from "@/lib/env";
+import { requirePublicSupabaseConfig } from "@/lib/supabase/config";
 
 export function requirePublicSupabaseEnv() {
-  const supabaseUrl = getRuntimeEnv("NEXT_PUBLIC_SUPABASE_URL");
-  const supabaseAnonKey = getRuntimeEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY.");
-  }
-
-  return { supabaseAnonKey, supabaseUrl };
+  return requirePublicSupabaseConfig();
 }
 
 export async function createSupabaseServerClient() {

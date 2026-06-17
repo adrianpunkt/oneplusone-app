@@ -21,7 +21,10 @@
     }
   ],
   "vars": {
-    "NEXT_PUBLIC_APP_URL": "https://app.oneplusoneclub.com"
+    "APP_URL": "https://app.oneplusoneclub.com",
+    "NEXT_PUBLIC_APP_URL": "https://app.oneplusoneclub.com",
+    "NEXTJS_ENV": "cloudflare",
+    "SUPABASE_PROJECT_REF": "qevpnhaycygiyjxeucmj"
   },
   "env": {
     "dev": {
@@ -33,7 +36,10 @@
         }
       ],
       "vars": {
-        "NEXT_PUBLIC_APP_URL": "https://dev-app.oneplusoneclub.com"
+        "APP_URL": "https://dev-app.oneplusoneclub.com",
+        "NEXT_PUBLIC_APP_URL": "https://dev-app.oneplusoneclub.com",
+        "NEXTJS_ENV": "cloudflare",
+        "SUPABASE_PROJECT_REF": "oackdojvcfrkzbnprovb"
       },
       "build": {
         "command": "npx opennextjs-cloudflare build --env dev"

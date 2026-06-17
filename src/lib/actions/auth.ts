@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { resolveAppOrigin } from "@/lib/app-origin";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -69,11 +70,7 @@ export async function requestOtpAction(
   }
 
   const requestHeaders = await headers();
-  const origin = (
-    process.env.NEXT_PUBLIC_APP_URL ||
-    requestHeaders.get("origin") ||
-    "http://localhost:3000"
-  ).replace(/\/$/, "");
+  const origin = resolveAppOrigin(requestHeaders.get("origin"));
 
   let supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
 

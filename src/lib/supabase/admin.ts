@@ -1,21 +1,22 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 import { getRuntimeEnv } from "@/lib/env";
+import { requireSupabaseUrl } from "@/lib/supabase/config";
 
 let serviceClient: SupabaseClient | null = null;
 
 export function getSupabaseServiceClient() {
   if (serviceClient) return serviceClient;
 
-  const supabaseUrl = getRuntimeEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const supabaseUrl = requireSupabaseUrl();
   const serverApiKey =
     getRuntimeEnv("SUPABASE_SECRET_KEY") ||
     getRuntimeEnv("SUPABASE_API_SECRET_KEY") ||
     getDefaultKeyFromJsonEnv(getRuntimeEnv("SUPABASE_SECRET_KEYS")) ||
     getRuntimeEnv("SUPABASE_SERVICE_ROLE_KEY");
 
-  if (!supabaseUrl || !serverApiKey) {
-    throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY.");
+  if (!serverApiKey) {
+    throw new Error("Missing SUPABASE_SECRET_KEY.");
   }
 
   serviceClient = createClient(supabaseUrl, serverApiKey, {

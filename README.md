@@ -11,9 +11,10 @@ npm run dev
 
 Required env:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
+- `SUPABASE_PROJECT_REF` or `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SECRET_KEY`
+- `APP_URL`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET` or `APP_STRIPE_WEBHOOK_SECRET`
 
@@ -22,6 +23,18 @@ Local development is configured to use the Supabase development project:
 ```text
 opo-dev: https://oackdojvcfrkzbnprovb.supabase.co
 ```
+
+Cloudflare deployments pin the expected Supabase project in `wrangler.jsonc`:
+
+- prod app `app.oneplusoneclub.com` -> `qevpnhaycygiyjxeucmj`
+- dev app `dev-app.oneplusoneclub.com` -> `oackdojvcfrkzbnprovb`
+
+`SUPABASE_PROJECT_REF` is the deployment guardrail. When it is present, the app
+constructs the Supabase URL from that ref instead of trusting generated
+`.env.local` fallback values or a stale `NEXT_PUBLIC_SUPABASE_URL` secret.
+`NEXTJS_ENV=cloudflare` disables OpenNext's runtime fallback to bundled
+`.env.local` values, so missing Worker secrets fail instead of silently using
+local development credentials.
 
 The ignored `.env.local` file contains the matching dev publishable key and
 server-only Supabase secret API key. Use `.env.example` only as the template for new
