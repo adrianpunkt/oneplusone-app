@@ -9,6 +9,7 @@ import { getOptionalMemberContext } from "@/lib/data/member";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
 import { safeInternalPath } from "@/lib/utils";
+import { emailSchema } from "@/lib/validators/story";
 
 export const dynamic = "force-dynamic";
 
@@ -16,17 +17,54 @@ export const metadata: Metadata = {
   title: "Login",
 };
 
+type LoginSearchParams = {
+  auth?: string | string[];
+  email_hint?: string | string[];
+  next?: string | string[];
+};
+
+function firstSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function decodeEmailHint(value: string | string[] | undefined) {
+  const rawHint = firstSearchParam(value)?.trim();
+  if (!rawHint) return "";
+
+  try {
+    const normalized = rawHint
+      .replace(/\s/g, "+")
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const decoded = new TextDecoder().decode(
+      Uint8Array.from(atob(padded), (character) => character.charCodeAt(0)),
+    );
+    const parsed = emailSchema.safeParse(decoded);
+
+    return parsed.success ? parsed.data.toLowerCase() : "";
+  } catch {
+    return "";
+  }
+}
+
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ auth?: string; next?: string }>;
+  searchParams: Promise<LoginSearchParams>;
 }) {
   const context = await getOptionalMemberContext();
   if (context) redirect("/dashboard");
   const locale = await getRequestLocaleFallback();
   const dictionary = getDictionary(locale);
 
-  const { auth, next } = await searchParams;
+  const {
+    auth: authParam,
+    email_hint: emailHint,
+    next: nextParam,
+  } = await searchParams;
+  const auth = firstSearchParam(authParam);
+  const next = firstSearchParam(nextParam);
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-10">
@@ -68,6 +106,7 @@ export default async function LoginPage({
               sentCodePrefix: locale === "es" ? "Hemos enviado un código a " : "We sent a login code to ",
               sentCodeSuffix: ".",
             }}
+            initialEmail={decodeEmailHint(emailHint)}
             next={safeInternalPath(next, "/dashboard")}
           />
         </CardContent>

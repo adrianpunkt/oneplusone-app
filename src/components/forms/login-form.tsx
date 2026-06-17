@@ -51,9 +51,11 @@ function LoginIntro({ copy }: { copy: LoginFormCopy }) {
 
 export function LoginForm({
   copy,
+  initialEmail = "",
   next = "/dashboard",
 }: {
   copy: LoginFormCopy;
+  initialEmail?: string;
   next?: string;
 }) {
   const [hideVerifyError, setHideVerifyError] = useState(false);
@@ -66,7 +68,7 @@ export function LoginForm({
     verifyOtpAction,
     initialState,
   );
-  const email = verifyState.email || requestState.email || "";
+  const email = verifyState.email || requestState.email || initialEmail;
   const activeNext = verifyState.next || requestState.next || next;
   const codeStep = Boolean(requestState.sent || verifyState.sent);
   const notRegistered = requestState.notRegistered || verifyState.notRegistered;
