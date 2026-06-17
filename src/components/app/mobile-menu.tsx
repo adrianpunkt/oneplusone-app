@@ -113,7 +113,7 @@ export function MobileMenu({
                 aria-current={isActive ? "page" : undefined}
                 aria-label={messageTooltip ? `${item.label}. ${messageTooltip}` : undefined}
                 className={cn(
-                  "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-bold transition-colors hover:bg-white hover:text-lipstick",
+                  "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-white hover:text-lipstick",
                   isActive ? "bg-white text-lipstick shadow-sm" : "text-wine",
                 )}
                 href={item.href}
@@ -136,7 +136,7 @@ export function MobileMenu({
           <Link
             aria-current={isPathInSection(pathname, meActivePaths) ? "page" : undefined}
             className={cn(
-              "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-bold transition-colors hover:bg-white hover:text-lipstick",
+              "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-white hover:text-lipstick",
               isPathInSection(pathname, meActivePaths)
                 ? "bg-white text-lipstick shadow-sm"
                 : "text-wine",

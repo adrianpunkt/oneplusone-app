@@ -27,7 +27,7 @@ export default async function PreferencesPage({
   return (
     <>
       <section className="grid gap-2">
-        <h1 className="font-display text-3xl font-black tracking-tight text-wine">
+        <h1 className="font-display text-3xl font-black text-wine">
           Going-out preferences
         </h1>
       </section>

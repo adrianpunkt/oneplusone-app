@@ -135,7 +135,7 @@ export default async function DashboardPage({
       />
 
       <section className="grid min-h-[calc(100dvh-7.5rem)] content-center gap-5 md:min-h-[calc(100dvh-3rem)]">
-        <h1 className="font-display text-3xl font-black tracking-tight text-wine sm:text-4xl">
+        <h1 className="font-display text-3xl font-black text-wine sm:text-4xl">
           Welcome to the club
         </h1>
 

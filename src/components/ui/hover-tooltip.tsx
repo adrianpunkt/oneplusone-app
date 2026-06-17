@@ -26,7 +26,7 @@ export function HoverTooltip({
     <span
       aria-hidden="true"
       className={cn(
-        "pointer-events-none absolute z-50 whitespace-nowrap rounded-md border border-lipstick/20 bg-lipstick px-2.5 py-1.5 text-xs font-bold leading-none text-white opacity-0 shadow-lg shadow-lipstick/20 ring-1 ring-white/20 translate-y-1 transition-[opacity,transform] duration-150 before:absolute before:h-2 before:w-2 before:rotate-45 before:bg-lipstick before:content-[''] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100",
+        "pointer-events-none absolute z-50 whitespace-nowrap rounded-md border border-lipstick/20 bg-lipstick px-2.5 py-1.5 text-xs font-semibold leading-none text-white opacity-0 shadow-lg shadow-lipstick/20 ring-1 ring-white/20 translate-y-1 transition-[opacity,transform] duration-150 before:absolute before:h-2 before:w-2 before:rotate-45 before:bg-lipstick before:content-[''] group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100",
         placementClasses[placement],
         className,
       )}

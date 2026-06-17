@@ -31,7 +31,7 @@ const heightOptions = Array.from({ length: 131 }, (_, index) =>
 );
 const noneDealBreaker = "none — I'm pretty easygoing";
 const storyTextClass =
-  "min-w-0 max-w-full text-[1.25rem] font-medium leading-[1.9] text-ink [overflow-wrap:anywhere] sm:text-[1.45rem] lg:text-[1.6rem]";
+  "min-w-0 max-w-full text-xl font-medium leading-8 text-ink [overflow-wrap:anywhere] sm:text-2xl sm:leading-9";
 const SELECT_DIALOG_MIN_WIDTH = 300;
 const SELECT_DIALOG_MAX_WIDTH = 520;
 
@@ -323,10 +323,10 @@ function StoryChapter({
           <div className="flex min-w-0 justify-center md:block">{media}</div>
         ) : null}
         <div className="min-w-0">
-          <span className="mb-3 block text-xs font-bold uppercase tracking-[0.18em] text-lipstick">
+          <span className="mb-3 block text-xs font-semibold uppercase tracking-wide text-lipstick">
             {eyebrow}
           </span>
-          <h2 className="font-display text-2xl font-black leading-tight text-wine sm:text-3xl">
+          <h2 className="font-display text-2xl font-extrabold leading-tight text-wine sm:text-3xl">
             {title}
           </h2>
           {description ? (
@@ -415,12 +415,12 @@ function InlineText({
       </label>
       <span
         aria-hidden="true"
-        className="invisible col-start-1 row-start-1 h-11 whitespace-pre border-b-2 border-dotted border-transparent px-1 py-0 text-[0.9em] font-semibold leading-[2.75rem]"
+        className="invisible col-start-1 row-start-1 h-11 whitespace-pre border-b-2 border-dotted border-transparent px-1 py-0 text-[1em] font-semibold leading-[2.75rem]"
       >
         {sizerText}
       </span>
       <Input
-        className="absolute inset-0 h-11 w-full min-w-0 max-w-full rounded-none border-0 border-b-2 border-dotted border-lipstick bg-transparent px-1 py-0 align-baseline text-[0.9em] font-semibold text-lipstick shadow-none placeholder:text-faint focus-visible:border-lipstick focus-visible:ring-0"
+        className="absolute inset-0 h-11 w-full min-w-0 max-w-full rounded-none border-0 border-b-2 border-dotted border-lipstick bg-transparent px-1 py-0 align-baseline text-[1em] font-semibold text-lipstick shadow-none placeholder:text-faint focus-visible:border-lipstick focus-visible:ring-0"
         defaultValue={defaultValue}
         id={id}
         name={name}
@@ -521,7 +521,7 @@ function InlineLongText({
       {!isEditing ? (
         <button
           className={cn(
-            "inline max-w-full cursor-text whitespace-pre-wrap border-0 bg-transparent p-0 text-left font-semibold leading-[1.35] text-lipstick underline decoration-dotted decoration-2 underline-offset-[0.28em] [overflow-wrap:anywhere] transition hover:text-wine focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25",
+            "inline max-w-full cursor-text whitespace-pre-wrap border-0 bg-transparent p-0 text-left font-semibold leading-snug text-lipstick underline decoration-dotted decoration-2 underline-offset-[0.28em] [overflow-wrap:anywhere] transition hover:text-wine focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25",
             !currentText && "text-faint",
             displayClassName,
           )}
@@ -542,12 +542,12 @@ function InlineLongText({
           </label>
           <span
             aria-hidden="true"
-            className="invisible col-start-1 row-start-1 h-[1.35em] whitespace-pre p-0 text-[1em] font-semibold leading-[1.35]"
+            className="invisible col-start-1 row-start-1 h-[1.35em] whitespace-pre p-0 text-[1em] font-semibold leading-snug"
           >
             {editSizerText}
           </span>
           <input
-            className="absolute inset-0 h-[1.35em] w-full min-w-0 max-w-full rounded-none border-0 bg-transparent p-0 text-[1em] font-semibold leading-[1.35] text-lipstick underline decoration-dotted decoration-2 underline-offset-[0.28em] shadow-none outline-none placeholder:text-faint focus-visible:ring-0"
+            className="absolute inset-0 h-[1.35em] w-full min-w-0 max-w-full rounded-none border-0 bg-transparent p-0 text-[1em] font-semibold leading-snug text-lipstick underline decoration-dotted decoration-2 underline-offset-[0.28em] shadow-none outline-none placeholder:text-faint focus-visible:ring-0"
             id={id}
             onBlur={() => setIsEditing(false)}
             onChange={(event) => {
@@ -585,8 +585,8 @@ function InlineLongText({
           </label>
           <textarea
             className={cn(
-              "block w-full resize-none overflow-hidden rounded-none border-0 border-b-2 border-dotted border-lipstick bg-transparent px-1 text-[0.95em] font-semibold text-lipstick shadow-none outline-none placeholder:text-faint focus-visible:border-solid focus-visible:ring-0",
-              "min-h-[1.75em] py-0 leading-[1.45]",
+              "block w-full resize-none overflow-hidden rounded-none border-0 border-b-2 border-dotted border-lipstick bg-transparent px-1 text-[1em] font-semibold text-lipstick shadow-none outline-none placeholder:text-faint focus-visible:border-solid focus-visible:ring-0",
+              "min-h-[1.75em] py-0 leading-normal",
             )}
             id={id}
             onBlur={() => setIsEditing(false)}
@@ -776,7 +776,7 @@ function InlineSelect({
         aria-haspopup="dialog"
         aria-controls={isOpen ? dialogId : undefined}
         className={cn(
-          "group mx-1 inline-block max-w-[calc(100%-0.9em)] cursor-pointer whitespace-normal border-0 bg-transparent p-0 text-left text-[1em] font-semibold leading-[1.3] text-lipstick align-baseline transition hover:text-wine focus-visible:bg-lipstick/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25",
+          "group mx-1 inline-block max-w-[calc(100%-0.9em)] cursor-pointer whitespace-normal border-0 bg-transparent p-0 text-left text-[1em] font-semibold leading-snug text-lipstick align-baseline transition hover:text-wine focus-visible:bg-lipstick/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25",
           !hasCurrentValue && "text-faint",
         )}
         onClick={openList}
@@ -810,13 +810,13 @@ function InlineSelect({
           >
             <span className="flex items-center justify-between gap-4 border-b border-wine/10 px-4 py-4">
               <span
-                className="min-w-0 font-display text-lg font-black leading-tight text-wine"
+                className="min-w-0 font-display text-lg font-extrabold leading-tight text-wine"
                 id={titleId}
               >
                 {label}
               </span>
               <button
-                className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-sm font-bold leading-tight text-lipstick underline underline-offset-4 transition hover:text-wine"
+                className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold leading-tight text-lipstick underline underline-offset-4 transition hover:text-wine"
                 onClick={() => closeList()}
                 type="button"
               >
@@ -847,7 +847,7 @@ function InlineSelect({
                       tabIndex={index === activeIndex ? 0 : -1}
                       type="button"
                     >
-                      <span className="min-w-0 break-words text-base font-bold leading-tight">
+                      <span className="min-w-0 break-words text-base font-semibold leading-tight">
                         {option.label}
                       </span>
                       {isSelected ? (
@@ -863,7 +863,7 @@ function InlineSelect({
                   );
                 })
               ) : (
-                <span className="px-3 py-4 text-sm font-bold text-muted">
+                <span className="px-3 py-4 text-sm font-semibold text-muted">
                   No options available.
                 </span>
               )}
@@ -1058,7 +1058,7 @@ function DealBreakerPicker({
                 Choose up to 5 deal-breakers
               </span>
               <button
-                className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-sm font-bold leading-tight text-lipstick underline underline-offset-4 transition hover:text-wine"
+                className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold leading-tight text-lipstick underline underline-offset-4 transition hover:text-wine"
                 onClick={closePicker}
                 type="button"
               >
@@ -1097,7 +1097,7 @@ function DealBreakerPicker({
               {isOtherSelected ? (
                 <span className="mt-1 grid gap-2 rounded-md border border-lipstick/20 bg-lipstick/8 p-3">
                   <label
-                    className="text-sm font-black leading-tight text-wine"
+                    className="text-sm font-semibold leading-tight text-wine"
                     htmlFor={`${popupId}-other-details`}
                   >
                     What else?
@@ -1115,7 +1115,7 @@ function DealBreakerPicker({
                 </span>
               ) : null}
             </span>
-            <span className="border-t border-wine/10 px-4 py-3 text-sm font-bold leading-6 text-muted">
+            <span className="border-t border-wine/10 px-4 py-3 text-sm font-semibold leading-6 text-muted">
               {selectedValues.length} of 5 selected.
             </span>
           </span>
@@ -1733,7 +1733,7 @@ function StoryNarrative({
               value={anythingElse}
             />
             <button
-              className="max-w-full text-left text-[1.25rem] font-extrabold leading-tight text-lipstick underline decoration-lipstick/30 underline-offset-4 transition hover:text-wine sm:text-[1.45rem] lg:text-[1.6rem]"
+              className="max-w-full text-left text-xl font-extrabold leading-tight text-lipstick underline decoration-lipstick/30 underline-offset-4 transition hover:text-wine sm:text-2xl"
               onClick={() => setShowAnythingElse(true)}
               type="button"
             >
@@ -1743,10 +1743,10 @@ function StoryNarrative({
         ) : (
           <div className={cn("space-y-3", storyTextClass)}>
             <p className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-2">
-              <span className="pt-[0.1em] leading-[1.45]">P.S.</span>
+              <span className="pt-[0.1em] leading-normal">P.S.</span>
               <InlineLongText
                 containerClassName="mx-0 block min-w-0 align-top"
-                displayClassName="block w-full leading-[1.45]"
+                displayClassName="block w-full leading-normal"
                 editClassName="block w-full align-top"
                 editWidthClassName="w-full"
                 label="Anything else"
@@ -1754,7 +1754,7 @@ function StoryNarrative({
                 name="profile.anything_else"
                 defaultValue={anythingElse}
                 placeholder="tell us more"
-                readClassName="mx-0 block min-w-0 px-0 leading-[1.45]"
+                readClassName="mx-0 block min-w-0 px-0 leading-normal"
               />
             </p>
           </div>

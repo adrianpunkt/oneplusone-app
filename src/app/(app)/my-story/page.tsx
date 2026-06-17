@@ -22,7 +22,7 @@ export default async function MyStoryPage({ searchParams }: MyStoryPageProps) {
   return (
     <article className="grid w-full min-w-0 gap-6">
       <header>
-        <h1 className="font-display text-3xl font-black tracking-tight text-wine sm:text-4xl">
+        <h1 className="font-display text-3xl font-black text-wine sm:text-4xl">
           My story
         </h1>
       </header>

@@ -130,7 +130,7 @@ function EventStatusText({
 }) {
   return (
     <p
-      className={`text-xs font-black uppercase ${eventStatusClassName(status)}`}
+      className={`text-xs font-semibold uppercase ${eventStatusClassName(status)}`}
     >
       {label || statusLabel(status)}
     </p>
@@ -219,7 +219,7 @@ function WaitlistConfirmation({
             </span>
             <div className="grid gap-2">
               <h2
-                className="font-display text-2xl font-black leading-tight text-wine"
+                className="font-display text-2xl font-extrabold leading-tight text-wine"
                 id="waitlist-confirmation-title"
               >
                 You are on the waitlist!
@@ -302,7 +302,7 @@ function EmptyEventState({
   return (
     <div className="grid gap-3 rounded-lg border border-dashed border-wine/15 bg-blush p-5">
       <div className="grid gap-1">
-        <p className="font-display text-lg font-black text-wine">{title}</p>
+        <p className="font-display text-lg font-extrabold text-wine">{title}</p>
         <p className="max-w-2xl text-sm leading-6 text-muted">{body}</p>
       </div>
       {ctaHref && ctaLabel ? (
@@ -407,7 +407,7 @@ function PendingInvitationCard({
             label={pendingInvitationStatusLabel(invitation)}
             status={invitation.status}
           />
-          <h2 className="font-display text-lg font-black text-wine">
+          <h2 className="font-display text-lg font-extrabold text-wine">
             {eventTitle(invitation.events)}
           </h2>
         </div>
@@ -436,7 +436,7 @@ function UpcomingEventCard({ item }: { item: UpcomingEvent }) {
             label={upcomingEventStatusLabel(item)}
             status={item.status}
           />
-          <h2 className="font-display text-lg font-black text-wine">
+          <h2 className="font-display text-lg font-extrabold text-wine">
             {eventTitle(item.event)}
           </h2>
           {isWaitlisted ? (
@@ -479,7 +479,7 @@ function PastEventCard({ attendee }: { attendee: EventAttendee }) {
     >
       <div className="grid gap-1">
         <EventStatusText status={attendee.status} />
-        <h2 className="font-display text-lg font-black text-wine">
+        <h2 className="font-display text-lg font-extrabold text-wine">
           {eventTitle(attendee.events)}
         </h2>
       </div>
@@ -523,7 +523,7 @@ function PreferencesStrip({
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-wine/10 bg-white/88 p-4 shadow-[0_14px_35px_rgba(68,10,18,0.05)] sm:flex-row sm:items-center sm:justify-between">
       <div className="grid gap-2">
-        <p className="font-display text-base font-black text-wine">
+        <p className="font-display text-base font-extrabold text-wine">
           Going-out preferences
         </p>
         <div className="flex flex-wrap gap-2">
@@ -625,7 +625,7 @@ export default async function GoingOutPage({
   return (
     <>
       <section className="grid gap-2">
-        <h1 className="font-display text-3xl font-black tracking-tight text-wine sm:text-4xl">
+        <h1 className="font-display text-3xl font-black text-wine sm:text-4xl">
           Going-out
         </h1>
       </section>

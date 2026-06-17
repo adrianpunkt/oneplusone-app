@@ -30,7 +30,7 @@ export default async function EventDetailPage({
     <>
       <section className="grid gap-2">
         <Badge variant="wine">{event.event_format}</Badge>
-        <h1 className="font-display text-3xl font-black tracking-tight text-wine">
+        <h1 className="font-display text-3xl font-black text-wine">
           {event.title}
         </h1>
         <div className="flex flex-wrap gap-3 text-sm font-semibold text-muted">
@@ -56,13 +56,13 @@ export default async function EventDetailPage({
           <CardContent className="grid gap-4">
             <dl className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg bg-blush p-3">
-                <dt className="text-xs font-bold uppercase text-faint">Venue</dt>
+                <dt className="text-xs font-semibold uppercase text-faint">Venue</dt>
                 <dd className="mt-1 text-sm font-semibold text-wine">
                   {event.venue_name || "Shared after confirmation"}
                 </dd>
               </div>
               <div className="rounded-lg bg-blush p-3">
-                <dt className="text-xs font-bold uppercase text-faint">Status</dt>
+                <dt className="text-xs font-semibold uppercase text-faint">Status</dt>
                 <dd className="mt-1 text-sm font-semibold capitalize text-wine">{event.status}</dd>
               </div>
             </dl>
@@ -90,7 +90,7 @@ export default async function EventDetailPage({
               eventAttendees.map((person) => (
                 <article key={person.member_id} className="grid gap-3 rounded-lg border border-wine/10 bg-blush p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-display text-lg font-black text-wine">{person.first_name}</p>
+                    <p className="font-display text-lg font-extrabold text-wine">{person.first_name}</p>
                     <Badge variant="muted">Past event</Badge>
                   </div>
                   <StartConversationForm eventId={event.id} recipientMemberId={person.member_id} />

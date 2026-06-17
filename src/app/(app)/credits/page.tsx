@@ -46,7 +46,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
   return (
     <>
       <section className="grid gap-2">
-        <h1 className="font-display text-3xl font-black tracking-tight text-wine">
+        <h1 className="font-display text-3xl font-black text-wine">
           Credits
         </h1>
       </section>
@@ -76,7 +76,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
             </span>
           </p>
           <div className="flex flex-col gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0 px-2 py-2 font-mono text-2xl font-black tracking-[0.1em] break-all text-wine sm:px-3 sm:text-3xl sm:tracking-[0.14em]">
+            <div className="min-w-0 px-2 py-2 font-mono text-2xl font-black tracking-widest break-all text-wine sm:px-3 sm:text-3xl">
               {referralCode || "Available after membership is active"}
             </div>
             <ReferralCodeActions code={referralCode} />
@@ -101,7 +101,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
                 <div className="flex h-7 items-start">
                   {label ? (
                     <span
-                      className={`inline-flex h-7 items-center rounded-full px-3 text-[0.68rem] font-medium uppercase tracking-wide text-white ${
+                      className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold uppercase tracking-wide text-white ${
                         label === "MOST POPULAR" ? "bg-lipstick" : "bg-ocean"
                       }`}
                     >
@@ -110,7 +110,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
                   ) : null}
                 </div>
                 <div>
-                  <p className="text-sm font-black text-wine">{product.name}</p>
+                  <p className="text-sm font-extrabold text-wine">{product.name}</p>
                   <p className="mt-1 text-xs leading-5 text-muted">
                     {formatCreditProductDescription(product.credits)}
                   </p>
@@ -123,7 +123,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
                         product.currency,
                       )}
                     </p>
-                    <span className="inline-flex h-6 items-center rounded-full bg-white px-2.5 text-[0.68rem] font-medium uppercase tracking-wide text-muted ring-1 ring-wine/10">
+                    <span className="inline-flex h-6 items-center rounded-full bg-white px-2.5 text-xs font-semibold uppercase tracking-wide text-muted ring-1 ring-wine/10">
                       {discountPercent > 0
                         ? `Save ${discountPercent}%`
                         : "Base"}
@@ -277,7 +277,7 @@ function PurchaseStatus({
       <div className="flex items-start gap-3 rounded-lg border border-wine/10 bg-white p-4 text-sm leading-6 text-muted">
         <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-muted" />
         <div>
-          <p className="font-black text-wine">Checkout cancelled</p>
+          <p className="font-semibold text-wine">Checkout cancelled</p>
           <p>No credits were purchased.</p>
         </div>
       </div>
@@ -302,7 +302,7 @@ function PurchaseStatus({
           style={{ filter: "brightness(0) invert(1)" }}
         />
         <div>
-          <p className="font-black text-blush">PAYMENT CONFIRMED</p>
+          <p className="font-semibold text-blush">PAYMENT CONFIRMED</p>
           <p className="text-white/88">
             {result.credits
               ? `${result.credits} credit${result.credits === 1 ? "" : "s"} `
@@ -319,7 +319,7 @@ function PurchaseStatus({
       <div className="flex items-start gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-4 text-sm leading-6 text-lipstick">
         <CreditCard className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
-          <p className="font-black">Payment is still processing</p>
+          <p className="font-semibold">Payment is still processing</p>
           <p>Your credits will appear here when Stripe confirms the payment.</p>
         </div>
       </div>
@@ -330,7 +330,7 @@ function PurchaseStatus({
     <div className="flex items-start gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-4 text-sm leading-6 text-lipstick">
       <XCircle className="mt-0.5 h-5 w-5 shrink-0" />
       <div>
-        <p className="font-black">Payment needs review</p>
+        <p className="font-semibold">Payment needs review</p>
         <p>
           {result?.error || "We could not verify this checkout session yet."}
         </p>

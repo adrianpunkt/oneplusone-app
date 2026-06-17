@@ -67,7 +67,7 @@ export function PreferencesForm({
         >
           Events
         </h2>
-        <p className="text-sm font-bold text-ink">
+        <p className="text-sm font-semibold text-ink">
           Which events would you like to be invited to?
         </p>
         <div className="grid gap-3">
@@ -77,7 +77,7 @@ export function PreferencesForm({
               defaultChecked={preferences?.prefers_saturday_dinner ?? true}
             />
             <span>
-              <span className="block text-sm font-bold text-wine">
+              <span className="block text-sm font-semibold text-wine">
                 Saturday dinners
               </span>
               <span className="block text-sm leading-6 text-muted">
@@ -91,7 +91,7 @@ export function PreferencesForm({
               defaultChecked={preferences?.prefers_sunday_brunch ?? true}
             />
             <span>
-              <span className="block text-sm font-bold text-wine">
+              <span className="block text-sm font-semibold text-wine">
                 Sunday brunches
               </span>
               <span className="block text-sm leading-6 text-muted">
@@ -109,7 +109,7 @@ export function PreferencesForm({
                 }
               />
               <span>
-                <span className="block text-sm font-bold text-wine">
+                <span className="block text-sm font-semibold text-wine">
                   Other ideas?
                 </span>
                 <span className="block text-sm leading-6 text-muted">
@@ -146,7 +146,7 @@ export function PreferencesForm({
         >
           Going out vibe
         </h2>
-        <p className="text-sm font-bold text-ink">
+        <p className="text-sm font-semibold text-ink">
           What kind of locations would you prefer for the events?
         </p>
         <div className="grid gap-3">
@@ -158,7 +158,7 @@ export function PreferencesForm({
                   ?.prefers_affordable_relaxed_locations === true
               }
             />
-            <span className="block text-sm font-bold text-wine">
+            <span className="block text-sm font-semibold text-wine">
               Somewhere affordable and relaxed
             </span>
           </label>
@@ -170,7 +170,7 @@ export function PreferencesForm({
                   ?.prefers_michelin_guide_locations === true
               }
             />
-            <span className="block text-sm font-bold text-wine">
+            <span className="block text-sm font-semibold text-wine">
               Michelin-guide territory
             </span>
           </label>
@@ -194,7 +194,7 @@ export function PreferencesForm({
                 setShowDietaryPreferences(checked === true)
               }
             />
-            <span className="block text-sm font-bold text-wine">
+            <span className="block text-sm font-semibold text-wine">
               Anything we need to be aware of?
             </span>
           </label>
@@ -234,7 +234,7 @@ export function PreferencesForm({
               onCheckedChange={(checked) => setWantsToHost(checked === true)}
             />
             <span>
-              <span className="block text-sm font-bold text-wine">
+              <span className="block text-sm font-semibold text-wine">
                 I am open to be the host
               </span>
               <span className="mt-2 block text-sm leading-6 text-muted">
@@ -255,7 +255,7 @@ export function PreferencesForm({
                 <Dialog.Overlay className="fixed inset-0 z-50 bg-wine/35 backdrop-blur-sm" />
                 <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine/10 bg-white p-5 shadow-2xl">
                   <div className="grid gap-2">
-                    <Dialog.Title className="font-display text-xl font-black text-wine">
+                    <Dialog.Title className="font-display text-xl font-extrabold text-wine">
                       Being the host
                     </Dialog.Title>
                     <Dialog.Description className="grid gap-3 text-sm leading-6 text-muted">
@@ -314,7 +314,7 @@ export function PreferencesForm({
         >
           Other preferences?
         </h2>
-        <p className="text-sm font-bold text-ink">
+        <p className="text-sm font-semibold text-ink">
           What would make these events even better for you?
         </p>
         <Label htmlFor="otherPreferences" className="sr-only">

@@ -48,7 +48,7 @@ export function CorrespondentAvatar({
       <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(229,58,62,0.18),transparent_32%),linear-gradient(135deg,rgba(197,135,50,0.18),rgba(38,66,107,0.10))]" />
       <span
         className={cn(
-          "absolute inset-0 grid place-items-center bg-white/80 text-xl font-black uppercase leading-none text-wine",
+          "absolute inset-0 grid place-items-center bg-white/80 text-xl font-extrabold uppercase leading-none text-wine",
           initialsClassName,
         )}
       >

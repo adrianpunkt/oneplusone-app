@@ -46,7 +46,7 @@ function StepContent({ step }: { step: DashboardChecklistStep }) {
         }`}
       />
       <span className="grid gap-1">
-        <span className="text-base font-black leading-6 text-wine">
+        <span className="text-base font-extrabold leading-6 text-wine">
           {step.title}
         </span>
         <span className="text-sm font-medium leading-5 text-muted">
@@ -90,7 +90,7 @@ function ProfileImageStep({
         <Dialog.Overlay className="fixed inset-0 z-50 bg-wine/45 backdrop-blur-sm" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[min(calc(100vw-2rem),30rem)] max-h-[calc(100dvh-2rem)] -translate-x-1/2 -translate-y-1/2 gap-5 overflow-y-auto rounded-lg border border-wine/10 bg-white p-5 shadow-2xl">
           <div className="grid gap-1 pr-10">
-            <Dialog.Title className="font-display text-2xl font-black tracking-tight text-wine">
+            <Dialog.Title className="font-display text-2xl font-extrabold text-wine">
               Upload a photo
             </Dialog.Title>
             <Dialog.Description className="text-sm font-medium leading-5 text-muted">

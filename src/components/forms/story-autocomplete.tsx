@@ -276,7 +276,7 @@ export function StoryAutocompleteField({
         {selected.map((item, index) => (
           <span key={item.key}>
             <button
-              className="mx-1 inline max-w-full cursor-pointer break-words border-0 bg-transparent px-1 py-0 align-baseline font-semibold leading-[1.2] text-lipstick underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] transition hover:text-wine hover:decoration-solid"
+              className="mx-1 inline max-w-full cursor-pointer break-words border-0 bg-transparent px-1 py-0 align-baseline font-semibold leading-tight text-lipstick underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] transition hover:text-wine hover:decoration-solid"
               onClick={openList}
               type="button"
             >
@@ -289,7 +289,7 @@ export function StoryAutocompleteField({
       <button
         aria-label={`Open ${kind === "city" ? "city" : "language"} suggestions`}
         className={cn(
-          "inline-flex cursor-pointer items-center border-0 bg-transparent p-0 font-semibold leading-[1.2] text-lipstick transition hover:text-wine",
+          "inline-flex cursor-pointer items-center border-0 bg-transparent p-0 font-semibold leading-tight text-lipstick transition hover:text-wine",
           selected.length
             ? "ml-[0.05em] mr-[0.12em] h-[1em] w-[1em] justify-center rounded-full bg-lipstick align-[-0.08em] text-white hover:bg-wine hover:text-white"
             : "mx-1 gap-2 px-1 align-baseline underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em]",
@@ -348,7 +348,7 @@ export function StoryAutocompleteField({
               />
               <button
                 aria-label="Close suggestions"
-                className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0 text-sm font-bold leading-none text-lipstick underline underline-offset-4 transition hover:text-wine"
+                className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0 text-sm font-semibold leading-none text-lipstick underline underline-offset-4 transition hover:text-wine"
                 onClick={() => {
                   closeList();
                   inputRef.current?.blur();
@@ -392,7 +392,7 @@ export function StoryAutocompleteField({
                 </div>
               ) : null}
               {!isLoaded ? (
-                <p className="px-3 py-3 text-sm font-bold text-muted">
+                <p className="px-3 py-3 text-sm font-semibold text-muted">
                   Loading {kind === "city" ? "cities" : "languages"}...
                 </p>
               ) : visibleSuggestions.length ? (
@@ -408,20 +408,20 @@ export function StoryAutocompleteField({
                     type="button"
                   >
                     <span className="grid min-w-0 gap-0.5">
-                      <strong className="truncate text-sm font-black text-wine">{item.label}</strong>
+                      <strong className="truncate text-sm font-semibold text-wine">{item.label}</strong>
                       {item.meta ? (
-                        <span className="truncate text-xs font-bold text-muted">{item.meta}</span>
+                        <span className="truncate text-xs font-medium text-muted">{item.meta}</span>
                       ) : null}
                     </span>
                     {item.code ? (
-                      <span className="rounded-full border border-lipstick/20 bg-lipstick/8 px-2 py-1 text-xs font-black uppercase text-lipstick">
+                      <span className="rounded-full border border-lipstick/20 bg-lipstick/8 px-2 py-1 text-xs font-semibold uppercase text-lipstick">
                         {item.code}
                       </span>
                     ) : null}
                   </button>
                 ))
               ) : (
-                <p className="px-3 py-3 text-sm font-bold text-muted">
+                <p className="px-3 py-3 text-sm font-semibold text-muted">
                   No matching {kind === "city" ? "cities" : "languages"}.
                 </p>
               )}

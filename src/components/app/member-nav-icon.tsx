@@ -38,7 +38,7 @@ export function MemberNavIcon({
     <span
       aria-hidden="true"
       className={cn(
-        "grid place-items-center rounded-md border border-current bg-mist text-[10px] font-black uppercase leading-none text-current",
+        "grid place-items-center rounded-md border border-current bg-mist text-xs font-extrabold uppercase leading-none text-current",
         className,
       )}
     >

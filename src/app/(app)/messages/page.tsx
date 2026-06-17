@@ -69,7 +69,7 @@ export default async function MessagesPage() {
   return (
     <>
       <section className="grid gap-2">
-        <h1 className="font-display text-3xl font-black tracking-tight text-wine">
+        <h1 className="font-display text-3xl font-black text-wine">
           Messages
         </h1>
       </section>
@@ -113,11 +113,11 @@ export default async function MessagesPage() {
                   />
                   <div className="grid min-w-0 flex-1 gap-1">
                     <div className="flex min-w-0 items-start justify-between gap-3">
-                      <h2 className="truncate font-display text-lg font-black text-wine">
+                      <h2 className="truncate font-display text-lg font-extrabold text-wine">
                         {correspondent.name}
                       </h2>
                       {hasNewMessage ? (
-                        <Badge className="shrink-0 rounded-md px-2 py-0.5 text-[11px]">
+                        <Badge className="shrink-0 rounded-md px-2 py-0.5 text-xs">
                           New
                         </Badge>
                       ) : null}

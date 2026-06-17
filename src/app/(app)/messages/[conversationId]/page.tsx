@@ -47,7 +47,7 @@ export default async function ConversationPage({
             imageUrl={correspondent.imageUrl}
             name={correspondent.name}
           />
-          <h1 className="truncate font-display text-xl font-black tracking-tight text-wine">
+          <h1 className="truncate font-display text-xl font-extrabold text-wine">
             {correspondent.name}
           </h1>
         </section>
@@ -70,7 +70,7 @@ export default async function ConversationPage({
                         )}
                       >
                         <p>{message.deleted_at ? "This message was deleted." : message.body}</p>
-                        <p className={cn("mt-2 text-[11px] font-semibold", own ? "text-white/70" : "text-faint")}>
+                        <p className={cn("mt-2 text-xs font-semibold", own ? "text-white/70" : "text-faint")}>
                           {formatDateTime(message.created_at)}
                         </p>
                       </div>

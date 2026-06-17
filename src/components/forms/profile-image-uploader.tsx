@@ -585,7 +585,7 @@ export function ProfileImageUploader({
           type="button"
         >
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(229,58,62,0.18),transparent_32%),linear-gradient(135deg,rgba(197,135,50,0.18),rgba(38,66,107,0.10))]" />
-          <span className="absolute inset-0 grid place-items-center bg-white/80 text-[3.35rem] font-black uppercase text-wine">
+          <span className="absolute inset-0 grid place-items-center bg-white/80 text-5xl font-extrabold uppercase text-wine">
             {displayInitials}
           </span>
           <span className="absolute inset-0 z-20 flex items-end justify-center bg-wine/0 p-3 opacity-100 transition-colors duration-150 sm:group-hover:bg-wine/12 sm:group-focus-within:bg-wine/12">
@@ -654,7 +654,7 @@ export function ProfileImageUploader({
           <Dialog.Overlay className="fixed inset-0 z-50 bg-wine/45 backdrop-blur-sm" />
           <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[min(calc(100vw-2rem),24rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine/10 bg-white p-5 shadow-2xl">
             <div className="grid gap-2">
-              <Dialog.Title className="font-display text-2xl font-black tracking-tight text-wine">
+              <Dialog.Title className="font-display text-2xl font-extrabold text-wine">
                 Delete photo?
               </Dialog.Title>
               <Dialog.Description className="text-sm font-medium leading-6 text-muted">

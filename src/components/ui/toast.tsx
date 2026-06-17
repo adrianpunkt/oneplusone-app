@@ -181,7 +181,7 @@ function ToastCard({
         <Icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.6} />
       </span>
       <div className="min-w-0">
-        <p className="text-sm font-black leading-5 text-wine">{toast.title}</p>
+        <p className="text-sm font-semibold leading-5 text-wine">{toast.title}</p>
         {toast.description ? (
           <p className="mt-1 text-sm leading-5 text-muted">
             {toast.description}

@@ -24,7 +24,7 @@ export default async function EventsPage() {
     <>
       <section className="grid gap-2">
         <Badge variant="wine">Events</Badge>
-        <h1 className="font-display text-3xl font-black tracking-tight text-wine">
+        <h1 className="font-display text-3xl font-black text-wine">
           Invitations and past tables
         </h1>
         <p className="max-w-2xl text-sm leading-6 text-muted">
@@ -48,7 +48,7 @@ export default async function EventsPage() {
                 <div className="grid gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge>{invitation.status}</Badge>
-                    <h2 className="font-display text-lg font-black text-wine">
+                    <h2 className="font-display text-lg font-extrabold text-wine">
                       {invitation.events?.title || "Event"}
                     </h2>
                   </div>
@@ -97,7 +97,7 @@ export default async function EventsPage() {
                   <Badge variant={attendee.status === "attended" ? "ocean" : "muted"}>
                     {attendee.status}
                   </Badge>
-                  <h2 className="font-display text-lg font-black text-wine">
+                  <h2 className="font-display text-lg font-extrabold text-wine">
                     {attendee.events?.title || "Event"}
                   </h2>
                 </div>
