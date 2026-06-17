@@ -42,6 +42,10 @@ const en = {
     introBodySuffix: ". We will send you a private code to login.",
     missingCode:
       "That login link was issued for a different auth flow. Request a fresh link from this page.",
+    expiredLink:
+      "That private link has expired. Request a fresh login code from this page.",
+    inactiveMembership:
+      "Your membership is not active yet. Use the email from your active membership to login.",
     email: "Email",
     emailPlaceholder: "you@example.com",
     sendLoginCode: "Send login code",
@@ -801,6 +805,10 @@ const es: typeof en = {
     introBodySuffix: ". Te enviaremos un código privado para iniciar sesión.",
     missingCode:
       "Ese enlace de acceso pertenece a otro flujo de autenticación. Pide un enlace nuevo desde esta página.",
+    expiredLink:
+      "Ese enlace privado ha caducado. Pide un código nuevo desde esta página.",
+    inactiveMembership:
+      "Tu membresía aún no está activa. Usa el email de tu membresía activa para entrar.",
     email: "Email",
     emailPlaceholder: "tu@email.com",
     sendLoginCode: "Enviar código",

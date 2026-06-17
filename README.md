@@ -13,7 +13,7 @@ Required env:
 
 - `SUPABASE_PROJECT_REF` or `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SECRET_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`
 - `APP_URL`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET` or `APP_STRIPE_WEBHOOK_SECRET`
@@ -36,9 +36,15 @@ constructs the Supabase URL from that ref instead of trusting generated
 `.env.local` values, so missing Worker secrets fail instead of silently using
 local development credentials.
 
-The ignored `.env.local` file contains the matching dev publishable key and
-server-only Supabase secret API key. Use `.env.example` only as the template for new
-checkouts; do not commit real keys.
+Production deploys should use `npm run deploy`. That wrapper temporarily hides
+local `.env*` files before OpenNext builds so generated Worker artifacts cannot
+carry development Supabase or Stripe values as runtime fallbacks.
+
+The ignored `.env.local` file contains the matching dev publishable key and a
+server-only Supabase key. Use `.env.example` only as the template for new
+checkouts; do not commit real keys. For Cloudflare production, prefer the
+Supabase `service_role` JWT in `SUPABASE_SERVICE_ROLE_KEY`; the app still keeps
+`SUPABASE_SECRET_KEY` as a fallback for local/dev compatibility.
 
 Supabase Auth redirects for the dev project allow the member app callbacks:
 
@@ -52,6 +58,13 @@ running with `.env.local` and that the dev Auth config has been pushed.
 Login uses Supabase Auth email OTP. The Supabase email template must include
 both the one-time token and confirmation URL so members can enter the code or
 tap the backup link.
+
+If production login shows "We could not check your membership right now", first
+verify the top-level Cloudflare Worker secrets match the prod Supabase project
+ref `qevpnhaycygiyjxeucmj`: `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`NEXT_PUBLIC_SUPABASE_URL`, and `SUPABASE_SERVICE_ROLE_KEY`. A dev key or an API
+key rejected by the database API paired with the prod project ref makes the
+server-side member lookup fail for every email.
 
 ## Supabase
 
@@ -113,5 +126,6 @@ npm run build
 - Import stable local images from `public/` instead of passing string paths to
   `next/image`; this emits hashed `/_next/static/media/` assets that Cloudflare
   can cache immutably.
-- Keep `middleware.ts` for OpenNext Cloudflare, but avoid broad middleware work
-  on public/callback/static-safe routes.
+- Keep `middleware.ts` for OpenNext Cloudflare. Auth pages stay covered so
+  Supabase SSR can refresh cookies; static-safe and clearly public API routes
+  stay excluded.

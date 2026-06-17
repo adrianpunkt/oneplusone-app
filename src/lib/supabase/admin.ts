@@ -10,13 +10,13 @@ export function getSupabaseServiceClient() {
 
   const supabaseUrl = requireSupabaseUrl();
   const serverApiKey =
+    getRuntimeEnv("SUPABASE_SERVICE_ROLE_KEY") ||
     getRuntimeEnv("SUPABASE_SECRET_KEY") ||
     getRuntimeEnv("SUPABASE_API_SECRET_KEY") ||
-    getDefaultKeyFromJsonEnv(getRuntimeEnv("SUPABASE_SECRET_KEYS")) ||
-    getRuntimeEnv("SUPABASE_SERVICE_ROLE_KEY");
+    getDefaultKeyFromJsonEnv(getRuntimeEnv("SUPABASE_SECRET_KEYS"));
 
   if (!serverApiKey) {
-    throw new Error("Missing SUPABASE_SECRET_KEY.");
+    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY or SUPABASE_SECRET_KEY.");
   }
 
   serviceClient = createClient(supabaseUrl, serverApiKey, {

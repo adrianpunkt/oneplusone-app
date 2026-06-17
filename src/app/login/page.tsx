@@ -48,6 +48,13 @@ function decodeEmailHint(value: string | string[] | undefined) {
   }
 }
 
+function authMessage(auth: string | undefined, dictionary: ReturnType<typeof getDictionary>) {
+  if (auth === "missing-code") return dictionary.login.missingCode;
+  if (auth === "expired-link") return dictionary.login.expiredLink;
+  if (auth === "inactive") return dictionary.login.inactiveMembership;
+  return "";
+}
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -65,6 +72,7 @@ export default async function LoginPage({
   } = await searchParams;
   const auth = firstSearchParam(authParam);
   const next = firstSearchParam(nextParam);
+  const message = authMessage(auth, dictionary);
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-10">
@@ -79,9 +87,9 @@ export default async function LoginPage({
           </div>
         </CardHeader>
         <CardContent>
-          {auth === "missing-code" ? (
+          {message ? (
             <p className="mb-4 rounded-lg border border-lipstick/20 bg-lipstick/8 p-3 text-sm font-semibold leading-6 text-lipstick">
-              {dictionary.login.missingCode}
+              {message}
             </p>
           ) : null}
           <LoginForm
