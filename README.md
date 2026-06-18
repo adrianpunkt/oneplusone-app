@@ -15,6 +15,7 @@ Required env:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`
 - `APP_URL`
+- `LOOPS_API_KEY`
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET` or `APP_STRIPE_WEBHOOK_SECRET`
 
@@ -56,9 +57,25 @@ Local login links should come back to `http://localhost:3000/auth/callback`.
 If a new local login email opens `https://oneplusoneclub.com`, verify the app is
 running with `.env.local` and that the dev Auth config has been pushed.
 
-Login uses Supabase Auth email OTP. The Supabase email template must include
-both the one-time token and confirmation URL so members can enter the code or
-tap the backup link.
+Login uses Supabase Auth email OTPs and magic links. The app generates the
+token/link with Supabase admin APIs and sends it through a Loops transactional
+email when `LOOPS_API_KEY` is configured. The English transactional ID defaults
+to `cmqcfkdqi1er60jygou29o4sw`; the Spanish transactional ID defaults to
+`cmqihzpab01ql0jznkf1zjzrg`. Override them with
+`LOOPS_LOGIN_TRANSACTIONAL_ID_EN` and `LOOPS_LOGIN_TRANSACTIONAL_ID_ES` if they
+change. The Loops templates should use `token` and `confirmationUrl`;
+`confirmationUrl` points to `/auth/confirm` and both paths preserve the
+requested `next` destination. If Loops is not configured, the login form falls
+back to Supabase's built-in email provider.
+
+Used or expired welcome/login links are one-time-use through Supabase
+`verifyOtp`. When a used/expired `/auth/confirm` link still carries a valid
+active-member `email_hint`, the app sends a fresh Loops login email and redirects
+to `/login` in the same code-entry state as a normal login request.
+
+The shared Supabase Auth config sets email OTP expiry to 1 hour. Apply
+`../website/supabase/config.toml` to the target Supabase project when changing
+that expiry remotely.
 
 If production login shows "We could not check your membership right now", first
 verify the top-level Cloudflare Worker secrets match the prod Supabase project

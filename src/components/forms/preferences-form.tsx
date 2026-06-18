@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useCallback, useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Info, Save } from "lucide-react";
 
@@ -18,8 +18,18 @@ import {
 } from "@/lib/actions/profile";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { EventPreferences } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 const initialState: FormActionState = {};
+
+function serializeForm(form: HTMLFormElement) {
+  return JSON.stringify(
+    Array.from(new FormData(form).entries()).filter(
+      ([name, value]) =>
+        !name.startsWith("$ACTION_") && typeof value === "string",
+    ),
+  );
+}
 
 export function PreferencesForm({
   copy,
@@ -33,6 +43,9 @@ export function PreferencesForm({
   saved?: boolean;
 }) {
   const [state, action] = useActionState(savePreferencesAction, initialState);
+  const [isDirty, setIsDirty] = useState(false);
+  const formRef = useRef<HTMLFormElement>(null);
+  const initialSnapshotRef = useRef<string | null>(null);
   const otherEventIdeas =
     typeof preferences?.extra_preferences?.other_event_ideas === "string"
       ? preferences.extra_preferences.other_event_ideas
@@ -56,9 +69,32 @@ export function PreferencesForm({
   const [wantsToHost, setWantsToHost] = useState(
     preferences?.wants_to_host ?? false,
   );
+  const updateDirtyState = useCallback(() => {
+    const form = formRef.current;
+    if (!form) return;
+
+    const snapshot = serializeForm(form);
+    if (initialSnapshotRef.current === null) {
+      initialSnapshotRef.current = snapshot;
+    }
+    setIsDirty(snapshot !== initialSnapshotRef.current);
+  }, []);
+  const scheduleDirtyCheck = useCallback(() => {
+    window.requestAnimationFrame(updateDirtyState);
+  }, [updateDirtyState]);
+
+  useEffect(() => {
+    updateDirtyState();
+  }, [updateDirtyState]);
 
   return (
-    <form action={action} className="grid gap-6 pb-24">
+    <form
+      action={action}
+      className={cn("grid gap-6", isDirty && "pb-24")}
+      onChange={scheduleDirtyCheck}
+      onInput={scheduleDirtyCheck}
+      ref={formRef}
+    >
       {returnToDashboard ? (
         <input name="return_to" type="hidden" value="dashboard" />
       ) : null}
@@ -107,9 +143,10 @@ export function PreferencesForm({
               <Checkbox
                 name="interested_in_other_events"
                 checked={showOtherEventIdeas}
-                onCheckedChange={(checked) =>
-                  setShowOtherEventIdeas(checked === true)
-                }
+                onCheckedChange={(checked) => {
+                  setShowOtherEventIdeas(checked === true);
+                  scheduleDirtyCheck();
+                }}
               />
               <span>
                 <span className="block text-sm font-semibold text-wine">
@@ -193,9 +230,10 @@ export function PreferencesForm({
           <label className="flex cursor-pointer items-start gap-3">
             <Checkbox
               checked={showDietaryPreferences}
-              onCheckedChange={(checked) =>
-                setShowDietaryPreferences(checked === true)
-              }
+              onCheckedChange={(checked) => {
+                setShowDietaryPreferences(checked === true);
+                scheduleDirtyCheck();
+              }}
             />
             <span className="block text-sm font-semibold text-wine">
               {copy.dietaryQuestion}
@@ -234,7 +272,10 @@ export function PreferencesForm({
             <Checkbox
               name="wants_to_host"
               checked={wantsToHost}
-              onCheckedChange={(checked) => setWantsToHost(checked === true)}
+              onCheckedChange={(checked) => {
+                setWantsToHost(checked === true);
+                scheduleDirtyCheck();
+              }}
             />
             <span>
               <span className="block text-sm font-semibold text-wine">
@@ -271,7 +312,10 @@ export function PreferencesForm({
                       <Button
                         type="button"
                         variant="secondary"
-                        onClick={() => setWantsToHost(false)}
+                        onClick={() => {
+                          setWantsToHost(false);
+                          scheduleDirtyCheck();
+                        }}
                       >
                         {copy.thinkAboutIt}
                       </Button>
@@ -279,7 +323,10 @@ export function PreferencesForm({
                     <Dialog.Close asChild>
                       <Button
                         type="button"
-                        onClick={() => setWantsToHost(true)}
+                        onClick={() => {
+                          setWantsToHost(true);
+                          scheduleDirtyCheck();
+                        }}
                       >
                         {copy.imIn}
                       </Button>
@@ -315,27 +362,29 @@ export function PreferencesForm({
         />
       </section>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-8 z-40 min-[901px]:left-[260px]">
-        <div className="mx-auto flex w-full max-w-6xl justify-center px-4 sm:px-6 lg:px-8">
-          <div className="pointer-events-auto flex min-w-0 flex-wrap items-center justify-center gap-3">
-            <SubmitButton pendingLabel={copy.saving}>
-              <Save className="h-4 w-4" />
-              {copy.save}
-            </SubmitButton>
-            <Button asChild variant="secondary">
-              <Link href={returnToDashboard ? "/dashboard" : "/going-out"}>
-                {copy.cancel}
-              </Link>
-            </Button>
-            <ActionStatus
-              error={state.error}
-              ok={state.ok || saved}
-              successMessage={copy.saved}
-              toastKey={state}
-            />
+      {isDirty ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-8 z-40 min-[901px]:left-[260px]">
+          <div className="mx-auto flex w-full max-w-6xl justify-center px-4 sm:px-6 lg:px-8">
+            <div className="pointer-events-auto flex min-w-0 flex-wrap items-center justify-center gap-3">
+              <SubmitButton pendingLabel={copy.saving}>
+                <Save className="h-4 w-4" />
+                {copy.save}
+              </SubmitButton>
+              <Button asChild variant="secondary">
+                <Link href={returnToDashboard ? "/dashboard" : "/going-out"}>
+                  {copy.cancel}
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
+      <ActionStatus
+        error={state.error}
+        ok={state.ok || saved}
+        successMessage={copy.saved}
+        toastKey={state}
+      />
     </form>
   );
 }

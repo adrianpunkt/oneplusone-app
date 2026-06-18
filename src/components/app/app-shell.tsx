@@ -129,7 +129,7 @@ export function AppShell({
       <aside className="sticky top-0 hidden h-screen border-r border-wine/10 bg-white/84 p-4 backdrop-blur md:block">
         <div className="flex h-full flex-col gap-5">
           <Link href="/dashboard" className="rounded-lg p-2" aria-label={dictionary.nav.dashboardAria}>
-            <BrandLogo className="w-36" priority />
+            <BrandLogo className="w-32" priority />
           </Link>
 
           <div className="px-4">
@@ -177,7 +177,7 @@ export function AppShell({
               className="flex items-center"
               aria-label={dictionary.nav.dashboardAria}
             >
-              <BrandLogo className="w-28" priority />
+              <BrandLogo className="w-24" priority />
             </Link>
             <div className="flex items-center gap-2">
               {unreadCount > 0 ? (

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
 
 const INVITE_BASE_URL = "https://oneplusoneclub.com/invite";
-const ACTION_BUTTON_CLASSNAME = "h-11 w-full min-w-0 px-0 text-base";
+const ACTION_BUTTON_CLASSNAME = "h-11 w-full min-w-0 px-0";
 const ACTION_ICON_CLASSNAME = "h-5 w-5 shrink-0";
 
 type CopyTarget = "code" | "url";

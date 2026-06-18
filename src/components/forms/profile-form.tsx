@@ -32,7 +32,7 @@ const heightOptions = Array.from({ length: 131 }, (_, index) =>
 );
 const noneDealBreaker = "none — I'm pretty easygoing";
 const storyTextClass =
-  "min-w-0 max-w-full text-xl font-medium leading-8 text-ink [overflow-wrap:anywhere] sm:text-2xl sm:leading-9";
+  "min-w-0 max-w-full text-[1.18rem] font-normal leading-[1.9] text-wine [overflow-wrap:anywhere] sm:text-[clamp(1.12rem,2.15vw,1.28rem)] sm:leading-[1.85]";
 const SELECT_DIALOG_MIN_WIDTH = 300;
 const SELECT_DIALOG_MAX_WIDTH = 520;
 
@@ -441,11 +441,11 @@ function StoryChapter({
           <span className="mb-3 block font-display text-[0.78rem] font-bold uppercase tracking-[0.22em] text-lipstick">
             {eyebrow}
           </span>
-          <h2 className="font-display text-[clamp(2rem,5vw,3rem)] font-extrabold leading-[1.05] text-wine">
+          <h2 className="font-display text-3xl font-black text-wine">
             {title}
           </h2>
           {description ? (
-            <p className="mt-[18px] max-w-none text-[1.08rem] leading-[1.65] text-muted">
+            <p className="mt-3 max-w-2xl text-base font-medium leading-6 text-muted">
               {description}
             </p>
           ) : null}

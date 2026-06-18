@@ -943,7 +943,7 @@ insert into public.credit_products (
 values
   ('11111111-1111-4111-8111-111111111111', '1 credit', 'One seat at one dinner or brunch.', 1, 1500, 'eur', 'active', 10),
   ('33333333-3333-4333-8333-333333333333', '3 credits', 'Three events with a small bundle discount.', 3, 3900, 'eur', 'active', 20),
-  ('55555555-5555-4555-8555-555555555555', '5 credits', 'Five events for members who plan to keep showing up.', 5, 6000, 'eur', 'active', 30)
+  ('55555555-5555-4555-8555-555555555555', '5 credits', 'Five events for members who like savings.', 5, 6000, 'eur', 'active', 30)
 on conflict (id) do update
   set name = excluded.name,
       description = excluded.description,

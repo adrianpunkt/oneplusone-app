@@ -27,7 +27,7 @@ where id = '33333333-3333-4333-8333-333333333333';
 update public.credit_products
 set
   name = '5 credits',
-  description = 'Five events for members who plan to keep showing up.',
+  description = 'Five events for members who like savings.',
   credits = 5,
   price_amount_cents = 5000,
   currency = 'eur',

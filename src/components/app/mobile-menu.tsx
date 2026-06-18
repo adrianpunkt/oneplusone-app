@@ -41,7 +41,6 @@ export function MobileMenu({
   unreadCount: number;
 }) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [menuTop, setMenuTop] = useState(0);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
@@ -53,8 +52,7 @@ export function MobileMenu({
 
   function openMenu() {
     updateMenuTop();
-    setMounted(true);
-    window.requestAnimationFrame(() => setOpen(true));
+    setOpen(true);
   }
 
   function closeMenu() {
@@ -62,7 +60,7 @@ export function MobileMenu({
   }
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!open) return;
 
     const previousOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
@@ -72,10 +70,10 @@ export function MobileMenu({
       document.body.style.overflow = previousOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
     };
-  }, [mounted]);
+  }, [open]);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!open) return;
 
     updateMenuTop();
     window.addEventListener("resize", updateMenuTop);
@@ -84,17 +82,10 @@ export function MobileMenu({
       window.removeEventListener("resize", updateMenuTop);
       window.visualViewport?.removeEventListener("resize", updateMenuTop);
     };
-  }, [mounted, updateMenuTop]);
+  }, [open, updateMenuTop]);
 
   useEffect(() => {
-    if (open || !mounted) return;
-
-    const timeout = window.setTimeout(() => setMounted(false), 260);
-    return () => window.clearTimeout(timeout);
-  }, [mounted, open]);
-
-  useEffect(() => {
-    if (!mounted) return;
+    if (!open) return;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
@@ -104,28 +95,23 @@ export function MobileMenu({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [mounted]);
+  }, [open]);
 
   const menu = (
     <div
-      className={cn(
-        "fixed inset-x-0 z-20 grid w-dvw origin-top overflow-hidden bg-blush px-4 shadow-[0_18px_45px_rgba(68,10,18,0.10)] transition-[clip-path,opacity,transform] duration-[260ms] ease-[cubic-bezier(0.16,1,0.3,1)] md:hidden",
-        open
-          ? "translate-y-0 opacity-100 [clip-path:inset(0_0_0_0)]"
-          : "-translate-y-2 opacity-0 [clip-path:inset(0_0_100%_0)]",
-      )}
+      className="fixed inset-x-0 z-[45] grid w-dvw overflow-hidden bg-white px-4 shadow-[0_18px_45px_rgba(68,10,18,0.10)] md:hidden"
       id="mobile-menu"
       role="dialog"
       aria-modal="true"
       style={{ height: `calc(100dvh - ${menuTop}px)`, top: menuTop }}
     >
       <LanguageSwitcher
-        activeClassName="bg-white text-wine shadow-sm"
+        activeClassName="bg-lipstick text-white"
         ariaLabel={languageLabel}
         buttonClassName="h-9 min-w-12 rounded-md text-sm"
-        className="absolute right-5 top-5 rounded-lg border-wine/15 bg-white/45 p-0.5 shadow-sm"
+        className="absolute right-5 top-5 h-10 rounded-lg border-wine/10 bg-white shadow-sm"
         currentLocale={currentLocale}
-        inactiveClassName="text-wine/70 hover:bg-white/60 hover:text-wine"
+        inactiveClassName="text-wine hover:bg-lipstick/8 hover:text-lipstick"
       />
       <div className="grid h-full place-items-center pb-20">
         <nav className="grid w-full max-w-sm gap-3">
@@ -140,8 +126,10 @@ export function MobileMenu({
                 aria-current={isActive ? "page" : undefined}
                 aria-label={itemMessageTooltip ? `${label}. ${itemMessageTooltip}` : undefined}
                 className={cn(
-                  "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-white hover:text-lipstick",
-                  isActive ? "bg-white text-lipstick shadow-sm" : "text-wine",
+                  "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick/8 hover:text-lipstick",
+                  isActive
+                    ? "bg-lipstick/10 text-lipstick hover:bg-lipstick/10"
+                    : "text-wine",
                 )}
                 href={item.href}
                 key={item.href}
@@ -163,9 +151,9 @@ export function MobileMenu({
           <Link
             aria-current={isPathInSection(pathname, meActivePaths) ? "page" : undefined}
             className={cn(
-              "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-white hover:text-lipstick",
+              "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick/8 hover:text-lipstick",
               isPathInSection(pathname, meActivePaths)
-                ? "bg-white text-lipstick shadow-sm"
+                ? "bg-lipstick/10 text-lipstick hover:bg-lipstick/10"
                 : "text-wine",
             )}
             href="/my-story"
@@ -199,7 +187,7 @@ export function MobileMenu({
         {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {mounted ? createPortal(menu, document.body) : null}
+      {open ? createPortal(menu, document.body) : null}
     </>
   );
 }

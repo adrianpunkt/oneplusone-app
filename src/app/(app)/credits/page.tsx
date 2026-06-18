@@ -71,7 +71,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3">
-          <p className="grid gap-1 text-lg leading-8 text-muted">
+          <p className="grid gap-1 text-base font-medium leading-6 text-muted">
             <span>{dictionary.credits.inviteLine1}</span>
             <span>
               {dictionary.credits.inviteLine2Prefix}{" "}
@@ -313,7 +313,10 @@ function getCreditProductPricing(products: CreditProduct[]) {
       isPreferred,
       labelKey: isPreferred ? "maxSavings" : product.labelKey,
     };
-  });
+  }).sort(
+    (first, second) =>
+      second.product.price_amount_cents - first.product.price_amount_cents,
+  );
 }
 
 function PurchaseStatus({

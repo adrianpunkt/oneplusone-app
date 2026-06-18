@@ -44,6 +44,10 @@ const en = {
       "That login link was issued for a different auth flow. Request a fresh link from this page.",
     expiredLink:
       "That private link has expired. Request a fresh login code from this page.",
+    expiredLinkSent: (email: string) =>
+      `This link has expired, so we sent you a new one by email at ${email}`,
+    expiredLinkSentCodeStep:
+      "You can click the link or enter the code below.",
     inactiveMembership:
       "Your membership is not active yet. Use the email from your active membership to login.",
     email: "Email",
@@ -71,7 +75,8 @@ const en = {
       "We could not send the login email. Check the Supabase email provider for opo-dev.",
     emailForCode: "Enter the email address we sent the code to.",
     codeFromEmail: "Enter the code from your email.",
-    invalidCode: "That code did not work. Check the code or request a new one.",
+    invalidCode:
+      "The code did not work. Make sure you use the last one you received or request a new one.",
   },
   dashboard: {
     title: "Welcome to the club",
@@ -807,6 +812,10 @@ const es: typeof en = {
       "Ese enlace de acceso pertenece a otro flujo de autenticación. Pide un enlace nuevo desde esta página.",
     expiredLink:
       "Ese enlace privado ha caducado. Pide un código nuevo desde esta página.",
+    expiredLinkSent: (email: string) =>
+      `Este enlace ha caducado, así que te enviamos uno nuevo por email a ${email}`,
+    expiredLinkSentCodeStep:
+      "Puedes abrir el enlace o introducir el código abajo.",
     inactiveMembership:
       "Tu membresía aún no está activa. Usa el email de tu membresía activa para entrar.",
     email: "Email",
@@ -834,7 +843,8 @@ const es: typeof en = {
       "No pudimos enviar el email de acceso. Revisa el proveedor de email de Supabase para opo-dev.",
     emailForCode: "Introduce el email al que enviamos el código.",
     codeFromEmail: "Introduce el código de tu email.",
-    invalidCode: "Ese código no funcionó. Revisa el código o pide uno nuevo.",
+    invalidCode:
+      "El código no funcionó. Asegúrate de usar el último que recibiste o pide uno nuevo.",
   },
   dashboard: {
     title: "Bienvenido al club",
