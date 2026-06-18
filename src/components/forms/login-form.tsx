@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import type { Locale } from "@/lib/i18n/locales";
+import type { MemberLoginOtpType } from "@/lib/auth-link";
 
 const initialState: AuthActionState = {};
 const joinUrl = "https://oneplusoneclub.com/story";
@@ -50,22 +51,58 @@ function LoginIntro({ copy }: { copy: LoginFormCopy }) {
   );
 }
 
+function FormErrorMessage({ message }: { message: string }) {
+  const highlight = message.includes("last one")
+    ? "last one"
+    : message.includes("último")
+      ? "último"
+      : "";
+
+  if (!highlight) return message;
+
+  const highlightStart = message.indexOf(highlight);
+  const before = message.slice(0, highlightStart);
+  const after = message.slice(highlightStart + highlight.length);
+
+  return (
+    <>
+      {before}
+      <span className="underline decoration-current decoration-2 underline-offset-2">
+        {highlight}
+      </span>
+      {after}
+    </>
+  );
+}
+
 export function LoginForm({
+  codeStepMessage,
   copy,
   initialEmail = "",
+  initialOtpType = "email",
+  initialSent = false,
   locale,
   next = "/dashboard",
 }: {
+  codeStepMessage?: string;
   copy: LoginFormCopy;
   initialEmail?: string;
+  initialOtpType?: MemberLoginOtpType;
+  initialSent?: boolean;
   locale: Locale;
   next?: string;
 }) {
   const [hideVerifyError, setHideVerifyError] = useState(false);
   const { showToast } = useToast();
+  const initialRequestState: AuthActionState = {
+    email: initialEmail || undefined,
+    next,
+    otpType: initialOtpType,
+    sent: initialSent || undefined,
+  };
   const [requestState, requestAction, requestPending] = useActionState(
     requestOtpAction,
-    initialState,
+    initialRequestState,
   );
   const [verifyState, verifyAction, verifyPending] = useActionState(
     verifyOtpAction,
@@ -73,6 +110,7 @@ export function LoginForm({
   );
   const email = verifyState.email || requestState.email || initialEmail;
   const activeNext = verifyState.next || requestState.next || next;
+  const otpType = verifyState.otpType || requestState.otpType || initialOtpType;
   const codeStep = Boolean(requestState.sent || verifyState.sent);
   const notRegistered = requestState.notRegistered || verifyState.notRegistered;
   const codeStepError =
@@ -148,8 +186,9 @@ export function LoginForm({
         >
           <input type="hidden" name="email" value={email} />
           <input type="hidden" name="next" value={activeNext} />
+          <input type="hidden" name="otpType" value={otpType} />
           <p className="rounded-lg border border-ocean/15 bg-ocean/8 p-3 text-sm font-semibold leading-6 text-ocean">
-            {copy.sentCodePrefix}{email}{copy.sentCodeSuffix}
+            {codeStepMessage || `${copy.sentCodePrefix}${email}${copy.sentCodeSuffix}`}
           </p>
           <div className="grid gap-2">
             <Label htmlFor="code">{copy.emailCode}</Label>
@@ -168,7 +207,7 @@ export function LoginForm({
           </Button>
           {codeStepError ? (
             <p className="text-sm font-semibold text-lipstick" role="status">
-              {codeStepError}
+              <FormErrorMessage message={codeStepError} />
             </p>
           ) : null}
         </form>

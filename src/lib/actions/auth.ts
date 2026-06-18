@@ -4,11 +4,13 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { resolveAppOrigin } from "@/lib/app-origin";
+import { normalizeOtpType, type MemberLoginOtpType } from "@/lib/auth-link";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
 import { normalizeLocale, type Locale } from "@/lib/i18n/locales";
+import { sendMemberLoginEmail } from "@/lib/member-login-email";
 import { safeInternalPath } from "@/lib/utils";
 import { emailSchema, otpCodeSchema } from "@/lib/validators/story";
 
@@ -17,6 +19,7 @@ export type AuthActionState = {
   email?: string;
   next?: string;
   notRegistered?: boolean;
+  otpType?: MemberLoginOtpType;
   sent?: boolean;
 };
 
@@ -58,7 +61,7 @@ function getFormLocale(formData: FormData): Locale | null {
 }
 
 export async function requestOtpAction(
-  _previousState: AuthActionState,
+  previousState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
   const formLocale = getFormLocale(formData);
@@ -82,6 +85,23 @@ export async function requestOtpAction(
 
   const requestHeaders = await headers();
   const origin = resolveAppOrigin(requestHeaders.get("origin"));
+
+  try {
+    const loginEmail = await sendMemberLoginEmail({
+      email,
+      locale,
+      next,
+      origin,
+      reason: previousState.sent ? "resend" : "login",
+    });
+
+    if (loginEmail.ok) {
+      return { email, next, otpType: loginEmail.otpType, sent: true };
+    }
+  } catch (error) {
+    console.error("Could not send Loops login email", error);
+  }
+
   let supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>;
 
   try {
@@ -114,7 +134,7 @@ export async function requestOtpAction(
     };
   }
 
-  return { email, next, sent: true };
+  return { email, next, otpType: "email", sent: true };
 }
 
 export async function verifyOtpAction(
@@ -125,6 +145,7 @@ export async function verifyOtpAction(
   const parsedEmail = emailSchema.safeParse(formData.get("email"));
   const parsedToken = otpCodeSchema.safeParse(formData.get("code"));
   const next = safeInternalPath(String(formData.get("next") || "/dashboard"));
+  const otpType = normalizeOtpType(formData.get("otpType"));
 
   if (!parsedEmail.success) {
     return { error: dictionary.authErrors.emailForCode, sent: true };
@@ -153,7 +174,7 @@ export async function verifyOtpAction(
   const { error } = await supabase.auth.verifyOtp({
     email,
     token: parsedToken.data,
-    type: "email",
+    type: otpType,
   });
 
   if (error) {

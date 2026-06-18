@@ -29,7 +29,7 @@ set
       'description', case credits
         when 1 then 'Una plaza en una cena o brunch.'
         when 3 then 'Tres eventos con un pequeño descuento de pack.'
-        when 5 then 'Cinco eventos para miembros que quieren seguir viniendo.'
+        when 5 then 'Cinco eventos para miembros a quienes les gusta ahorrar.'
         else coalesce(description, '')
       end
     )

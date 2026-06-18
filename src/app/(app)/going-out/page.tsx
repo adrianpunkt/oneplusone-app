@@ -352,8 +352,12 @@ function EmptyEventState({
   return (
     <div className="grid gap-3 rounded-lg border border-dashed border-wine/15 bg-blush p-5">
       <div className="grid gap-1">
-        <p className="font-display text-lg font-extrabold text-wine">{title}</p>
-        <p className="max-w-2xl text-sm leading-6 text-muted">{body}</p>
+        <p className="font-display text-lg font-extrabold leading-tight text-wine">
+          {title}
+        </p>
+        <p className="max-w-2xl text-base font-medium leading-6 text-muted">
+          {body}
+        </p>
       </div>
       {ctaHref && ctaLabel ? (
         <p className="max-w-2xl text-sm leading-6 text-muted">
@@ -709,7 +713,7 @@ export default async function GoingOutPage({
   return (
     <>
       <section className="grid gap-2">
-        <h1 className="font-display text-3xl font-black text-wine sm:text-4xl">
+        <h1 className="font-display text-3xl font-black text-wine">
           {dictionary.goingOut.title}
         </h1>
       </section>

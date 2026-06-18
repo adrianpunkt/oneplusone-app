@@ -24,7 +24,7 @@ export default async function MyStoryPage({ searchParams }: MyStoryPageProps) {
   return (
     <article className="grid w-full min-w-0 gap-6" data-app-content="wide">
       <header>
-        <h1 className="font-display text-3xl font-black text-wine sm:text-4xl">
+        <h1 className="font-display text-3xl font-black text-wine">
           {dictionary.profile.title}
         </h1>
       </header>

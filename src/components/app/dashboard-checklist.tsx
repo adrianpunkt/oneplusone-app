@@ -59,10 +59,10 @@ function StepContent({
         }`}
       />
       <span className="grid gap-1">
-        <span className="text-base font-extrabold leading-6 text-wine">
+        <span className="text-lg font-extrabold leading-6 text-wine">
           {step.title}
         </span>
-        <span className="text-sm font-medium leading-5 text-muted">
+        <span className="text-base font-medium leading-6 text-muted">
           {step.description}
         </span>
       </span>
@@ -110,7 +110,7 @@ function ProfileImageStep({
             <Dialog.Title className="font-display text-2xl font-extrabold text-wine">
               {step.title}
             </Dialog.Title>
-            <Dialog.Description className="text-sm font-medium leading-5 text-muted">
+            <Dialog.Description className="text-base font-medium leading-6 text-muted">
               {step.description}
             </Dialog.Description>
           </div>

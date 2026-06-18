@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getOptionalMemberContextForRender } from "@/lib/data/member";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
+import { decodeEmailHint, normalizeOtpType } from "@/lib/auth-link";
 import { safeInternalPath } from "@/lib/utils";
-import { emailSchema } from "@/lib/validators/story";
 
 export const dynamic = "force-dynamic";
 
@@ -21,35 +21,23 @@ type LoginSearchParams = {
   auth?: string | string[];
   email_hint?: string | string[];
   next?: string | string[];
+  otp_type?: string | string[];
+  sent?: string | string[];
 };
 
 function firstSearchParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function decodeEmailHint(value: string | string[] | undefined) {
-  const rawHint = firstSearchParam(value)?.trim();
-  if (!rawHint) return "";
-
-  try {
-    const normalized = rawHint
-      .replace(/\s/g, "+")
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
-    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
-    const decoded = new TextDecoder().decode(
-      Uint8Array.from(atob(padded), (character) => character.charCodeAt(0)),
-    );
-    const parsed = emailSchema.safeParse(decoded);
-
-    return parsed.success ? parsed.data.toLowerCase() : "";
-  } catch {
-    return "";
-  }
-}
-
-function authMessage(auth: string | undefined, dictionary: ReturnType<typeof getDictionary>) {
+function authMessage(
+  auth: string | undefined,
+  dictionary: ReturnType<typeof getDictionary>,
+  email: string,
+) {
   if (auth === "missing-code") return dictionary.login.missingCode;
+  if (auth === "expired-link-sent") {
+    return email ? dictionary.login.expiredLinkSent(email) : dictionary.login.expiredLink;
+  }
   if (auth === "expired-link") return dictionary.login.expiredLink;
   if (auth === "inactive") return dictionary.login.inactiveMembership;
   return "";
@@ -69,17 +57,26 @@ export default async function LoginPage({
     auth: authParam,
     email_hint: emailHint,
     next: nextParam,
+    otp_type: otpTypeParam,
+    sent: sentParam,
   } = await searchParams;
   const auth = firstSearchParam(authParam);
   const next = firstSearchParam(nextParam);
-  const message = authMessage(auth, dictionary);
+  const sent = firstSearchParam(sentParam);
+  const initialEmail = decodeEmailHint(emailHint);
+  const message = authMessage(auth, dictionary, initialEmail);
+  const initialSent = Boolean(initialEmail && (auth === "expired-link-sent" || sent === "1"));
+  const initialOtpType = normalizeOtpType(firstSearchParam(otpTypeParam));
+  const codeStepMessage = auth === "expired-link-sent"
+    ? dictionary.login.expiredLinkSentCodeStep
+    : undefined;
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
-            <BrandLogo className="w-44" priority />
+            <BrandLogo className="w-40" priority />
             <LanguageSwitcher
               ariaLabel={dictionary.common.language}
               currentLocale={locale}
@@ -93,6 +90,7 @@ export default async function LoginPage({
             </p>
           ) : null}
           <LoginForm
+            codeStepMessage={codeStepMessage}
             copy={{
               checking: dictionary.login.checking,
               codePlaceholder: dictionary.login.codePlaceholder,
@@ -114,7 +112,9 @@ export default async function LoginPage({
               sentCodePrefix: locale === "es" ? "Hemos enviado un código a " : "We sent a login code to ",
               sentCodeSuffix: ".",
             }}
-            initialEmail={decodeEmailHint(emailHint)}
+            initialEmail={initialEmail}
+            initialOtpType={initialOtpType}
+            initialSent={initialSent}
             locale={locale}
             next={safeInternalPath(next, "/dashboard")}
           />
