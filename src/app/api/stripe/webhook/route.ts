@@ -2,7 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 
 import { completeCreditPackPurchaseFromSession } from "@/lib/credit-purchases";
-import { getStripe, getStripeWebhookSecret } from "@/lib/stripe";
+import {
+  getStripe,
+  getStripeWebhookCryptoProvider,
+  getStripeWebhookSecret,
+} from "@/lib/stripe";
 
 export const runtime = "nodejs";
 
@@ -21,7 +25,13 @@ export async function POST(request: NextRequest) {
   let event: Stripe.Event;
 
   try {
-    event = getStripe().webhooks.constructEvent(payload, signature, webhookSecret);
+    event = await getStripe().webhooks.constructEventAsync(
+      payload,
+      signature,
+      webhookSecret,
+      undefined,
+      getStripeWebhookCryptoProvider(),
+    );
   } catch {
     return NextResponse.json({ ok: false, error: "Invalid Stripe signature." }, { status: 400 });
   }

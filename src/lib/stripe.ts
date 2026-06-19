@@ -1,8 +1,12 @@
 import Stripe from "stripe";
 
 export const STRIPE_API_VERSION = "2026-05-27.dahlia";
+const STRIPE_REQUEST_TIMEOUT_MS = 10_000;
 
 let stripeClient: Stripe | null = null;
+let stripeWebhookCryptoProvider: ReturnType<
+  typeof Stripe.createSubtleCryptoProvider
+> | null = null;
 
 export function getStripe() {
   if (stripeClient) return stripeClient;
@@ -14,9 +18,18 @@ export function getStripe() {
 
   stripeClient = new Stripe(secretKey, {
     apiVersion: STRIPE_API_VERSION,
+    httpClient: Stripe.createFetchHttpClient(),
+    timeout: STRIPE_REQUEST_TIMEOUT_MS,
     typescript: true,
   });
   return stripeClient;
+}
+
+export function getStripeWebhookCryptoProvider() {
+  if (stripeWebhookCryptoProvider) return stripeWebhookCryptoProvider;
+
+  stripeWebhookCryptoProvider = Stripe.createSubtleCryptoProvider();
+  return stripeWebhookCryptoProvider;
 }
 
 export function getStripeWebhookSecret() {
