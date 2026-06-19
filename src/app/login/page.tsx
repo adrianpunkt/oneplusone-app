@@ -85,7 +85,7 @@ export default async function LoginPage({
         </CardHeader>
         <CardContent>
           {message ? (
-            <p className="mb-4 rounded-lg border border-lipstick/20 bg-lipstick/8 p-3 text-sm font-semibold leading-6 text-lipstick">
+            <p className="mb-4 rounded-lg border border-lipstick-red/20 bg-lipstick-red/8 p-3 text-sm font-semibold leading-6 text-lipstick-red">
               {message}
             </p>
           ) : null}

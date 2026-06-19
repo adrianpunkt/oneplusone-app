@@ -36,7 +36,7 @@ export function LanguageSwitcher({
       action={setLocaleAction}
       aria-label={ariaLabel}
       className={cn(
-        "inline-flex shrink-0 overflow-hidden rounded-lg border border-wine/10 bg-white p-0.5 shadow-sm",
+        "inline-flex shrink-0 overflow-hidden rounded-lg border border-wine-burgundy/10 bg-white p-0.5 shadow-sm",
         className,
       )}
     >
@@ -48,10 +48,10 @@ export function LanguageSwitcher({
           <button
             aria-pressed={active}
             className={cn(
-              "h-8 min-w-9 rounded-md px-2 text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35",
+              "h-8 min-w-9 rounded-md px-2 text-xs font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35",
               active
-                ? "bg-lipstick text-white"
-                : "text-wine hover:bg-blush hover:text-lipstick",
+                ? "bg-lipstick-red text-white"
+                : "bg-white text-wine-burgundy hover:bg-blush-pink hover:text-lipstick-red",
               active ? activeClassName : inactiveClassName,
               buttonClassName,
             )}

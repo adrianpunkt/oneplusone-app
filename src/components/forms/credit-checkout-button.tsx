@@ -50,7 +50,7 @@ export function CreditCheckoutButton({
         <CreditCard className="h-4 w-4" />
         {loading ? copy.opening : copy.buy}
       </Button>
-      {error ? <p className="text-xs font-semibold text-lipstick">{error}</p> : null}
+      {error ? <p className="text-xs font-semibold text-lipstick-red">{error}</p> : null}
     </div>
   );
 }

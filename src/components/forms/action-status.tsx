@@ -42,7 +42,7 @@ export function ActionStatus({
 
   return (
     <p
-      className="text-sm font-semibold text-lipstick"
+      className="text-sm font-semibold text-lipstick-red"
       role="alert"
     >
       {error}

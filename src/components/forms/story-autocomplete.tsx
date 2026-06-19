@@ -2,6 +2,7 @@
 
 import type { KeyboardEvent } from "react";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Plus, X } from "lucide-react";
 
 import type { Dictionary } from "@/lib/i18n/dictionaries";
@@ -235,7 +236,7 @@ export function StoryAutocompleteField({
     return (
       <span
         className={cn(
-          "mx-1 inline max-w-full break-words px-1 font-semibold text-lipstick",
+          "mx-1 inline max-w-full break-words px-1 font-semibold text-lipstick-red",
           !selected.length && "text-faint",
         )}
       >
@@ -321,7 +322,7 @@ export function StoryAutocompleteField({
         {selected.map((item, index) => (
           <span key={item.key}>
             <button
-              className="mx-1 inline max-w-full cursor-pointer break-words border-0 bg-transparent px-1 py-0 align-baseline font-semibold leading-tight text-lipstick underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] transition hover:text-wine hover:decoration-solid"
+              className="mx-1 inline max-w-full cursor-pointer break-words border-0 bg-transparent px-1 py-0 align-baseline font-semibold leading-tight text-lipstick-red underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] transition hover:text-wine-burgundy hover:decoration-solid"
               onClick={openList}
               type="button"
             >
@@ -338,9 +339,9 @@ export function StoryAutocompleteField({
             : copy.openLanguageSuggestions
         }
         className={cn(
-          "inline-flex cursor-pointer items-center border-0 bg-transparent p-0 font-semibold leading-tight text-lipstick transition hover:text-wine",
+          "inline-flex cursor-pointer items-center border-0 bg-transparent p-0 font-semibold leading-tight text-lipstick-red transition hover:text-wine-burgundy",
           selected.length
-            ? "ml-[0.05em] mr-[0.12em] h-[1em] w-[1em] justify-center rounded-full bg-lipstick align-[-0.08em] text-white hover:bg-wine hover:text-white"
+            ? "ml-[0.05em] mr-[0.12em] h-[1em] w-[1em] justify-center rounded-full bg-lipstick-red align-[-0.08em] text-white hover:bg-wine-burgundy hover:text-white"
             : "mx-1 gap-2 px-1 align-baseline underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em]",
         )}
         onClick={openList}
@@ -350,17 +351,18 @@ export function StoryAutocompleteField({
         <span
           className={cn(
             "inline-grid place-items-center rounded-full text-white",
-            selected.length ? "h-full w-full bg-transparent" : "h-[1.05em] w-[1.05em] bg-lipstick",
+            selected.length ? "h-full w-full bg-transparent" : "h-[1.05em] w-[1.05em] bg-lipstick-red",
           )}
         >
           <Plus className={selected.length ? "h-[0.52em] w-[0.52em]" : "h-[0.62em] w-[0.62em]"} strokeWidth={3.25} />
         </span>
       </button>
 
-      {isOpen ? (
-        <>
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+          <>
           <div
-            className="fixed inset-0 z-50 cursor-pointer bg-wine/10 backdrop-blur-[1px]"
+            className="fixed inset-0 z-50 cursor-pointer bg-wine-burgundy/10 backdrop-blur-[1px]"
             aria-hidden="true"
             onPointerDown={closeList}
           />
@@ -380,7 +382,7 @@ export function StoryAutocompleteField({
                 aria-controls={listId}
                 aria-describedby={statusId}
                 aria-expanded="true"
-                className="h-14 w-full rounded-t-lg border border-lipstick/30 border-b-wine/10 bg-white px-4 pr-20 text-base font-semibold text-ink shadow-none outline-none placeholder:text-faint"
+                className="h-14 w-full rounded-t-lg border border-lipstick-red/30 border-b-wine-burgundy/10 bg-white px-4 pr-20 text-base font-semibold text-ink shadow-none outline-none placeholder:text-faint"
                 id={reactId}
                 inputMode="search"
                 onChange={(event) => {
@@ -399,7 +401,7 @@ export function StoryAutocompleteField({
               />
               <button
                 aria-label={copy.closeSuggestions}
-                className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0 text-sm font-semibold leading-none text-lipstick underline underline-offset-4 transition hover:text-wine"
+                className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer border-0 bg-transparent px-0 text-sm font-semibold leading-none text-lipstick-red underline underline-offset-4 transition hover:text-wine-burgundy"
                 onClick={() => {
                   closeList();
                   inputRef.current?.blur();
@@ -410,7 +412,7 @@ export function StoryAutocompleteField({
               </button>
             </div>
             <div
-              className="grid max-h-[min(23rem,50vh)] gap-1 overflow-y-auto rounded-b-lg border border-lipstick/30 border-t-wine/10 bg-white p-2 shadow-[0_18px_45px_rgba(68,10,18,0.14)]"
+              className="grid max-h-[min(23rem,50vh)] gap-1 overflow-y-auto rounded-b-lg border border-lipstick-red/30 border-t-wine-burgundy/10 bg-white p-2 shadow-[0_18px_45px_rgba(68,10,18,0.14)]"
               id={listId}
               onMouseDown={(event) => event.preventDefault()}
               onScroll={(event) => {
@@ -423,16 +425,16 @@ export function StoryAutocompleteField({
               role="listbox"
             >
               {selected.length ? (
-                <div className="mb-1 grid gap-1 border-b border-wine/10 pb-1">
+                <div className="mb-1 grid gap-1 border-b border-wine-burgundy/10 pb-1">
                   {selected.map((item) => (
                     <div
-                      className="grid min-h-10 grid-cols-[minmax(0,1fr)_2rem] items-center gap-3 px-2 py-1 text-sm font-semibold text-wine"
+                      className="grid min-h-10 grid-cols-[minmax(0,1fr)_2rem] items-center gap-3 px-2 py-1 text-sm font-semibold text-wine-burgundy"
                       key={item.key}
                     >
                       <span className="min-w-0 truncate">{item.label}</span>
                       <button
                         aria-label={`${copy.removePrefix} ${item.label}`}
-                        className="inline-grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-lipstick text-white transition hover:bg-wine"
+                        className="inline-grid h-7 w-7 cursor-pointer place-items-center rounded-full bg-lipstick-red text-white transition hover:bg-wine-burgundy"
                         onClick={() => removeSelected(item.key)}
                         type="button"
                       >
@@ -449,7 +451,7 @@ export function StoryAutocompleteField({
               ) : visibleSuggestions.length ? (
                 visibleSuggestions.map((item, index) => (
                   <button
-                    className="grid min-h-12 cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-2 text-left text-ink transition hover:bg-lipstick/8 data-[active=true]:bg-lipstick/8"
+                    className="grid min-h-12 cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-md px-3 py-2 text-left text-ink transition hover:bg-lipstick-red/8 data-[active=true]:bg-lipstick-red/8"
                     data-active={index === activeIndex}
                     aria-selected={index === activeIndex}
                     id={`${listId}-option-${index}`}
@@ -459,13 +461,13 @@ export function StoryAutocompleteField({
                     type="button"
                   >
                     <span className="grid min-w-0 gap-0.5">
-                      <strong className="truncate text-sm font-semibold text-wine">{item.label}</strong>
+                      <strong className="truncate text-sm font-semibold text-wine-burgundy">{item.label}</strong>
                       {item.meta ? (
                         <span className="truncate text-xs font-medium text-muted">{item.meta}</span>
                       ) : null}
                     </span>
                     {item.code ? (
-                      <span className="rounded-full border border-lipstick/20 bg-lipstick/8 px-2 py-1 text-xs font-semibold uppercase text-lipstick">
+                      <span className="rounded-full border border-lipstick-red/20 bg-lipstick-red/8 px-2 py-1 text-xs font-semibold uppercase text-lipstick-red">
                         {item.code}
                       </span>
                     ) : null}
@@ -481,8 +483,10 @@ export function StoryAutocompleteField({
           <span className="sr-only" id={statusId} role="status">
             {statusText}
           </span>
-        </>
-      ) : null}
+          </>,
+          document.body,
+        )
+        : null}
     </span>
   );
 }

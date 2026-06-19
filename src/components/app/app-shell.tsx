@@ -32,13 +32,13 @@ function NotificationHeartLink({
     <Link
       aria-label={tooltip}
       className={cn(
-        "grid h-10 w-10 shrink-0 place-items-center text-lipstick transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/30 focus-visible:ring-offset-2",
+        "grid h-10 w-10 shrink-0 place-items-center text-lipstick-red transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/30 focus-visible:ring-offset-2",
         className,
       )}
       href={href}
     >
       <MessageHeartIcon
-        className="h-10 w-10 text-lipstick"
+        className="h-10 w-10 text-lipstick-red"
         count={count}
         iconClassName="h-9 w-9"
         tooltip={tooltip}
@@ -62,22 +62,22 @@ function CreditBalanceLink({
     <Link
       aria-label={ariaLabel}
       className={cn(
-        "-ml-1.5 inline-flex h-8 min-w-12 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-lipstick/25 bg-white py-0 pl-1.5 pr-2.5 text-sm font-semibold text-lipstick shadow-sm transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35 focus-visible:ring-offset-2",
+        "-ml-1.5 inline-flex h-8 min-w-12 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-lipstick-red/25 bg-white py-0 pl-1.5 pr-2.5 text-sm font-semibold text-lipstick-red shadow-sm transition-transform duration-150 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35 focus-visible:ring-offset-2",
         className,
       )}
       href="/credits"
     >
       <span className="grid h-6 w-6 shrink-0 place-items-center">
-        <span className="grid h-4 w-4 place-items-center rounded-full bg-lipstick text-white">
+        <span className="grid h-4 w-4 place-items-center rounded-full bg-lipstick-red text-white">
           <Star
             className="h-2.5 w-2.5"
-            fill="#ffffff"
-            stroke="#ffffff"
+            fill="currentColor"
+            stroke="currentColor"
             strokeWidth={2.4}
           />
         </span>
       </span>
-      <span className="leading-none text-lipstick">
+      <span className="leading-none text-lipstick-red">
         {creditBalance} {creditLabel}
       </span>
     </Link>
@@ -126,7 +126,7 @@ export function AppShell({
 
   return (
     <div className="min-h-screen app-grid">
-      <aside className="sticky top-0 hidden h-screen border-r border-wine/10 bg-white/84 p-4 backdrop-blur md:block">
+      <aside className="sticky top-0 hidden h-screen border-r border-wine-burgundy/10 bg-white/84 p-4 backdrop-blur md:block">
         <div className="flex h-full flex-col gap-5">
           <Link href="/dashboard" className="rounded-lg p-2" aria-label={dictionary.nav.dashboardAria}>
             <BrandLogo className="w-32" priority />
@@ -150,16 +150,16 @@ export function AppShell({
 
           <div className="mt-auto flex items-center justify-between gap-4 px-0">
             <LanguageSwitcher
-              activeClassName="bg-lipstick text-white"
+              activeClassName="bg-lipstick-red text-white"
               ariaLabel={dictionary.common.language}
               buttonClassName="h-8 min-w-9"
               className="h-9 rounded-lg"
               currentLocale={locale}
-              inactiveClassName="text-wine hover:bg-lipstick/8 hover:text-lipstick"
+              inactiveClassName="text-wine-burgundy hover:bg-lipstick-red/8 hover:text-lipstick-red"
             />
             <div className="min-w-0">
               <SignOutButton
-                className="h-9 justify-center border-wine/10 bg-white px-3 text-xs font-black text-wine shadow-sm hover:translate-y-0 hover:bg-lipstick/8 hover:text-lipstick hover:shadow-sm"
+                className="h-9 justify-center border-wine-burgundy/10 bg-white px-3 text-xs font-black text-wine-burgundy shadow-sm hover:translate-y-0 hover:bg-lipstick-red/8 hover:text-lipstick-red hover:shadow-sm"
                 label={dictionary.common.signOut}
                 size="sm"
                 variant="secondary"
@@ -170,7 +170,7 @@ export function AppShell({
       </aside>
 
       <div className="min-w-0">
-        <header className="fixed inset-x-0 top-0 z-30 border-b border-wine/10 bg-blush/95 px-4 py-3 backdrop-blur md:hidden">
+        <header className="fixed inset-x-0 top-0 z-30 border-b border-wine-burgundy/10 bg-blush-pink/95 px-4 py-3 backdrop-blur md:hidden">
           <div className="flex items-center justify-between gap-3">
             <Link
               href="/dashboard"

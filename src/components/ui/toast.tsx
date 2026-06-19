@@ -52,18 +52,18 @@ const toastVariantStyles: Record<
 > = {
   error: {
     icon: AlertCircle,
-    iconClassName: "bg-lipstick text-white",
-    ringClassName: "border-lipstick/25",
+    iconClassName: "bg-lipstick-red text-white",
+    ringClassName: "border-lipstick-red/25",
   },
   info: {
     icon: Info,
-    iconClassName: "bg-gold text-white",
-    ringClassName: "border-gold/30",
+    iconClassName: "bg-ocean-blue text-white",
+    ringClassName: "border-ocean-blue/20",
   },
   success: {
     icon: CheckCircle2,
-    iconClassName: "bg-ocean text-white",
-    ringClassName: "border-ocean/20",
+    iconClassName: "bg-ocean-blue text-white",
+    ringClassName: "border-ocean-blue/20",
   },
 };
 
@@ -167,7 +167,7 @@ function ToastCard({
   return (
     <div
       className={cn(
-        "pointer-events-auto grid w-full max-w-[calc(100vw-1.5rem)] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg border bg-white p-4 text-wine shadow-[0_18px_45px_rgba(68,10,18,0.16)]",
+        "pointer-events-auto grid w-full max-w-[calc(100vw-1.5rem)] grid-cols-[auto_1fr_auto] items-center gap-3 rounded-lg border bg-white p-4 text-wine-burgundy shadow-[0_18px_45px_rgba(68,10,18,0.16)]",
         styles.ringClassName,
       )}
       role={role}
@@ -181,7 +181,7 @@ function ToastCard({
         <Icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.6} />
       </span>
       <div className="min-w-0">
-        <p className="text-sm font-semibold leading-5 text-wine">{toast.title}</p>
+        <p className="text-sm font-semibold leading-5 text-wine-burgundy">{toast.title}</p>
         {toast.description ? (
           <p className="mt-1 text-sm leading-5 text-muted">
             {toast.description}
@@ -190,7 +190,7 @@ function ToastCard({
       </div>
       <button
         aria-label="Dismiss notification"
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-blush hover:text-wine focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35"
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-muted transition-colors hover:bg-blush-pink hover:text-wine-burgundy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35"
         onClick={() => onDismiss(toast.id)}
         type="button"
       >

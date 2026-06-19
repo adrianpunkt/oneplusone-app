@@ -46,8 +46,8 @@ export default async function EventsPage() {
   return (
     <>
       <section className="grid gap-2">
-        <Badge variant="wine">{dictionary.events.badge}</Badge>
-        <h1 className="font-display text-3xl font-black text-wine">
+        <Badge variant="wine-burgundy">{dictionary.events.badge}</Badge>
+        <h1 className="font-display text-3xl font-black text-wine-burgundy">
           {dictionary.events.title}
         </h1>
         <p className="max-w-2xl text-sm leading-6 text-muted">
@@ -65,22 +65,22 @@ export default async function EventsPage() {
             invitations.map((invitation) => (
               <article
                 key={invitation.id}
-                className="grid gap-4 rounded-lg border border-wine/10 bg-white p-4 lg:grid-cols-[1fr_auto]"
+                className="grid gap-4 rounded-lg border border-wine-burgundy/10 bg-white p-4 lg:grid-cols-[1fr_auto]"
               >
                 <div className="grid gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge>{statusLabel(invitation.status, locale)}</Badge>
-                    <h2 className="font-display text-lg font-extrabold text-wine">
+                    <h2 className="font-display text-lg font-extrabold text-wine-burgundy">
                       {localizeText(invitation.events?.title, invitation.events?.localized_content, locale, "title") || dictionary.common.event}
                     </h2>
                   </div>
                   <p className="flex items-center gap-2 text-sm font-semibold text-muted">
-                    <CalendarDays className="h-4 w-4 text-lipstick" />
+                    <CalendarDays className="h-4 w-4 text-lipstick-red" />
                     {formatDateTime(invitation.events?.starts_at, locale)}
                   </p>
                   {invitation.events?.city ? (
                     <p className="flex items-center gap-2 text-sm font-semibold text-muted">
-                      <MapPin className="h-4 w-4 text-lipstick" />
+                      <MapPin className="h-4 w-4 text-lipstick-red" />
                       {invitation.events.city}
                     </p>
                   ) : null}
@@ -94,7 +94,7 @@ export default async function EventsPage() {
               </article>
             ))
           ) : (
-            <p className="rounded-lg bg-blush p-4 text-sm font-semibold text-muted">
+            <p className="rounded-lg bg-blush-pink p-4 text-sm font-semibold text-muted">
               {dictionary.events.noInvitations}
             </p>
           )}
@@ -112,13 +112,13 @@ export default async function EventsPage() {
               <Link
                 key={attendee.id}
                 href={`/events/${attendee.event_id}`}
-                className="grid gap-2 rounded-lg border border-wine/10 bg-blush p-4 transition hover:border-lipstick/25"
+                className="grid gap-2 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 transition hover:border-lipstick-red/25"
               >
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={attendee.status === "attended" ? "ocean" : "muted"}>
+                  <Badge variant={attendee.status === "attended" ? "ocean-blue" : "muted"}>
                     {statusLabel(attendee.status, locale)}
                   </Badge>
-                  <h2 className="font-display text-lg font-extrabold text-wine">
+                  <h2 className="font-display text-lg font-extrabold text-wine-burgundy">
                     {localizeText(attendee.events?.title, attendee.events?.localized_content, locale, "title") || dictionary.common.event}
                   </h2>
                 </div>
@@ -128,7 +128,7 @@ export default async function EventsPage() {
               </Link>
             ))
           ) : (
-            <p className="rounded-lg bg-blush p-4 text-sm font-semibold text-muted">
+            <p className="rounded-lg bg-blush-pink p-4 text-sm font-semibold text-muted">
               {dictionary.events.noHistory}
             </p>
           )}

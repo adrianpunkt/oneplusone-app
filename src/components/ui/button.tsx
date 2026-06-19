@@ -5,16 +5,16 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-55 disabled:shadow-none",
+  "inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-[background-color,border-color,color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:translate-y-0 disabled:opacity-55 disabled:shadow-none",
   {
     variants: {
       variant: {
-        default: "bg-lipstick text-white shadow-sm hover:bg-lipstick/90",
+        default: "bg-lipstick-red text-white shadow-sm hover:bg-lipstick-red/90",
         secondary:
-          "border border-wine/10 bg-white text-wine shadow-sm hover:bg-blush",
-        ghost: "text-wine hover:bg-lipstick/8",
-        destructive: "bg-wine text-white hover:bg-wine/90",
-        ocean: "bg-ocean text-white hover:bg-ocean/90",
+          "border border-wine-burgundy/10 bg-white text-wine-burgundy shadow-sm hover:bg-blush-pink",
+        ghost: "text-wine-burgundy hover:bg-lipstick-red/8",
+        destructive: "bg-wine-burgundy text-white hover:bg-wine-burgundy/90",
+        "ocean-blue": "bg-ocean-blue text-white hover:bg-ocean-blue/90",
       },
       size: {
         default: "h-10 px-4",

@@ -140,7 +140,7 @@ export default async function DashboardPage({
       />
 
       <section className="grid min-h-[calc(100dvh-7.5rem)] content-center gap-5 md:min-h-[calc(100dvh-3rem)]">
-        <h1 className="font-display text-3xl font-black text-wine">
+        <h1 className="font-display text-3xl font-black text-wine-burgundy">
           {dictionary.dashboard.title}
         </h1>
 

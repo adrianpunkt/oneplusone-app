@@ -21,7 +21,7 @@ export function CorrespondentAvatar({
     return (
       <span
         className={cn(
-          "block aspect-square shrink-0 overflow-hidden rounded-xl border-2 border-lipstick/70 bg-mist shadow-inner",
+          "block aspect-square shrink-0 overflow-hidden rounded-xl border-2 border-lipstick-red/70 bg-cement-gray shadow-inner",
           className,
         )}
       >
@@ -41,14 +41,14 @@ export function CorrespondentAvatar({
   return (
     <span
       className={cn(
-        "relative grid aspect-square shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-lipstick/70 bg-mist shadow-inner",
+        "relative grid aspect-square shrink-0 place-items-center overflow-hidden rounded-xl border-2 border-lipstick-red/70 bg-cement-gray shadow-inner",
         className,
       )}
     >
-      <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(229,58,62,0.18),transparent_32%),linear-gradient(135deg,rgba(197,135,50,0.18),rgba(38,66,107,0.10))]" />
+      <span className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(229,58,62,0.18),transparent_32%),linear-gradient(135deg,rgba(229,58,62,0.12),rgba(38,66,107,0.10))]" />
       <span
         className={cn(
-          "absolute inset-0 grid place-items-center bg-white/80 text-xl font-extrabold uppercase leading-none text-wine",
+          "absolute inset-0 grid place-items-center bg-white/80 text-xl font-extrabold uppercase leading-none text-wine-burgundy",
           initialsClassName,
         )}
       >
