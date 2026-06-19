@@ -8,8 +8,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getOptionalMemberContextForRender } from "@/lib/data/member";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
-import { decodeEmailHint, normalizeOtpType } from "@/lib/auth-link";
-import { safeInternalPath } from "@/lib/utils";
+import {
+  decodeEmailHint,
+  normalizeMemberLoginNextPath,
+  normalizeOtpType,
+} from "@/lib/auth-link";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +51,6 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<LoginSearchParams>;
 }) {
-  const context = await getOptionalMemberContextForRender();
-  if (context) redirect("/dashboard");
   const locale = await getRequestLocaleFallback();
   const dictionary = getDictionary(locale);
 
@@ -61,8 +62,11 @@ export default async function LoginPage({
     sent: sentParam,
   } = await searchParams;
   const auth = firstSearchParam(authParam);
-  const next = firstSearchParam(nextParam);
+  const next = normalizeMemberLoginNextPath(firstSearchParam(nextParam));
   const sent = firstSearchParam(sentParam);
+  const context = await getOptionalMemberContextForRender();
+  if (context) redirect(next);
+
   const initialEmail = decodeEmailHint(emailHint);
   const message = authMessage(auth, dictionary, initialEmail);
   const initialSent = Boolean(initialEmail && (auth === "expired-link-sent" || sent === "1"));
@@ -124,7 +128,7 @@ export default async function LoginPage({
             initialOtpType={initialOtpType}
             initialSent={initialSent}
             locale={locale}
-            next={safeInternalPath(next, "/dashboard")}
+            next={next}
           />
         </CardContent>
       </Card>

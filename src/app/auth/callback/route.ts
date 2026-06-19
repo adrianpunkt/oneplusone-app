@@ -1,13 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { normalizeMemberLoginNextPath } from "@/lib/auth-link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { localeCookieName, normalizeLocale } from "@/lib/i18n/locales";
-import { safeInternalPath } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get("code");
-  const next = safeInternalPath(requestUrl.searchParams.get("next"), "/dashboard");
+  const next = normalizeMemberLoginNextPath(requestUrl.searchParams.get("next"));
 
   if (!code) {
     return NextResponse.redirect(new URL("/login?auth=missing-code#_", requestUrl.origin));

@@ -17,6 +17,11 @@ function searchParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function returnsToDashboard(value: string | string[] | undefined) {
+  const from = searchParamValue(value);
+  return from === "dashboard" || from === "login";
+}
+
 export default async function PreferencesPage({
   searchParams,
 }: PreferencesPageProps) {
@@ -24,7 +29,7 @@ export default async function PreferencesPage({
   const dictionary = getDictionary(locale);
   const { from, saved } = await searchParams;
   const preferences = await getPreferences(member.id);
-  const returnToDashboard = searchParamValue(from) === "dashboard";
+  const returnToDashboard = returnsToDashboard(from);
 
   return (
     <>

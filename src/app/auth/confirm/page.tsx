@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   decodeEmailHint,
   MEMBER_LOGIN_LINK_TTL_MINUTES,
+  normalizeMemberLoginNextPath,
   type MemberLoginOtpType,
 } from "@/lib/auth-link";
 import { resolveAppOrigin } from "@/lib/app-origin";
@@ -21,7 +22,6 @@ import { localeCookieName, normalizeLocale } from "@/lib/i18n/locales";
 import { sendMemberLoginEmail } from "@/lib/member-login-email";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { safeInternalPath } from "@/lib/utils";
 
 const allowedEmailOtpTypes = new Set(["email", "invite", "magiclink", "signup"]);
 const authLinkPreflightStatuses = new Set(["invalid", "unknown", "valid"]);
@@ -166,7 +166,7 @@ export async function confirmLoginAction(formData: FormData) {
 
   const tokenHash = firstValue(formData.get("token_hash") || formData.get("token"));
   const type = firstValue(formData.get("type"));
-  const next = safeInternalPath(firstValue(formData.get("next")), "/dashboard");
+  const next = normalizeMemberLoginNextPath(firstValue(formData.get("next")));
   const emailHint = firstValue(formData.get("email_hint"));
   const requestHeaders = await headers();
   const origin = resolveAppOrigin(requestHeaders.get("origin"));
@@ -233,16 +233,15 @@ export default async function ConfirmLoginPage({
 }: {
   searchParams: Promise<ConfirmSearchParams>;
 }) {
-  const context = await getOptionalMemberContextForRender();
-  if (context) redirect("/dashboard");
-
   const locale = await getRequestLocaleFallback();
   const dictionary = getDictionary(locale);
   const params = await searchParams;
   const tokenHash = firstValue(params.token_hash || params.token);
   const type = firstValue(params.type);
-  const next = safeInternalPath(firstValue(params.next), "/dashboard");
+  const next = normalizeMemberLoginNextPath(firstValue(params.next));
   const emailHint = firstValue(params.email_hint);
+  const context = await getOptionalMemberContextForRender();
+  if (context) redirect(next);
 
   if (!tokenHash || !allowedEmailOtpTypes.has(type)) {
     redirect(loginRedirectPath("expired-link", next, emailHint));
