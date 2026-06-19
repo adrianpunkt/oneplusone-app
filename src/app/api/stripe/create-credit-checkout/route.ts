@@ -56,24 +56,19 @@ export async function POST(request: NextRequest) {
     context.locale,
     "description",
   );
-  const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = product.stripe_price_id
-    ? {
-        price: product.stripe_price_id,
-        quantity: 1,
-      }
-    : {
-        quantity: 1,
-        price_data: {
-          currency: product.currency,
-          unit_amount: product.price_amount_cents,
-          product_data: {
-            name: productName,
-            description:
-              productDescription ||
-              dictionary.credits.attendEvents(product.credits),
-          },
-        },
-      };
+  const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = {
+    quantity: 1,
+    price_data: {
+      currency: product.currency,
+      unit_amount: product.price_amount_cents,
+      product_data: {
+        name: productName,
+        description:
+          productDescription ||
+          dictionary.credits.attendEvents(product.credits),
+      },
+    },
+  };
 
   try {
     const session = await getStripe().checkout.sessions.create({
