@@ -156,6 +156,7 @@ export function LoginForm({
   const [hideVerifyError, setHideVerifyError] = useState(false);
   const submittedRequestBaselineRef = useRef<AuthActionState | null>(null);
   const handledRequestStateRef = useRef<AuthActionState | null>(null);
+  const codeInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -190,6 +191,12 @@ export function LoginForm({
   function handleRequestSubmit() {
     submittedRequestBaselineRef.current = requestState;
   }
+
+  useEffect(() => {
+    if (!codeStep) return;
+
+    codeInputRef.current?.focus();
+  }, [codeStep]);
 
   useEffect(() => {
     if (
@@ -312,6 +319,7 @@ export function LoginForm({
             <Input
               id="code"
               name="code"
+              ref={codeInputRef}
               inputMode="numeric"
               autoComplete="one-time-code"
               placeholder={copy.codePlaceholder}
