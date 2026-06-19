@@ -21,6 +21,62 @@ import type { EventPreferences } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const initialState: FormActionState = {};
+const dietaryOptions = [
+  "Everything works",
+  "Vegetarian",
+  "Vegan",
+  "Other",
+] as const;
+
+type DietaryOption = (typeof dietaryOptions)[number];
+
+function parseDietaryRestrictions(value: string) {
+  const selected = new Set<DietaryOption>();
+  const otherParts: string[] = [];
+
+  value
+    .split(/[,;\n]/)
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .forEach((part) => {
+      const normalized = part.toLowerCase();
+
+      if (normalized === "everything works") {
+        selected.add("Everything works");
+        return;
+      }
+
+      if (normalized === "vegetarian") {
+        selected.add("Vegetarian");
+        return;
+      }
+
+      if (normalized === "vegan") {
+        selected.add("Vegan");
+        return;
+      }
+
+      if (normalized === "other") {
+        selected.add("Other");
+        return;
+      }
+
+      if (normalized.startsWith("other:")) {
+        selected.add("Other");
+        const otherDetail = part.slice(part.indexOf(":") + 1).trim();
+        if (otherDetail) otherParts.push(otherDetail);
+        return;
+      }
+
+      selected.add("Other");
+      otherParts.push(part);
+    });
+
+  return {
+    options: dietaryOptions.filter((option) => selected.has(option)),
+    other: otherParts.join(", "),
+  };
+}
 
 function serializeForm(form: HTMLFormElement) {
   return JSON.stringify(
@@ -55,20 +111,30 @@ export function PreferencesForm({
       ? preferences.extra_preferences.other_preferences
       : "";
   const dietaryRestrictions = preferences?.dietary_restrictions || "";
+  const parsedDietaryRestrictions =
+    parseDietaryRestrictions(dietaryRestrictions);
   const [otherEventIdeasValue, setOtherEventIdeasValue] =
     useState(otherEventIdeas);
   const [showOtherEventIdeas, setShowOtherEventIdeas] = useState(
     preferences?.extra_preferences?.interested_in_other_events === true ||
       Boolean(otherEventIdeas),
   );
-  const [showDietaryPreferences, setShowDietaryPreferences] = useState(
-    Boolean(dietaryRestrictions),
+  const [selectedDietaryOptions, setSelectedDietaryOptions] = useState<
+    DietaryOption[]
+  >(parsedDietaryRestrictions.options);
+  const [dietaryOtherValue, setDietaryOtherValue] = useState(
+    parsedDietaryRestrictions.other,
   );
-  const [dietaryRestrictionsValue, setDietaryRestrictionsValue] =
-    useState(dietaryRestrictions);
   const [wantsToHost, setWantsToHost] = useState(
     preferences?.wants_to_host ?? false,
   );
+  const dietaryOptionLabels: Record<DietaryOption, string> = {
+    "Everything works": copy.dietaryEverythingWorks,
+    Vegetarian: copy.dietaryVegetarian,
+    Vegan: copy.dietaryVegan,
+    Other: copy.dietaryOther,
+  };
+  const hasOtherDietaryOption = selectedDietaryOptions.includes("Other");
   const updateDirtyState = useCallback(() => {
     const form = formRef.current;
     if (!form) return;
@@ -82,6 +148,27 @@ export function PreferencesForm({
   const scheduleDirtyCheck = useCallback(() => {
     window.requestAnimationFrame(updateDirtyState);
   }, [updateDirtyState]);
+
+  function handleDietaryOptionChange(
+    option: DietaryOption,
+    checked: boolean,
+  ) {
+    setSelectedDietaryOptions((currentOptions) => {
+      const nextOptions: DietaryOption[] = checked
+        ? option === "Everything works"
+          ? ["Everything works"]
+          : dietaryOptions.filter(
+              (dietaryOption) =>
+                dietaryOption === option ||
+                (dietaryOption !== "Everything works" &&
+                  currentOptions.includes(dietaryOption)),
+            )
+        : currentOptions.filter((dietaryOption) => dietaryOption !== option);
+
+      return nextOptions;
+    });
+    scheduleDirtyCheck();
+  }
 
   useEffect(() => {
     updateDirtyState();
@@ -226,35 +313,46 @@ export function PreferencesForm({
         >
           {copy.dietary}
         </h2>
-        <div className="grid gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
-          <label className="flex cursor-pointer items-start gap-3">
-            <Checkbox
-              checked={showDietaryPreferences}
-              onCheckedChange={(checked) => {
-                setShowDietaryPreferences(checked === true);
-                scheduleDirtyCheck();
-              }}
-            />
-            <span className="block text-sm font-semibold text-wine-burgundy">
-              {copy.dietaryQuestion}
-            </span>
-          </label>
-          {showDietaryPreferences ? (
-            <div className="grid gap-2 pl-8">
-              <Label htmlFor="dietary" className="sr-only">
-                {copy.dietaryQuestion}
-              </Label>
-              <Textarea
-                id="dietary"
-                name="dietary_restrictions"
-                value={dietaryRestrictionsValue}
-                onChange={(event) =>
-                  setDietaryRestrictionsValue(event.target.value)
-                }
-                placeholder={copy.dietaryPlaceholder}
-              />
+        <p className="text-sm font-semibold text-ink">
+          {copy.dietaryQuestion}
+        </p>
+        <div className="grid gap-3">
+          {dietaryOptions.map((option) => (
+            <div
+              key={option}
+              className="grid gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4"
+            >
+              <label className="flex cursor-pointer items-start gap-3">
+                <Checkbox
+                  name="dietary_options"
+                  value={option}
+                  checked={selectedDietaryOptions.includes(option)}
+                  onCheckedChange={(checked) =>
+                    handleDietaryOptionChange(option, checked === true)
+                  }
+                />
+                <span className="block text-sm font-semibold text-wine-burgundy">
+                  {dietaryOptionLabels[option]}
+                </span>
+              </label>
+              {option === "Other" && hasOtherDietaryOption ? (
+                <div className="grid gap-2 pl-8">
+                  <Label htmlFor="dietaryOther" className="sr-only">
+                    {copy.dietaryOther}
+                  </Label>
+                  <Textarea
+                    id="dietaryOther"
+                    name="dietary_other"
+                    value={dietaryOtherValue}
+                    onChange={(event) =>
+                      setDietaryOtherValue(event.target.value)
+                    }
+                    placeholder={copy.dietaryPlaceholder}
+                  />
+                </div>
+              ) : null}
             </div>
-          ) : null}
+          ))}
         </div>
       </section>
 

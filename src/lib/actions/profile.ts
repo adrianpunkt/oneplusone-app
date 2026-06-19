@@ -44,6 +44,32 @@ function selectedValues(formData: FormData, key: string) {
     .filter(Boolean);
 }
 
+function dietaryRestrictionsValue(formData: FormData) {
+  const selectedOptions = new Set(selectedValues(formData, "dietary_options"));
+  const otherDetails = optionalText(formData, "dietary_other");
+  const hasSpecificDietaryNeed =
+    selectedOptions.has("Vegetarian") ||
+    selectedOptions.has("Vegan") ||
+    selectedOptions.has("Other") ||
+    Boolean(otherDetails);
+
+  if (selectedOptions.has("Everything works") && !hasSpecificDietaryNeed) {
+    return "Everything works";
+  }
+
+  const values = [
+    selectedOptions.has("Vegetarian") ? "Vegetarian" : "",
+    selectedOptions.has("Vegan") ? "Vegan" : "",
+    selectedOptions.has("Other") || otherDetails
+      ? otherDetails
+        ? `Other: ${otherDetails}`
+        : "Other"
+      : "",
+  ];
+
+  return values.filter(Boolean).join(", ");
+}
+
 export async function saveProfileAction(
   _previousState: FormActionState,
   formData: FormData,
@@ -126,7 +152,7 @@ export async function savePreferencesAction(
       formData,
       "prefers_michelin_guide_locations",
     ),
-    dietaryRestrictions: optionalText(formData, "dietary_restrictions"),
+    dietaryRestrictions: dietaryRestrictionsValue(formData),
     wantsToHost: checkboxValue(formData, "wants_to_host"),
     otherPreferences: optionalText(formData, "other_preferences"),
   });

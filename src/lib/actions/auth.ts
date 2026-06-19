@@ -68,11 +68,13 @@ export async function requestOtpAction(
   const requestLocale = await getRequestLocaleFallback();
   const locale = formLocale || requestLocale;
   const dictionary = getDictionary(locale);
-  const parsedEmail = emailSchema.safeParse(formData.get("email"));
+  const emailValue = formData.get("email");
+  const submittedEmail = typeof emailValue === "string" ? emailValue : "";
+  const parsedEmail = emailSchema.safeParse(emailValue);
   const next = safeInternalPath(String(formData.get("next") || "/dashboard"));
 
   if (!parsedEmail.success) {
-    return { error: dictionary.authErrors.validEmail };
+    return { email: submittedEmail, error: dictionary.authErrors.validEmail, next };
   }
 
   const email = parsedEmail.data.trim().toLowerCase();
@@ -127,10 +129,7 @@ export async function requestOtpAction(
   if (error) {
     return {
       email,
-      error:
-        error.message === "Error sending magic link email"
-          ? dictionary.authErrors.loginEmail
-          : error.message,
+      error: dictionary.authErrors.loginEmail,
     };
   }
 

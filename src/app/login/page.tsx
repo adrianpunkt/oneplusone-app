@@ -92,6 +92,13 @@ export default async function LoginPage({
           <LoginForm
             codeStepMessage={codeStepMessage}
             copy={{
+              assistanceClose: dictionary.login.assistanceClose,
+              assistanceEmail: dictionary.login.assistanceEmail,
+              assistanceEmailAriaLabel: dictionary.login.assistanceEmailAriaLabel,
+              assistanceLeadPrefix: dictionary.login.assistanceLeadPrefix,
+              assistanceLeadSuffix: dictionary.login.assistanceLeadSuffix,
+              assistanceSubject: dictionary.login.assistanceSubject,
+              assistanceTitle: dictionary.login.assistanceTitle,
               checking: dictionary.login.checking,
               codePlaceholder: dictionary.login.codePlaceholder,
               codeSentToast: dictionary.login.codeSentToast,
@@ -104,6 +111,7 @@ export default async function LoginPage({
               introTitle: dictionary.login.introTitle,
               joinClub: dictionary.login.joinClub,
               login: dictionary.login.login,
+              needAssistance: dictionary.login.needAssistance,
               notRegisteredBody: dictionary.login.notRegisteredBody,
               notRegisteredTitle: dictionary.login.notRegisteredTitle,
               sendLoginCode: dictionary.login.sendLoginCode,
