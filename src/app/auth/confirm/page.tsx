@@ -8,7 +8,11 @@ import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { decodeEmailHint, type MemberLoginOtpType } from "@/lib/auth-link";
+import {
+  decodeEmailHint,
+  MEMBER_LOGIN_LINK_TTL_MINUTES,
+  type MemberLoginOtpType,
+} from "@/lib/auth-link";
 import { resolveAppOrigin } from "@/lib/app-origin";
 import { getOptionalMemberContextForRender } from "@/lib/data/member";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -20,6 +24,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { safeInternalPath } from "@/lib/utils";
 
 const allowedEmailOtpTypes = new Set(["email", "invite", "magiclink", "signup"]);
+const authLinkPreflightStatuses = new Set(["invalid", "unknown", "valid"]);
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +62,42 @@ function counterpartLoginOtpType(type: string): EmailOtpType | "" {
   if (type === "email") return "magiclink";
   if (type === "magiclink") return "email";
   return "";
+}
+
+async function preflightAuthLink(tokenHash: string, type: string) {
+  const primaryStatus = await preflightAuthLinkType(tokenHash, type);
+  if (primaryStatus === "valid") return "valid";
+
+  const fallbackType = counterpartLoginOtpType(type);
+  if (!fallbackType) return primaryStatus;
+
+  const fallbackStatus = await preflightAuthLinkType(tokenHash, fallbackType);
+  if (fallbackStatus === "valid") return "valid";
+  if (primaryStatus === "unknown" || fallbackStatus === "unknown") return "unknown";
+  return "invalid";
+}
+
+async function preflightAuthLinkType(tokenHash: string, type: string) {
+  try {
+    const serviceClient = getSupabaseServiceClient();
+    const { data, error } = await serviceClient.rpc("preflight_member_auth_link", {
+      p_otp_ttl_seconds: MEMBER_LOGIN_LINK_TTL_MINUTES * 60,
+      p_token_hash: tokenHash,
+      p_type: type,
+    });
+
+    if (error) {
+      console.warn("Could not preflight auth link", error.message);
+      return "unknown";
+    }
+
+    return typeof data === "string" && authLinkPreflightStatuses.has(data)
+      ? data
+      : "unknown";
+  } catch (error) {
+    console.warn("Could not preflight auth link", error);
+    return "unknown";
+  }
 }
 
 async function verifyAuthLink(
@@ -205,6 +246,13 @@ export default async function ConfirmLoginPage({
 
   if (!tokenHash || !allowedEmailOtpTypes.has(type)) {
     redirect(loginRedirectPath("expired-link", next, emailHint));
+  }
+
+  const preflightStatus = await preflightAuthLink(tokenHash, type);
+  if (preflightStatus === "invalid") {
+    const requestHeaders = await headers();
+    const origin = resolveAppOrigin(requestHeaders.get("origin"));
+    redirect(await expiredLinkRedirectPath(origin, next, emailHint));
   }
 
   return (

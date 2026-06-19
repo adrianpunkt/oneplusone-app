@@ -122,6 +122,7 @@ export function AppShell({
     ...navLabels,
     closeMenu: dictionary.nav.closeMenu,
     openMenu: dictionary.nav.openMenu,
+    signOut: dictionary.common.signOut,
   };
 
   return (

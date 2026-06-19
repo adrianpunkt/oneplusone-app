@@ -1406,27 +1406,66 @@ function StoryNarrative({
   return (
     <ProfileCopyContext.Provider value={copy}>
       <div className={cn("min-w-0 space-y-10", showSaveActions && "pb-28")}>
-      <StoryChapter
-        eyebrow={copy.chapterIntro.eyebrow}
-        media={
-          profileImage ? (
-            <div
-              className="w-full max-w-[11rem] shrink-0"
-              data-profile-image-uploader
-            >
-              <ProfileImageUploader
-                className="w-full max-w-[11rem] justify-self-center md:justify-self-start"
-                copy={imageUploaderCopy}
-                currentImageUrl={profileImage.currentImageUrl}
-                displayName={profileImage.displayName}
-                hasProfile={profileImage.hasProfile}
-              />
+        <section className="min-w-0 scroll-mt-24">
+          <div
+            className={cn(
+              "grid min-w-0 gap-7",
+              profileImage &&
+                "md:grid-cols-[minmax(0,1fr)_10.5rem] md:items-start",
+            )}
+          >
+            <div className="min-w-0">
+              <span className="mb-3 block font-display text-[0.78rem] font-bold uppercase tracking-[0.22em] text-lipstick-red">
+                {copy.author.eyebrow}
+              </span>
+              <h2 className="font-display text-3xl font-black text-wine-burgundy">
+                {copy.author.title}
+              </h2>
             </div>
-          ) : undefined
-        }
-        title={copy.chapterIntro.title}
-        description={copy.chapterIntro.description}
-      />
+            {profileImage ? (
+              <div
+                className="flex min-w-0 justify-center text-base md:col-start-2 md:row-span-2 md:row-start-1 md:block"
+                data-profile-image-uploader
+              >
+                <ProfileImageUploader
+                  className="w-full max-w-[11rem] justify-self-center md:justify-self-end"
+                  copy={imageUploaderCopy}
+                  currentImageUrl={profileImage.currentImageUrl}
+                  displayName={profileImage.displayName}
+                  hasProfile={profileImage.hasProfile}
+                />
+              </div>
+            ) : null}
+            <div className={cn("space-y-6", storyTextClass)}>
+              <p>
+                {copy.sentences.firstName}
+                <InlineLongText
+                  editWidthClassName="w-[min(24rem,calc(100%-9rem))]"
+                  label={copy.fields.firstName}
+                  mode={mode}
+                  name="profile.first_name"
+                  defaultValue={storyValue(story, "profile.first_name")}
+                  placeholder={copy.placeholders.firstName}
+                  singleLine
+                />
+                {copy.sentences.notifications}
+                <InlineLongText
+                  label={copy.fields.email}
+                  mode={mode}
+                  name="profile.email"
+                  defaultValue={
+                    storyValue(story, "profile.email") ||
+                    profile.contact_email ||
+                    ""
+                  }
+                  placeholder={copy.placeholders.email}
+                  singleLine
+                />
+                .
+              </p>
+            </div>
+          </div>
+        </section>
 
       <Divider />
 
@@ -1935,35 +1974,6 @@ function StoryNarrative({
           </div>
         )}
       </section>
-
-      <Divider />
-
-      <StoryChapter eyebrow={copy.author.eyebrow} title={copy.author.title}>
-        <p>
-          {copy.sentences.firstName}
-          <InlineLongText
-            editWidthClassName="w-[min(24rem,calc(100%-9rem))]"
-            label={copy.fields.firstName}
-            mode={mode}
-            name="profile.first_name"
-            defaultValue={storyValue(story, "profile.first_name")}
-            placeholder={copy.placeholders.firstName}
-            singleLine
-          />
-          {copy.sentences.notifications}
-          <InlineLongText
-            label={copy.fields.email}
-            mode={mode}
-            name="profile.email"
-            defaultValue={
-              storyValue(story, "profile.email") || profile.contact_email || ""
-            }
-            placeholder={copy.placeholders.email}
-            singleLine
-          />
-          .
-        </p>
-      </StoryChapter>
 
       {showSaveActions ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-8 z-40 min-[901px]:left-[260px]">

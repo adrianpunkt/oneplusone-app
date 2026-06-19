@@ -10,6 +10,7 @@ import { MemberNavIcon } from "@/components/app/member-nav-icon";
 import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { isPathInSection, meActivePaths, navSections } from "@/components/app/nav-sections";
 import { LanguageSwitcher } from "@/components/app/language-switcher";
+import { SignOutButton } from "@/components/app/sign-out-button";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ type NavLabels = {
   messages: string;
   myStory: string;
   openMenu: string;
+  signOut: string;
 };
 
 export function MobileMenu({
@@ -99,7 +101,7 @@ export function MobileMenu({
 
   const menu = (
     <div
-      className="fixed inset-x-0 z-[45] grid w-dvw overflow-hidden bg-white px-4 shadow-[0_18px_45px_rgba(68,10,18,0.10)] md:hidden"
+      className="fixed inset-x-0 z-[45] grid w-dvw grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-white px-4 shadow-[0_18px_45px_rgba(68,10,18,0.10)] md:hidden"
       id="mobile-menu"
       role="dialog"
       aria-modal="true"
@@ -113,60 +115,70 @@ export function MobileMenu({
         currentLocale={currentLocale}
         inactiveClassName="text-wine-burgundy hover:bg-lipstick-red/8 hover:text-lipstick-red"
       />
-      <div className="grid h-full place-items-center pb-20">
-        <nav className="grid w-full max-w-sm gap-3">
-          {navSections.map((item) => {
-            const isActive = isPathInSection(pathname, item.activePaths);
-            const isMessages = item.href === "/messages";
-            const label = labels[item.labelKey];
-            const itemMessageTooltip = isMessages && unreadCount > 0 ? messageTooltip : undefined;
+      <div className="min-h-0 overflow-y-auto py-20">
+        <div className="grid min-h-full place-items-center">
+          <nav className="grid w-full max-w-sm gap-3">
+            {navSections.map((item) => {
+              const isActive = isPathInSection(pathname, item.activePaths);
+              const isMessages = item.href === "/messages";
+              const label = labels[item.labelKey];
+              const itemMessageTooltip = isMessages && unreadCount > 0 ? messageTooltip : undefined;
 
-            return (
-              <Link
-                aria-current={isActive ? "page" : undefined}
-                aria-label={itemMessageTooltip ? `${label}. ${itemMessageTooltip}` : undefined}
-                className={cn(
-                  "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
-                  isActive
-                    ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
-                    : "text-wine-burgundy",
-                )}
-                href={item.href}
-                key={item.href}
-                onClick={closeMenu}
-              >
-                {isMessages ? (
-                  <MessageHeartIcon
-                    className={cn("h-8 w-8", unreadCount > 0 ? "text-lipstick-red" : "text-current")}
-                    count={unreadCount}
-                    iconClassName="h-8 w-8"
-                  />
-                ) : (
-                  <item.icon className="h-6 w-6 shrink-0" />
-                )}
-                <span>{label}</span>
-              </Link>
-            );
-          })}
-          <Link
-            aria-current={isPathInSection(pathname, meActivePaths) ? "page" : undefined}
-            className={cn(
-              "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
-              isPathInSection(pathname, meActivePaths)
-                ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
-                : "text-wine-burgundy",
-            )}
-            href="/my-story"
-            onClick={closeMenu}
-          >
-            <MemberNavIcon
-              className="h-7 w-7 shrink-0 text-xs"
-              displayName={displayName}
-              imageUrl={imageUrl}
-            />
-            <span>{labels.myStory}</span>
-          </Link>
-        </nav>
+              return (
+                <Link
+                  aria-current={isActive ? "page" : undefined}
+                  aria-label={itemMessageTooltip ? `${label}. ${itemMessageTooltip}` : undefined}
+                  className={cn(
+                    "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
+                    isActive
+                      ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
+                      : "text-wine-burgundy",
+                  )}
+                  href={item.href}
+                  key={item.href}
+                  onClick={closeMenu}
+                >
+                  {isMessages ? (
+                    <MessageHeartIcon
+                      className={cn("h-8 w-8", unreadCount > 0 ? "text-lipstick-red" : "text-current")}
+                      count={unreadCount}
+                      iconClassName="h-8 w-8"
+                    />
+                  ) : (
+                    <item.icon className="h-6 w-6 shrink-0" />
+                  )}
+                  <span>{label}</span>
+                </Link>
+              );
+            })}
+            <Link
+              aria-current={isPathInSection(pathname, meActivePaths) ? "page" : undefined}
+              className={cn(
+                "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
+                isPathInSection(pathname, meActivePaths)
+                  ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
+                  : "text-wine-burgundy",
+              )}
+              href="/my-story"
+              onClick={closeMenu}
+            >
+              <MemberNavIcon
+                className="h-7 w-7 shrink-0 text-xs"
+                displayName={displayName}
+                imageUrl={imageUrl}
+              />
+              <span>{labels.myStory}</span>
+            </Link>
+          </nav>
+        </div>
+      </div>
+      <div className="border-t border-wine-burgundy/10 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+        <SignOutButton
+          className="h-12 w-full justify-center border-wine-burgundy/10 bg-white text-base font-black text-wine-burgundy shadow-sm hover:translate-y-0 hover:bg-lipstick-red/8 hover:text-lipstick-red hover:shadow-sm"
+          label={labels.signOut}
+          size="lg"
+          variant="secondary"
+        />
       </div>
     </div>
   );
