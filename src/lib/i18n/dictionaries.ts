@@ -40,6 +40,10 @@ const en = {
     introBodyPrefix: "Use the email from your story to login to the ",
     introBodyAppName: "one plus one app",
     introBodySuffix: ". We will send you a private code to login.",
+    confirmTitle: "Confirm login",
+    confirmBody: (email: string) =>
+      email ? `Continue with the private link for ${email}.` : "Continue with this private link.",
+    confirmButton: "Continue",
     missingCode:
       "That login link was issued for a different auth flow. Request a fresh link from this page.",
     expiredLink:
@@ -818,6 +822,10 @@ const es: typeof en = {
     introBodyPrefix: "Usa el email de tu historia para entrar en la ",
     introBodyAppName: "one plus one app",
     introBodySuffix: ". Te enviaremos un código privado para iniciar sesión.",
+    confirmTitle: "Confirmar acceso",
+    confirmBody: (email: string) =>
+      email ? `Continúa con el enlace privado para ${email}.` : "Continúa con este enlace privado.",
+    confirmButton: "Continuar",
     missingCode:
       "Ese enlace de acceso pertenece a otro flujo de autenticación. Pide un enlace nuevo desde esta página.",
     expiredLink:
