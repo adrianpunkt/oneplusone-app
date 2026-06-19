@@ -1,5 +1,6 @@
 import { AppShell } from "@/components/app/app-shell";
 import { NotificationRefresh } from "@/components/app/notification-refresh";
+import { PostHogMemberIdentify } from "@/components/app/posthog-member-identify";
 import { requireMemberContextForRender } from "@/lib/data/member";
 import { getCreditBalance, getUnreadNotifications } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -30,6 +31,7 @@ export default async function PortalLayout({
       notifications={notifications.map((notification) => localizeNotification(notification, locale))}
       profile={profile}
     >
+      <PostHogMemberIdentify locale={locale} member={member} />
       <NotificationRefresh memberId={member.id} supabaseConfig={supabaseConfig} />
       {children}
     </AppShell>

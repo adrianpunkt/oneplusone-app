@@ -19,6 +19,17 @@ Required env:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET` or `APP_STRIPE_WEBHOOK_SECRET`
 
+Optional PostHog analytics env:
+
+- `NEXT_PUBLIC_POSTHOG_ENABLED=true` opts the browser client into tracking.
+- `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` is the public PostHog project token.
+- `NEXT_PUBLIC_POSTHOG_HOST` defaults to `https://eu.i.posthog.com`.
+
+When PostHog is enabled, autocapture, session replay, and heatmaps are enabled.
+
+Leave `NEXT_PUBLIC_POSTHOG_ENABLED` unset or set to `false` for production
+deployments while the app and dev traffic share one PostHog project.
+
 Local development is configured to use the Supabase development project:
 
 ```text
