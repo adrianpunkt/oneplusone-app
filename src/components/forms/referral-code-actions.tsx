@@ -133,10 +133,10 @@ export function ReferralCodeActions({ code, copy }: ReferralCodeActionsProps) {
           </Button>
         </Dialog.Trigger>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-wine/35 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-lg border border-wine/10 bg-white p-4 shadow-2xl sm:w-[calc(100vw-2rem)] sm:gap-5 sm:p-5">
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/35 backdrop-blur-sm" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid max-h-[calc(100dvh-2rem)] w-[calc(100vw-1.5rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-lg border border-wine-burgundy/10 bg-white p-4 shadow-2xl sm:w-[calc(100vw-2rem)] sm:gap-5 sm:p-5">
             <div className="grid gap-2 pr-10">
-              <Dialog.Title className="font-display text-xl font-extrabold text-wine">
+              <Dialog.Title className="font-display text-xl font-extrabold text-wine-burgundy">
                 {copy.shareReferral}
               </Dialog.Title>
               <Dialog.Description className="text-sm leading-6 text-muted">
@@ -164,7 +164,7 @@ export function ReferralCodeActions({ code, copy }: ReferralCodeActionsProps) {
               />
             </div>
 
-            <div className="grid gap-3 rounded-lg border border-wine/10 bg-white p-2 sm:p-3">
+            <div className="grid gap-3 rounded-lg border border-wine-burgundy/10 bg-white p-2 sm:p-3">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-muted">
                   {copy.shareVia}
@@ -190,7 +190,7 @@ export function ReferralCodeActions({ code, copy }: ReferralCodeActionsProps) {
             <Dialog.Close asChild>
               <Button
                 aria-label={copy.close}
-                className="absolute right-3 top-3 h-9 w-9 rounded-full p-0 text-muted hover:bg-blush hover:text-wine"
+                className="absolute right-3 top-3 h-9 w-9 rounded-full p-0 text-muted hover:bg-blush-pink hover:text-wine-burgundy"
                 type="button"
                 variant="ghost"
               >
@@ -252,7 +252,7 @@ function InviteCopyRow({
   value: string;
 }) {
   return (
-    <div className="grid gap-2 rounded-lg border border-wine/10 bg-white p-2 sm:p-3">
+    <div className="grid gap-2 rounded-lg border border-wine-burgundy/10 bg-white p-2 sm:p-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted">
           {label}
@@ -273,7 +273,7 @@ function InviteCopyRow({
         </Button>
       </div>
       <p
-        className={`rounded-md bg-blush py-2 font-mono font-semibold text-wine ${
+        className={`rounded-md bg-blush-pink py-2 font-mono font-semibold text-wine-burgundy ${
           compactValue
             ? "overflow-x-auto whitespace-nowrap px-2 text-xs leading-5 sm:break-all sm:px-3 sm:text-sm sm:leading-6"
             : "break-all px-3 text-sm leading-6"

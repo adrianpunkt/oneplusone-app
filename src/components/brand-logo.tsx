@@ -16,7 +16,7 @@ export function BrandLogo({
     <span className={cn("inline-flex items-center", className)}>
       <Image
         src={brandLogoImage}
-        alt="one plus one club app"
+        alt="one plus one app"
         priority={priority}
         className={cn("h-auto w-full object-contain", imageClassName)}
       />

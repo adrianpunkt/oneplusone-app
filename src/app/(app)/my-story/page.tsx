@@ -24,7 +24,7 @@ export default async function MyStoryPage({ searchParams }: MyStoryPageProps) {
   return (
     <article className="grid w-full min-w-0 gap-6" data-app-content="wide">
       <header>
-        <h1 className="font-display text-3xl font-black text-wine">
+        <h1 className="font-display text-3xl font-black text-wine-burgundy">
           {dictionary.profile.title}
         </h1>
       </header>
@@ -35,7 +35,7 @@ export default async function MyStoryPage({ searchParams }: MyStoryPageProps) {
         toastKey={saved === "1" ? "story-saved" : null}
       />
 
-      <div className="min-w-0 overflow-hidden rounded-lg border border-wine/10 bg-white px-4 py-8 shadow-[0_18px_45px_rgba(68,10,18,0.07)] sm:px-8 sm:py-10">
+      <div className="min-w-0 overflow-hidden rounded-lg border border-wine-burgundy/10 bg-white px-4 py-8 shadow-[0_18px_45px_rgba(68,10,18,0.07)] sm:px-8 sm:py-10">
         <ProfileForm
           autocompleteCopy={dictionary.autocomplete}
           copy={dictionary.profile}

@@ -40,10 +40,10 @@ export default async function ConversationPage({
         supabaseConfig={supabaseConfig}
       />
       <div className="mx-auto flex h-full w-full max-w-6xl flex-col gap-0 md:gap-2">
-        <section className="flex min-h-[3.25rem] min-w-0 shrink-0 items-center gap-2 border-b border-wine/10 bg-white/95 px-4 py-1.5 shadow-[0_8px_22px_rgba(68,10,18,0.05)] backdrop-blur sm:px-6 md:rounded-lg md:border md:px-3">
+        <section className="flex min-h-[3.25rem] min-w-0 shrink-0 items-center gap-2 border-b border-wine-burgundy/10 bg-white/95 px-4 py-1.5 shadow-[0_8px_22px_rgba(68,10,18,0.05)] backdrop-blur sm:px-6 md:rounded-lg md:border md:px-3">
           <Link
             aria-label={dictionary.messages.back}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-wine transition-colors hover:bg-lipstick/8 hover:text-lipstick focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/35 focus-visible:ring-offset-2"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-wine-burgundy transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/35 focus-visible:ring-offset-2"
             href="/messages"
             title={dictionary.messages.back}
           >
@@ -54,14 +54,14 @@ export default async function ConversationPage({
             imageUrl={correspondent.imageUrl}
             name={correspondent.name}
           />
-          <h1 className="truncate font-display text-xl font-extrabold text-wine">
+          <h1 className="truncate font-display text-xl font-extrabold text-wine-burgundy">
             {correspondent.name}
           </h1>
         </section>
 
         <Card className="min-h-0 flex-1 overflow-hidden rounded-none md:rounded-lg">
           <CardContent className="h-full min-h-0 p-0">
-            <div className="h-full min-h-0 overflow-y-auto bg-blush p-3">
+            <div className="h-full min-h-0 overflow-y-auto bg-blush-pink p-3">
               <div className="grid gap-3">
                 {messages.length ? (
                   messages.map((message) => {
@@ -72,7 +72,7 @@ export default async function ConversationPage({
                         className={cn(
                           "max-w-[82%] rounded-lg px-4 py-3 text-sm leading-6 shadow-sm",
                           own
-                            ? "ml-auto bg-lipstick text-white"
+                            ? "ml-auto bg-lipstick-red text-white"
                             : "mr-auto bg-white text-ink",
                         )}
                       >
@@ -93,7 +93,7 @@ export default async function ConversationPage({
           </CardContent>
         </Card>
 
-        <div className="shrink-0 border-t border-wine/10 bg-white md:rounded-lg md:border md:border-wine/10">
+        <div className="shrink-0 border-t border-wine-burgundy/10 bg-white md:rounded-lg md:border md:border-wine-burgundy/10">
           <SendMessageForm
             conversationId={conversation.id}
             copy={{

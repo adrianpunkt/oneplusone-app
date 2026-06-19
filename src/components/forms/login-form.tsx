@@ -39,12 +39,12 @@ export type LoginFormCopy = {
 function LoginIntro({ copy }: { copy: LoginFormCopy }) {
   return (
     <div className="grid gap-2">
-      <h1 className="font-display text-2xl font-extrabold leading-tight text-wine">
+      <h1 className="font-display text-2xl font-extrabold leading-tight text-wine-burgundy">
         {copy.introTitle}
       </h1>
       <p className="text-sm leading-6 text-muted">
         {copy.introBodyPrefix}
-        <strong className="font-extrabold text-ocean">{copy.introBodyAppName}</strong>
+        <strong className="font-extrabold text-ocean-blue">{copy.introBodyAppName}</strong>
         {copy.introBodySuffix}
       </p>
     </div>
@@ -153,14 +153,14 @@ export function LoginForm({
             {requestPending ? copy.checking : copy.sendLoginCode}
           </Button>
         </form>
-        <div className="grid gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-4 text-sm leading-6 text-wine">
+        <div className="grid gap-3 rounded-lg border border-lipstick-red/20 bg-lipstick-red/8 p-4 text-sm leading-6 text-wine-burgundy">
           <div className="flex gap-3">
-            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-lipstick">
+            <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-lipstick-red">
               <UserPlus className="h-4 w-4" />
             </span>
             <div>
               <p className="font-semibold">{copy.notRegisteredTitle}</p>
-              <p className="text-wine/70">
+              <p className="text-wine-burgundy/70">
                 {copy.notRegisteredBody}
               </p>
             </div>
@@ -187,7 +187,7 @@ export function LoginForm({
           <input type="hidden" name="email" value={email} />
           <input type="hidden" name="next" value={activeNext} />
           <input type="hidden" name="otpType" value={otpType} />
-          <p className="rounded-lg border border-ocean/15 bg-ocean/8 p-3 text-sm font-semibold leading-6 text-ocean">
+          <p className="rounded-lg border border-ocean-blue/15 bg-ocean-blue/8 p-3 text-sm font-semibold leading-6 text-ocean-blue">
             {codeStepMessage || `${copy.sentCodePrefix}${email}${copy.sentCodeSuffix}`}
           </p>
           <div className="grid gap-2">
@@ -206,7 +206,7 @@ export function LoginForm({
             {verifyPending ? copy.checking : copy.login}
           </Button>
           {codeStepError ? (
-            <p className="text-sm font-semibold text-lipstick" role="status">
+            <p className="text-sm font-semibold text-lipstick-red" role="status">
               <FormErrorMessage message={codeStepError} />
             </p>
           ) : null}
@@ -220,7 +220,7 @@ export function LoginForm({
           <input type="hidden" name="locale" value={locale} />
           <input type="hidden" name="next" value={activeNext} />
           <button
-            className="group inline-flex items-center gap-1.5 text-sm font-semibold text-ocean underline decoration-ocean/40 underline-offset-4 transition-colors hover:text-ocean/80 hover:decoration-ocean disabled:pointer-events-none disabled:opacity-55"
+            className="group inline-flex items-center gap-1.5 text-sm font-semibold text-ocean-blue underline decoration-ocean-blue/40 underline-offset-4 transition-colors hover:text-ocean-blue/80 hover:decoration-ocean-blue disabled:pointer-events-none disabled:opacity-55"
             disabled={requestPending}
             type="submit"
           >
@@ -255,7 +255,7 @@ export function LoginForm({
           {requestPending ? copy.sending : copy.sendLoginCode}
         </Button>
         {requestState.error ? (
-          <p className="text-sm font-semibold text-lipstick" role="status">
+          <p className="text-sm font-semibold text-lipstick-red" role="status">
             {requestState.error}
           </p>
         ) : null}

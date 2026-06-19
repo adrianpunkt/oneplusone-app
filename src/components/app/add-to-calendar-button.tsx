@@ -140,11 +140,11 @@ export function AddToCalendarButton({
       </Button>
       {open ? (
         <div
-          className="absolute right-0 top-full z-20 mt-2 grid min-w-44 gap-1 rounded-lg border border-wine/10 bg-white p-1.5 shadow-[0_18px_45px_rgba(68,10,18,0.12)]"
+          className="absolute right-0 top-full z-20 mt-2 grid min-w-44 gap-1 rounded-lg border border-wine-burgundy/10 bg-white p-1.5 shadow-[0_18px_45px_rgba(68,10,18,0.12)]"
           role="menu"
         >
           <button
-            className="rounded-md px-3 py-2 text-left text-sm font-semibold text-wine hover:bg-blush focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35"
+            className="rounded-md px-3 py-2 text-left text-sm font-semibold text-wine-burgundy hover:bg-blush-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35"
             onClick={addToAppleCalendar}
             role="menuitem"
             type="button"
@@ -152,7 +152,7 @@ export function AddToCalendarButton({
             {copy.apple}
           </button>
           <button
-            className="rounded-md px-3 py-2 text-left text-sm font-semibold text-wine hover:bg-blush focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/35"
+            className="rounded-md px-3 py-2 text-left text-sm font-semibold text-wine-burgundy hover:bg-blush-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35"
             onClick={addToGoogleCalendar}
             role="menuitem"
             type="button"

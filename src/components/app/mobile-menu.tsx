@@ -106,12 +106,12 @@ export function MobileMenu({
       style={{ height: `calc(100dvh - ${menuTop}px)`, top: menuTop }}
     >
       <LanguageSwitcher
-        activeClassName="bg-lipstick text-white"
+        activeClassName="bg-lipstick-red text-white"
         ariaLabel={languageLabel}
         buttonClassName="h-9 min-w-12 rounded-md text-sm"
-        className="absolute right-5 top-5 h-10 rounded-lg border-wine/10 bg-white shadow-sm"
+        className="absolute right-5 top-5 h-10 rounded-lg border-wine-burgundy/10 bg-white shadow-sm"
         currentLocale={currentLocale}
-        inactiveClassName="text-wine hover:bg-lipstick/8 hover:text-lipstick"
+        inactiveClassName="text-wine-burgundy hover:bg-lipstick-red/8 hover:text-lipstick-red"
       />
       <div className="grid h-full place-items-center pb-20">
         <nav className="grid w-full max-w-sm gap-3">
@@ -126,10 +126,10 @@ export function MobileMenu({
                 aria-current={isActive ? "page" : undefined}
                 aria-label={itemMessageTooltip ? `${label}. ${itemMessageTooltip}` : undefined}
                 className={cn(
-                  "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick/8 hover:text-lipstick",
+                  "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
                   isActive
-                    ? "bg-lipstick/10 text-lipstick hover:bg-lipstick/10"
-                    : "text-wine",
+                    ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
+                    : "text-wine-burgundy",
                 )}
                 href={item.href}
                 key={item.href}
@@ -137,7 +137,7 @@ export function MobileMenu({
               >
                 {isMessages ? (
                   <MessageHeartIcon
-                    className={cn("h-8 w-8", unreadCount > 0 ? "text-lipstick" : "text-current")}
+                    className={cn("h-8 w-8", unreadCount > 0 ? "text-lipstick-red" : "text-current")}
                     count={unreadCount}
                     iconClassName="h-8 w-8"
                   />
@@ -151,10 +151,10 @@ export function MobileMenu({
           <Link
             aria-current={isPathInSection(pathname, meActivePaths) ? "page" : undefined}
             className={cn(
-              "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick/8 hover:text-lipstick",
+              "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
               isPathInSection(pathname, meActivePaths)
-                ? "bg-lipstick/10 text-lipstick hover:bg-lipstick/10"
-                : "text-wine",
+                ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
+                : "text-wine-burgundy",
             )}
             href="/my-story"
             onClick={closeMenu}

@@ -50,7 +50,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
   return (
     <>
       <section className="grid gap-2">
-        <h1 className="font-display text-3xl font-black text-wine">
+        <h1 className="font-display text-3xl font-black text-wine-burgundy">
           {dictionary.credits.title}
         </h1>
       </section>
@@ -66,7 +66,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-lipstick" />
+            <Gift className="h-5 w-5 text-lipstick-red" />
             {dictionary.credits.inviteTitle}
           </CardTitle>
         </CardHeader>
@@ -75,13 +75,13 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
             <span>{dictionary.credits.inviteLine1}</span>
             <span>
               {dictionary.credits.inviteLine2Prefix}{" "}
-              <span className="text-lipstick">{dictionary.credits.inviteTheyGet}</span>{" "}
+              <span className="text-lipstick-red">{dictionary.credits.inviteTheyGet}</span>{" "}
               {dictionary.credits.inviteLine2Middle}{" "}
-              <span className="text-lipstick">{dictionary.credits.inviteYouGet}</span>.
+              <span className="text-lipstick-red">{dictionary.credits.inviteYouGet}</span>.
             </span>
           </p>
-          <div className="flex flex-col gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0 px-2 py-2 font-mono text-2xl font-black tracking-widest break-all text-wine sm:px-3 sm:text-3xl">
+          <div className="flex flex-col gap-3 rounded-lg border border-lipstick-red/20 bg-lipstick-red/8 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 px-2 py-2 font-mono text-2xl font-black tracking-widest break-all text-wine-burgundy sm:px-3 sm:text-3xl">
               {referralCode || dictionary.credits.referralUnavailable}
             </div>
             <ReferralCodeActions
@@ -120,7 +120,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-lipstick" />
+            <CreditCard className="h-5 w-5 text-lipstick-red" />
             {dictionary.credits.buyTitle}
           </CardTitle>
         </CardHeader>
@@ -129,13 +129,13 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
             ({ product, discountPercent, labelKey, perCreditAmountCents }) => (
               <div
                 key={product.id}
-                className="flex min-h-full flex-col gap-4 rounded-lg border border-wine/10 bg-blush p-4 text-wine"
+                className="flex min-h-full flex-col gap-4 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 text-wine-burgundy"
               >
                 <div className="flex h-7 items-start">
                   {labelKey ? (
                     <span
                       className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold uppercase tracking-wide text-white ${
-                        labelKey === "mostPopular" ? "bg-lipstick" : "bg-ocean"
+                        labelKey === "mostPopular" ? "bg-lipstick-red" : "bg-ocean-blue"
                       }`}
                     >
                       {labelKey === "mostPopular"
@@ -145,7 +145,7 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
                   ) : null}
                 </div>
                 <div>
-                  <p className="text-sm font-extrabold text-wine">
+                  <p className="text-sm font-extrabold text-wine-burgundy">
                     {localizeText(product.name, product.localized_content, locale, "name")}
                   </p>
                   <p className="mt-1 text-xs leading-5 text-muted">
@@ -159,14 +159,14 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
                 </div>
                 <div className="mt-auto grid gap-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-2xl font-black text-wine">
+                    <p className="text-2xl font-black text-wine-burgundy">
                       {formatCurrency(
                         product.price_amount_cents,
                         product.currency,
                         locale,
                       )}
                     </p>
-                    <span className="inline-flex h-6 items-center rounded-full bg-white px-2.5 text-xs font-semibold uppercase tracking-wide text-muted ring-1 ring-wine/10">
+                    <span className="inline-flex h-6 items-center rounded-full bg-white px-2.5 text-xs font-semibold uppercase tracking-wide text-muted ring-1 ring-wine-burgundy/10">
                       {discountPercent > 0
                         ? dictionary.credits.save(discountPercent)
                         : dictionary.credits.base}
@@ -330,10 +330,10 @@ function PurchaseStatus({
 }) {
   if (purchase === "cancelled") {
     return (
-      <div className="flex items-start gap-3 rounded-lg border border-wine/10 bg-white p-4 text-sm leading-6 text-muted">
+      <div className="flex items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-white p-4 text-sm leading-6 text-muted">
         <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-muted" />
         <div>
-          <p className="font-semibold text-wine">{dictionary.credits.checkoutCancelledTitle}</p>
+          <p className="font-semibold text-wine-burgundy">{dictionary.credits.checkoutCancelledTitle}</p>
           <p>{dictionary.credits.checkoutCancelledDescription}</p>
         </div>
       </div>
@@ -345,7 +345,7 @@ function PurchaseStatus({
   if (result?.status === "completed") {
     return (
       <div
-        className="flex items-start gap-4 rounded-lg bg-ocean p-4 text-sm leading-6 text-white shadow-[0_18px_45px_rgba(38,66,107,0.18)]"
+        className="flex items-start gap-4 rounded-lg bg-ocean-blue p-4 text-sm leading-6 text-white shadow-[0_18px_45px_rgba(38,66,107,0.18)]"
         role="status"
       >
         <Image
@@ -356,7 +356,7 @@ function PurchaseStatus({
           style={{ filter: "brightness(0) invert(1)" }}
         />
         <div>
-          <p className="font-semibold text-blush">{dictionary.credits.paymentConfirmedCaps}</p>
+          <p className="font-semibold text-blush-pink">{dictionary.credits.paymentConfirmedCaps}</p>
           <p className="text-white/88">
             {dictionary.credits.creditsAdded(result.credits)}
           </p>
@@ -367,7 +367,7 @@ function PurchaseStatus({
 
   if (result?.status === "pending") {
     return (
-      <div className="flex items-start gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-4 text-sm leading-6 text-lipstick">
+      <div className="flex items-start gap-3 rounded-lg border border-lipstick-red/20 bg-lipstick-red/8 p-4 text-sm leading-6 text-lipstick-red">
         <CreditCard className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
           <p className="font-semibold">{dictionary.credits.paymentPendingTitle}</p>
@@ -378,7 +378,7 @@ function PurchaseStatus({
   }
 
   return (
-    <div className="flex items-start gap-3 rounded-lg border border-lipstick/20 bg-lipstick/8 p-4 text-sm leading-6 text-lipstick">
+    <div className="flex items-start gap-3 rounded-lg border border-lipstick-red/20 bg-lipstick-red/8 p-4 text-sm leading-6 text-lipstick-red">
       <XCircle className="mt-0.5 h-5 w-5 shrink-0" />
       <div>
         <p className="font-semibold">{dictionary.credits.paymentReviewTitle}</p>

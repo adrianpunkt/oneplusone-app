@@ -45,8 +45,8 @@ export function SectionNav({
             className={cn(
               "justify-start hover:translate-y-0 hover:shadow-none",
               isActive
-                ? "bg-lipstick/10 text-lipstick hover:bg-lipstick/10"
-                : "text-wine",
+                ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
+                : "text-wine-burgundy",
             )}
             key={item.href}
             variant="ghost"
@@ -58,7 +58,7 @@ export function SectionNav({
             >
               {isMessages ? (
                 <MessageHeartIcon
-                  className={cn("h-6 w-6", unreadCount > 0 ? "text-lipstick" : "text-current")}
+                  className={cn("h-6 w-6", unreadCount > 0 ? "text-lipstick-red" : "text-current")}
                   count={unreadCount}
                   iconClassName="h-6 w-6"
                   tooltip={itemMessageTooltip}
@@ -78,8 +78,8 @@ export function SectionNav({
         className={cn(
           "justify-start hover:translate-y-0 hover:shadow-none",
           isPathInSection(pathname, meActivePaths)
-            ? "bg-lipstick/10 text-lipstick hover:bg-lipstick/10"
-            : "text-wine",
+            ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
+            : "text-wine-burgundy",
         )}
         variant="ghost"
       >

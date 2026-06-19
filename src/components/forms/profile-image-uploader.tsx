@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import { cn, initials } from "@/lib/utils";
 
+const WHITE_HEX = "#ffffff";
+
 type Point = {
   x: number;
   y: number;
@@ -325,7 +327,7 @@ export function ProfileImageUploader({
     const context = canvas.getContext("2d");
     if (!context) throw new Error(copy.couldNotPrepare);
 
-    context.fillStyle = "#ffffff";
+    context.fillStyle = WHITE_HEX;
     context.fillRect(0, 0, size, size);
 
     const ratio = size / stageSize;
@@ -450,7 +452,7 @@ export function ProfileImageUploader({
       <>
         <Button
           aria-label={isRemoving ? copy.removingPhoto : copy.removePhoto}
-          className="h-9 w-9 rounded-full p-0 text-lipstick hover:bg-lipstick hover:text-white"
+          className="h-9 w-9 rounded-full p-0 text-lipstick-red hover:bg-lipstick-red hover:text-white"
           disabled={!hasProfile || isBusy}
           onClick={requestRemoveImage}
           title={copy.removePhoto}
@@ -459,10 +461,10 @@ export function ProfileImageUploader({
         >
           <Trash2 className="h-4 w-4" />
         </Button>
-        <span className="h-6 w-px bg-wine/15" aria-hidden="true" />
+        <span className="h-6 w-px bg-wine-burgundy/15" aria-hidden="true" />
         <Button
           aria-label={chooseImageLabel}
-          className="h-9 w-9 rounded-full p-0 text-wine hover:bg-gold/20"
+          className="h-9 w-9 rounded-full p-0 text-wine-burgundy hover:bg-ocean-blue/10"
           disabled={!hasProfile || isBusy}
           onClick={chooseImage}
           title={chooseImageLabel}
@@ -477,10 +479,10 @@ export function ProfileImageUploader({
 
   function renderMobileImageActions() {
     return (
-      <div className="absolute inset-0 z-30 grid grid-cols-2 overflow-hidden bg-wine/18 backdrop-blur-[1px] sm:hidden">
+      <div className="absolute inset-0 z-30 grid grid-cols-2 overflow-hidden bg-wine-burgundy/18 backdrop-blur-[1px] sm:hidden">
         <button
           aria-label={isRemoving ? copy.removingPhoto : copy.removePhoto}
-          className="flex items-start justify-center border-r border-white/70 bg-white/55 pt-[28%] text-lipstick transition hover:bg-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/45 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex items-start justify-center border-r border-white/70 bg-white/55 pt-[28%] text-lipstick-red transition hover:bg-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/45 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!hasProfile || isBusy}
           onClick={requestRemoveImage}
           type="button"
@@ -491,7 +493,7 @@ export function ProfileImageUploader({
         </button>
         <button
           aria-label={chooseImageLabel}
-          className="flex items-start justify-center bg-white/55 pt-[28%] text-wine transition hover:bg-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold/45 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex items-start justify-center bg-white/55 pt-[28%] text-wine-burgundy transition hover:bg-white/75 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!hasProfile || isBusy}
           onClick={chooseImage}
           type="button"
@@ -519,7 +521,7 @@ export function ProfileImageUploader({
         <div
           aria-label={copy.crop}
           className={cn(
-            "relative aspect-square w-full touch-none overflow-hidden rounded-xl border-2 border-lipstick/70 bg-mist shadow-inner",
+            "relative aspect-square w-full touch-none overflow-hidden rounded-xl border-2 border-lipstick-red/70 bg-cement-gray shadow-inner",
             isBusy ? "cursor-wait" : "cursor-grab active:cursor-grabbing",
           )}
           onPointerCancel={handlePointerEnd}
@@ -549,7 +551,7 @@ export function ProfileImageUploader({
         </div>
       ) : imageUrl ? (
         <Dialog.Root open={isPreviewOpen} onOpenChange={handlePreviewOpenChange}>
-          <div className="group relative aspect-square overflow-hidden rounded-xl border-2 border-lipstick/70 bg-mist shadow-inner">
+          <div className="group relative aspect-square overflow-hidden rounded-xl border-2 border-lipstick-red/70 bg-cement-gray shadow-inner">
             <Dialog.Trigger asChild>
               <button
                 aria-label={copy.previewPhoto}
@@ -568,7 +570,7 @@ export function ProfileImageUploader({
             <button
               aria-label={copy.editPhoto}
               aria-expanded={isImageActionMenuOpen}
-              className="absolute bottom-2 right-2 z-40 grid h-8 w-8 place-items-center rounded-full border border-white/80 bg-white/95 text-wine shadow-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/35 sm:hidden"
+              className="absolute bottom-2 right-2 z-40 grid h-8 w-8 place-items-center rounded-full border border-white/80 bg-white/95 text-wine-burgundy shadow-md transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/35 sm:hidden"
               disabled={!hasProfile || isBusy}
               onClick={() =>
                 setIsImageActionMenuOpen((current) => !current)
@@ -580,9 +582,9 @@ export function ProfileImageUploader({
             {isImageActionMenuOpen ? renderMobileImageActions() : null}
             <div
               className={cn(
-                "pointer-events-none absolute inset-0 hidden items-end justify-center bg-wine/0 p-3 opacity-0 transition-[background-color,opacity] duration-150 sm:flex sm:group-hover:bg-wine/20 sm:group-hover:opacity-100 sm:group-focus-within:bg-wine/20 sm:group-focus-within:opacity-100",
+                "pointer-events-none absolute inset-0 hidden items-end justify-center bg-wine-burgundy/0 p-3 opacity-0 transition-[background-color,opacity] duration-150 sm:flex sm:group-hover:bg-wine-burgundy/20 sm:group-hover:opacity-100 sm:group-focus-within:bg-wine-burgundy/20 sm:group-focus-within:opacity-100",
                 isPreviewOpen &&
-                  "sm:group-hover:bg-wine/0 sm:group-hover:opacity-0 sm:group-focus-within:bg-wine/0 sm:group-focus-within:opacity-0",
+                  "sm:group-hover:bg-wine-burgundy/0 sm:group-hover:opacity-0 sm:group-focus-within:bg-wine-burgundy/0 sm:group-focus-within:opacity-0",
               )}
             >
               <div
@@ -596,9 +598,9 @@ export function ProfileImageUploader({
             </div>
           </div>
           <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 z-50 bg-wine/45 backdrop-blur-sm" />
+            <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/45 backdrop-blur-sm" />
             <Dialog.Content
-              className="fixed left-1/2 top-1/2 z-50 aspect-square w-[min(calc(100vw-2rem),32rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border-2 border-lipstick/70 bg-mist shadow-2xl"
+              className="fixed left-1/2 top-1/2 z-50 aspect-square w-[min(calc(100vw-2rem),32rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border-2 border-lipstick-red/70 bg-cement-gray shadow-2xl"
               onCloseAutoFocus={handlePreviewCloseAutoFocus}
             >
               <Dialog.Title className="sr-only">
@@ -615,7 +617,7 @@ export function ProfileImageUploader({
               <Dialog.Close asChild>
                 <Button
                   aria-label={copy.closePreview}
-                  className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/95 p-0 text-wine shadow-sm hover:bg-white"
+                  className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/95 p-0 text-wine-burgundy shadow-sm hover:bg-white"
                   type="button"
                   variant="ghost"
                 >
@@ -628,18 +630,18 @@ export function ProfileImageUploader({
       ) : (
         <button
           aria-label={chooseImageLabel}
-          className="group relative grid aspect-square place-items-center overflow-hidden rounded-xl border-2 border-lipstick/70 bg-mist p-0 text-left shadow-inner disabled:cursor-not-allowed disabled:opacity-60"
+          className="group relative grid aspect-square place-items-center overflow-hidden rounded-xl border-2 border-lipstick-red/70 bg-cement-gray p-0 text-left shadow-inner disabled:cursor-not-allowed disabled:opacity-60"
           disabled={!hasProfile || isBusy}
           onClick={chooseImage}
           title={chooseImageLabel}
           type="button"
         >
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(229,58,62,0.18),transparent_32%),linear-gradient(135deg,rgba(197,135,50,0.18),rgba(38,66,107,0.10))]" />
-          <span className="absolute inset-0 grid place-items-center bg-white/80 text-5xl font-extrabold uppercase text-wine">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(229,58,62,0.18),transparent_32%),linear-gradient(135deg,rgba(229,58,62,0.12),rgba(38,66,107,0.10))]" />
+          <span className="absolute inset-0 grid place-items-center bg-white/80 text-5xl font-extrabold uppercase text-wine-burgundy">
             {displayInitials}
           </span>
-          <span className="absolute inset-0 z-20 flex items-end justify-center bg-wine/0 p-3 opacity-100 transition-colors duration-150 sm:group-hover:bg-wine/12 sm:group-focus-within:bg-wine/12">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/80 bg-white/95 p-0 text-wine shadow-[0_8px_22px_rgba(68,10,18,0.20)] transition-[background-color,border-color,color,transform] duration-150 group-hover:-translate-y-0.5 hover:border-lipstick/45 hover:bg-lipstick hover:text-white group-focus-visible:-translate-y-0.5">
+          <span className="absolute inset-0 z-20 flex items-end justify-center bg-wine-burgundy/0 p-3 opacity-100 transition-colors duration-150 sm:group-hover:bg-wine-burgundy/12 sm:group-focus-within:bg-wine-burgundy/12">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/80 bg-white/95 p-0 text-wine-burgundy shadow-[0_8px_22px_rgba(68,10,18,0.20)] transition-[background-color,border-color,color,transform] duration-150 group-hover:-translate-y-0.5 hover:border-lipstick-red/45 hover:bg-lipstick-red hover:text-white group-focus-visible:-translate-y-0.5">
               <Camera className="h-4 w-4" />
             </span>
           </span>
@@ -652,7 +654,7 @@ export function ProfileImageUploader({
             <Label htmlFor="profile-image-zoom">{copy.zoom}</Label>
             <input
               aria-label={copy.zoomAria}
-              className="h-2 w-full accent-lipstick"
+              className="h-2 w-full accent-lipstick-red"
               disabled={isBusy}
               id="profile-image-zoom"
               max={maxZoom}
@@ -669,7 +671,7 @@ export function ProfileImageUploader({
           </div>
           <div className="flex flex-nowrap items-center justify-center gap-2">
             <Button
-              className="whitespace-nowrap bg-lipstick px-5 text-white hover:bg-lipstick/90"
+              className="whitespace-nowrap bg-lipstick-red px-5 text-white hover:bg-lipstick-red/90"
               disabled={isBusy || !cropMetrics}
               onClick={uploadImage}
               type="button"
@@ -701,10 +703,10 @@ export function ProfileImageUploader({
         }}
       >
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-wine/45 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[min(calc(100vw-2rem),24rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine/10 bg-white p-5 shadow-2xl">
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/45 backdrop-blur-sm" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[min(calc(100vw-2rem),24rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine-burgundy/10 bg-white p-5 shadow-2xl">
             <div className="grid gap-2">
-              <Dialog.Title className="font-display text-2xl font-extrabold text-wine">
+              <Dialog.Title className="font-display text-2xl font-extrabold text-wine-burgundy">
                 {copy.deleteTitle}
               </Dialog.Title>
               <Dialog.Description className="text-sm font-medium leading-6 text-muted">
@@ -722,7 +724,7 @@ export function ProfileImageUploader({
                 </Button>
               </Dialog.Close>
               <Button
-                className="bg-lipstick text-white hover:bg-lipstick/90"
+                className="bg-lipstick-red text-white hover:bg-lipstick-red/90"
                 disabled={isRemoving}
                 onClick={removeImage}
                 type="button"

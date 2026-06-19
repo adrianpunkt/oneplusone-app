@@ -23,12 +23,12 @@ export function CreditHistorySection({
       <details className="group">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-5 [&::-webkit-details-marker]:hidden">
           <span className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 font-display text-lg font-extrabold leading-tight text-wine">
-              <History className="h-5 w-5 text-lipstick" />
+            <span className="inline-flex items-center gap-2 font-display text-lg font-extrabold leading-tight text-wine-burgundy">
+              <History className="h-5 w-5 text-lipstick-red" />
               {dictionary.creditHistory.title}
             </span>
           </span>
-          <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-wine/10 bg-white px-3 text-xs font-semibold text-wine shadow-sm">
+          <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-wine-burgundy/10 bg-white px-3 text-xs font-semibold text-wine-burgundy shadow-sm">
             <span className="group-open:hidden">{dictionary.common.expand}</span>
             <span className="hidden group-open:inline">{dictionary.common.hide}</span>
           </span>
@@ -38,12 +38,12 @@ export function CreditHistorySection({
             entries.map((entry) => (
               <div
                 key={entry.id}
-                className="grid gap-3 rounded-lg border border-wine/10 bg-white p-3 sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:items-center"
+                className="grid gap-3 rounded-lg border border-wine-burgundy/10 bg-white p-3 sm:grid-cols-[4rem_minmax(0,1fr)_auto] sm:items-center"
               >
-                <span className="inline-flex h-8 w-14 items-center justify-center rounded-full bg-ocean px-3 text-sm font-medium text-white shadow-sm">
+                <span className="inline-flex h-8 w-14 items-center justify-center rounded-full bg-ocean-blue px-3 text-sm font-medium text-white shadow-sm">
                   {formatCreditDelta(entry.delta)}
                 </span>
-                <p className="text-sm font-medium text-wine">
+                <p className="text-sm font-medium text-wine-burgundy">
                   {creditLedgerLabel(entry.reason, entry.delta, dictionary)}
                 </p>
                 <p className="text-xs font-medium text-faint sm:text-right">
@@ -52,7 +52,7 @@ export function CreditHistorySection({
               </div>
             ))
           ) : (
-            <p className="rounded-lg bg-blush p-4 text-sm font-medium text-muted">
+            <p className="rounded-lg bg-blush-pink p-4 text-sm font-medium text-muted">
               {dictionary.creditHistory.empty}
             </p>
           )}

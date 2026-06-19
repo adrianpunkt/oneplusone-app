@@ -102,7 +102,7 @@ export function PreferencesForm({
       <section aria-labelledby="events-preferences" className="grid gap-4">
         <h2
           id="events-preferences"
-          className="font-display text-lg font-extrabold text-wine"
+          className="font-display text-lg font-extrabold text-wine-burgundy"
         >
           {copy.events}
         </h2>
@@ -110,13 +110,13 @@ export function PreferencesForm({
           {copy.eventsQuestion}
         </p>
         <div className="grid gap-3">
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine/10 bg-blush p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
             <Checkbox
               name="prefers_saturday_dinner"
               defaultChecked={preferences?.prefers_saturday_dinner ?? true}
             />
             <span>
-              <span className="block text-sm font-semibold text-wine">
+              <span className="block text-sm font-semibold text-wine-burgundy">
                 {copy.saturdayDinners}
               </span>
               <span className="block text-sm leading-6 text-muted">
@@ -124,13 +124,13 @@ export function PreferencesForm({
               </span>
             </span>
           </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine/10 bg-blush p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
             <Checkbox
               name="prefers_sunday_brunch"
               defaultChecked={preferences?.prefers_sunday_brunch ?? true}
             />
             <span>
-              <span className="block text-sm font-semibold text-wine">
+              <span className="block text-sm font-semibold text-wine-burgundy">
                 {copy.sundayBrunches}
               </span>
               <span className="block text-sm leading-6 text-muted">
@@ -138,7 +138,7 @@ export function PreferencesForm({
               </span>
             </span>
           </label>
-          <div className="grid gap-3 rounded-lg border border-wine/10 bg-blush p-4">
+          <div className="grid gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
             <label className="flex cursor-pointer items-start gap-3">
               <Checkbox
                 name="interested_in_other_events"
@@ -149,7 +149,7 @@ export function PreferencesForm({
                 }}
               />
               <span>
-                <span className="block text-sm font-semibold text-wine">
+                <span className="block text-sm font-semibold text-wine-burgundy">
                   {copy.otherIdeas}
                 </span>
                 <span className="block text-sm leading-6 text-muted">
@@ -182,7 +182,7 @@ export function PreferencesForm({
       <section aria-labelledby="going-out-vibe" className="grid gap-4">
         <h2
           id="going-out-vibe"
-          className="font-display text-lg font-extrabold text-wine"
+          className="font-display text-lg font-extrabold text-wine-burgundy"
         >
           {copy.vibe}
         </h2>
@@ -190,7 +190,7 @@ export function PreferencesForm({
           {copy.vibeQuestion}
         </p>
         <div className="grid gap-3">
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine/10 bg-blush p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
             <Checkbox
               name="prefers_affordable_relaxed_locations"
               defaultChecked={
@@ -198,11 +198,11 @@ export function PreferencesForm({
                   ?.prefers_affordable_relaxed_locations === true
               }
             />
-            <span className="block text-sm font-semibold text-wine">
+            <span className="block text-sm font-semibold text-wine-burgundy">
               {copy.affordable}
             </span>
           </label>
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine/10 bg-blush p-4">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
             <Checkbox
               name="prefers_michelin_guide_locations"
               defaultChecked={
@@ -210,7 +210,7 @@ export function PreferencesForm({
                   ?.prefers_michelin_guide_locations === true
               }
             />
-            <span className="block text-sm font-semibold text-wine">
+            <span className="block text-sm font-semibold text-wine-burgundy">
               {copy.michelin}
             </span>
           </label>
@@ -222,11 +222,11 @@ export function PreferencesForm({
       <section aria-labelledby="dietary-preferences" className="grid gap-4">
         <h2
           id="dietary-preferences"
-          className="font-display text-lg font-extrabold text-wine"
+          className="font-display text-lg font-extrabold text-wine-burgundy"
         >
           {copy.dietary}
         </h2>
-        <div className="grid gap-3 rounded-lg border border-wine/10 bg-blush p-4">
+        <div className="grid gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
           <label className="flex cursor-pointer items-start gap-3">
             <Checkbox
               checked={showDietaryPreferences}
@@ -235,7 +235,7 @@ export function PreferencesForm({
                 scheduleDirtyCheck();
               }}
             />
-            <span className="block text-sm font-semibold text-wine">
+            <span className="block text-sm font-semibold text-wine-burgundy">
               {copy.dietaryQuestion}
             </span>
           </label>
@@ -263,11 +263,11 @@ export function PreferencesForm({
       <section aria-labelledby="hosting-preferences" className="grid gap-4">
         <h2
           id="hosting-preferences"
-          className="font-display text-lg font-extrabold text-wine"
+          className="font-display text-lg font-extrabold text-wine-burgundy"
         >
           {copy.host}
         </h2>
-        <div className="grid gap-3 rounded-lg border border-wine/10 bg-blush p-4">
+        <div className="grid gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
           <label className="flex cursor-pointer items-start gap-3">
             <Checkbox
               name="wants_to_host"
@@ -278,7 +278,7 @@ export function PreferencesForm({
               }}
             />
             <span>
-              <span className="block text-sm font-semibold text-wine">
+              <span className="block text-sm font-semibold text-wine-burgundy">
                 {copy.hostLabel}
               </span>
               <span className="mt-2 block text-sm leading-6 text-muted">
@@ -295,10 +295,10 @@ export function PreferencesForm({
                 </Button>
               </Dialog.Trigger>
               <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-wine/35 backdrop-blur-sm" />
-                <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine/10 bg-white p-5 shadow-2xl">
+                <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/35 backdrop-blur-sm" />
+                <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine-burgundy/10 bg-white p-5 shadow-2xl">
                   <div className="grid gap-2">
-                    <Dialog.Title className="font-display text-xl font-extrabold text-wine">
+                    <Dialog.Title className="font-display text-xl font-extrabold text-wine-burgundy">
                       {copy.hostModalTitle}
                     </Dialog.Title>
                     <Dialog.Description className="grid gap-3 text-sm leading-6 text-muted">
@@ -344,7 +344,7 @@ export function PreferencesForm({
       <section aria-labelledby="other-preferences" className="grid gap-4">
         <h2
           id="other-preferences"
-          className="font-display text-lg font-extrabold text-wine"
+          className="font-display text-lg font-extrabold text-wine-burgundy"
         >
           {copy.otherPreferences}
         </h2>

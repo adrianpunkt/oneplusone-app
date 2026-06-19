@@ -8,10 +8,10 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-lipstick/20 bg-lipstick/10 text-lipstick",
-        wine: "border-wine/20 bg-wine/8 text-wine",
-        ocean: "border-ocean/20 bg-ocean/10 text-ocean",
-        muted: "border-wine/10 bg-mist text-muted",
+        default: "border-lipstick-red/20 bg-lipstick-red/10 text-lipstick-red",
+        "wine-burgundy": "border-wine-burgundy/20 bg-wine-burgundy/8 text-wine-burgundy",
+        "ocean-blue": "border-ocean-blue/20 bg-ocean-blue/10 text-ocean-blue",
+        muted: "border-wine-burgundy/10 bg-cement-gray text-muted",
       },
     },
     defaultVariants: {

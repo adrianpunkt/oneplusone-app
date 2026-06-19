@@ -24,7 +24,7 @@ export function AvatarPreview({
         <button
           aria-label={previewLabel}
           className={cn(
-            "group block aspect-square shrink-0 cursor-zoom-in rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/35 focus-visible:ring-offset-2",
+            "group block aspect-square shrink-0 cursor-zoom-in rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/35 focus-visible:ring-offset-2",
             className,
           )}
           title={previewLabel}
@@ -38,8 +38,8 @@ export function AvatarPreview({
         </button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-wine/45 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 aspect-square w-[min(calc(100vw-2rem),32rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border-2 border-lipstick/70 bg-mist shadow-2xl">
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/45 backdrop-blur-sm" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 aspect-square w-[min(calc(100vw-2rem),32rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-xl border-2 border-lipstick-red/70 bg-cement-gray shadow-2xl">
           <Dialog.Title className="sr-only">
             {name} avatar preview
           </Dialog.Title>
@@ -54,7 +54,7 @@ export function AvatarPreview({
           <Dialog.Close asChild>
             <Button
               aria-label="Close preview"
-              className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/95 p-0 text-wine shadow-sm hover:bg-white"
+              className="absolute right-3 top-3 h-9 w-9 rounded-full bg-white/95 p-0 text-wine-burgundy shadow-sm hover:bg-white"
               type="button"
               variant="ghost"
             >

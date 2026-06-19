@@ -32,7 +32,7 @@ const heightOptions = Array.from({ length: 131 }, (_, index) =>
 );
 const noneDealBreaker = "none — I'm pretty easygoing";
 const storyTextClass =
-  "min-w-0 max-w-full text-[1.18rem] font-normal leading-[1.9] text-wine [overflow-wrap:anywhere] sm:text-[clamp(1.12rem,2.15vw,1.28rem)] sm:leading-[1.85]";
+  "min-w-0 max-w-full text-[1.18rem] font-normal leading-[1.9] text-wine-burgundy [overflow-wrap:anywhere] sm:text-[clamp(1.12rem,2.15vw,1.28rem)] sm:leading-[1.85]";
 const SELECT_DIALOG_MIN_WIDTH = 300;
 const SELECT_DIALOG_MAX_WIDTH = 520;
 
@@ -438,10 +438,10 @@ function StoryChapter({
           <div className="flex min-w-0 justify-center md:block">{media}</div>
         ) : null}
         <div className="min-w-0">
-          <span className="mb-3 block font-display text-[0.78rem] font-bold uppercase tracking-[0.22em] text-lipstick">
+          <span className="mb-3 block font-display text-[0.78rem] font-bold uppercase tracking-[0.22em] text-lipstick-red">
             {eyebrow}
           </span>
-          <h2 className="font-display text-3xl font-black text-wine">
+          <h2 className="font-display text-3xl font-black text-wine-burgundy">
             {title}
           </h2>
           {description ? (
@@ -463,9 +463,9 @@ function StoryChapter({
 function Divider() {
   return (
     <div className="flex items-center gap-4 py-1" aria-hidden="true">
-      <span className="h-px flex-1 bg-wine/12" />
-      <span className="h-1 w-11 rounded-full bg-lipstick" />
-      <span className="h-px flex-1 bg-wine/12" />
+      <span className="h-px flex-1 bg-wine-burgundy/12" />
+      <span className="h-1 w-11 rounded-full bg-lipstick-red" />
+      <span className="h-px flex-1 bg-wine-burgundy/12" />
     </div>
   );
 }
@@ -482,7 +482,7 @@ function ReadValue({
   return (
     <span
       className={cn(
-        "mx-1 inline max-w-full break-words px-1 font-semibold text-lipstick",
+        "mx-1 inline max-w-full break-words px-1 font-semibold text-lipstick-red",
         empty && "text-faint",
         className,
       )}
@@ -535,7 +535,7 @@ function InlineText({
         {sizerText}
       </span>
       <Input
-        className="absolute inset-0 h-11 w-full min-w-0 max-w-full rounded-none border-0 border-b-2 border-dotted border-lipstick bg-transparent px-1 py-0 align-baseline text-[1em] font-semibold text-lipstick shadow-none placeholder:text-faint focus-visible:border-lipstick focus-visible:ring-0"
+        className="absolute inset-0 h-11 w-full min-w-0 max-w-full rounded-none border-0 border-b-2 border-dotted border-lipstick-red bg-transparent px-1 py-0 align-baseline text-[1em] font-semibold text-lipstick-red shadow-none placeholder:text-faint focus-visible:border-lipstick-red focus-visible:ring-0"
         defaultValue={defaultValue}
         id={id}
         name={name}
@@ -636,7 +636,7 @@ function InlineLongText({
       {!isEditing ? (
         <button
           className={cn(
-            "inline max-w-full cursor-text whitespace-pre-wrap border-0 bg-transparent p-0 text-left font-semibold leading-snug text-lipstick underline decoration-dotted decoration-2 underline-offset-[0.28em] [overflow-wrap:anywhere] transition hover:text-wine focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25",
+            "inline max-w-full cursor-text whitespace-pre-wrap border-0 bg-transparent p-0 text-left font-semibold leading-snug text-lipstick-red underline decoration-dotted decoration-2 underline-offset-[0.28em] [overflow-wrap:anywhere] transition hover:text-wine-burgundy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/25",
             !currentText && "text-faint",
             displayClassName,
           )}
@@ -662,7 +662,7 @@ function InlineLongText({
             {editSizerText}
           </span>
           <input
-            className="absolute inset-0 h-[1.35em] w-full min-w-0 max-w-full rounded-none border-0 bg-transparent p-0 text-[1em] font-semibold leading-snug text-lipstick underline decoration-dotted decoration-2 underline-offset-[0.28em] shadow-none outline-none placeholder:text-faint focus-visible:ring-0"
+            className="absolute inset-0 h-[1.35em] w-full min-w-0 max-w-full rounded-none border-0 bg-transparent p-0 text-[1em] font-semibold leading-snug text-lipstick-red underline decoration-dotted decoration-2 underline-offset-[0.28em] shadow-none outline-none placeholder:text-faint focus-visible:ring-0"
             id={id}
             onBlur={() => setIsEditing(false)}
             onChange={(event) => {
@@ -700,7 +700,7 @@ function InlineLongText({
           </label>
           <textarea
             className={cn(
-              "block w-full resize-none overflow-hidden rounded-none border-0 border-b-2 border-dotted border-lipstick bg-transparent px-1 text-[1em] font-semibold text-lipstick shadow-none outline-none placeholder:text-faint focus-visible:border-solid focus-visible:ring-0",
+              "block w-full resize-none overflow-hidden rounded-none border-0 border-b-2 border-dotted border-lipstick-red bg-transparent px-1 text-[1em] font-semibold text-lipstick-red shadow-none outline-none placeholder:text-faint focus-visible:border-solid focus-visible:ring-0",
               "min-h-[1.75em] py-0 leading-normal",
             )}
             id={id}
@@ -891,7 +891,7 @@ function InlineSelect({
         aria-haspopup="dialog"
         aria-controls={isOpen ? dialogId : undefined}
         className={cn(
-          "group mx-1 inline-block max-w-[calc(100%-0.9em)] cursor-pointer whitespace-normal border-0 bg-transparent p-0 text-left text-[1em] font-semibold leading-snug text-lipstick align-baseline transition hover:text-wine focus-visible:bg-lipstick/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25",
+          "group mx-1 inline-block max-w-[calc(100%-0.9em)] cursor-pointer whitespace-normal border-0 bg-transparent p-0 text-left text-[1em] font-semibold leading-snug text-lipstick-red align-baseline transition hover:text-wine-burgundy focus-visible:bg-lipstick-red/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/25",
           !hasCurrentValue && "text-faint",
         )}
         onClick={openList}
@@ -907,14 +907,14 @@ function InlineSelect({
       {isOpen ? (
         <>
           <span
-            className="fixed inset-0 z-50 block cursor-pointer bg-wine/10 backdrop-blur-[1px]"
+            className="fixed inset-0 z-50 block cursor-pointer bg-wine-burgundy/10 backdrop-blur-[1px]"
             aria-hidden="true"
             onPointerDown={() => closeList()}
           />
           <span
             aria-labelledby={titleId}
             aria-modal="true"
-            className="fixed left-1/2 top-1/2 z-[60] grid max-h-[min(35rem,calc(100svh-3rem))] -translate-x-1/2 -translate-y-1/2 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg border border-lipstick/30 bg-white text-base text-ink shadow-[0_24px_70px_rgba(52,38,31,0.22)]"
+            className="fixed left-1/2 top-1/2 z-[60] grid max-h-[min(35rem,calc(100svh-3rem))] -translate-x-1/2 -translate-y-1/2 grid-rows-[auto_minmax(0,1fr)] overflow-hidden rounded-lg border border-lipstick-red/30 bg-white text-base text-ink shadow-[0_24px_70px_rgba(52,38,31,0.22)]"
             id={dialogId}
             onKeyDown={handleDialogKeyDown}
             ref={dialogRef}
@@ -923,15 +923,15 @@ function InlineSelect({
               width: `min(${Math.round(dialogWidth)}px, calc(100vw - 2rem))`,
             }}
           >
-            <span className="flex items-center justify-between gap-4 border-b border-wine/10 px-4 py-4">
+            <span className="flex items-center justify-between gap-4 border-b border-wine-burgundy/10 px-4 py-4">
               <span
-                className="min-w-0 font-display text-lg font-extrabold leading-tight text-wine"
+                className="min-w-0 font-display text-lg font-extrabold leading-tight text-wine-burgundy"
                 id={titleId}
               >
                 {label}
               </span>
               <button
-                className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold leading-tight text-lipstick underline underline-offset-4 transition hover:text-wine"
+                className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold leading-tight text-lipstick-red underline underline-offset-4 transition hover:text-wine-burgundy"
                 onClick={() => closeList()}
                 type="button"
               >
@@ -951,7 +951,7 @@ function InlineSelect({
                   return (
                     <button
                       aria-selected={isSelected}
-                      className="grid min-h-[46px] cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[7px] border-0 bg-transparent px-3 py-2.5 text-left text-ink transition hover:bg-lipstick/8 focus-visible:bg-lipstick/8 focus-visible:outline-none data-[active=true]:bg-lipstick/8 data-[selected=true]:bg-lipstick/10 data-[selected=true]:text-lipstick"
+                      className="grid min-h-[46px] cursor-pointer grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-[7px] border-0 bg-transparent px-3 py-2.5 text-left text-ink transition hover:bg-lipstick-red/8 focus-visible:bg-lipstick-red/8 focus-visible:outline-none data-[active=true]:bg-lipstick-red/8 data-[selected=true]:bg-lipstick-red/10 data-[selected=true]:text-lipstick-red"
                       data-active={index === activeIndex}
                       data-selected={isSelected}
                       data-story-select-option={index}
@@ -967,7 +967,7 @@ function InlineSelect({
                       </span>
                       {isSelected ? (
                         <Check
-                          className="h-4 w-4 text-lipstick"
+                          className="h-4 w-4 text-lipstick-red"
                           strokeWidth={3}
                           aria-hidden="true"
                         />
@@ -1069,7 +1069,7 @@ function DealBreakerPicker({
                 ? ` ${copy.and} `
                 : ", "
               : null}
-            <span className="font-semibold text-lipstick">{option.label}</span>
+            <span className="font-semibold text-lipstick-red">{option.label}</span>
           </span>
         ))}
       </span>
@@ -1127,7 +1127,7 @@ function DealBreakerPicker({
             : null}
           <button
             aria-label={`${copy.dealBreakers.editCurrentPrefix} ${option.label}`}
-            className="inline max-w-full cursor-pointer border-0 bg-transparent px-0 font-semibold leading-tight text-lipstick underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] transition hover:text-wine hover:decoration-solid focus-visible:bg-lipstick/8 focus-visible:outline-none"
+            className="inline max-w-full cursor-pointer border-0 bg-transparent px-0 font-semibold leading-tight text-lipstick-red underline decoration-dotted decoration-[1.5px] underline-offset-[0.28em] transition hover:text-wine-burgundy hover:decoration-solid focus-visible:bg-lipstick-red/8 focus-visible:outline-none"
             onClick={() => setIsOpen(true)}
             type="button"
           >
@@ -1140,7 +1140,7 @@ function DealBreakerPicker({
         aria-controls={isOpen ? popupId : undefined}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
-        className="ml-[0.16em] mr-[0.12em] inline-flex h-[1em] w-[1em] cursor-pointer items-center justify-center rounded-full border-0 bg-lipstick p-0 align-[-0.08em] text-white transition hover:bg-wine focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean/25"
+        className="ml-[0.16em] mr-[0.12em] inline-flex h-[1em] w-[1em] cursor-pointer items-center justify-center rounded-full border-0 bg-lipstick-red p-0 align-[-0.08em] text-white transition hover:bg-wine-burgundy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/25"
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
@@ -1156,17 +1156,17 @@ function DealBreakerPicker({
         <>
           <span
             aria-hidden="true"
-            className="fixed inset-0 z-50 block cursor-pointer bg-wine/10 backdrop-blur-[1px]"
+            className="fixed inset-0 z-50 block cursor-pointer bg-wine-burgundy/10 backdrop-blur-[1px]"
             onPointerDown={closePicker}
           />
           <span
             aria-labelledby={popupTitleId}
             aria-modal="true"
-            className="fixed left-1/2 top-1/2 z-[60] grid max-h-[min(35rem,calc(100svh-3rem))] w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border border-lipstick/30 bg-white text-base text-ink shadow-[0_24px_70px_rgba(52,38,31,0.22)]"
+            className="fixed left-1/2 top-1/2 z-[60] grid max-h-[min(35rem,calc(100svh-3rem))] w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-lg border border-lipstick-red/30 bg-white text-base text-ink shadow-[0_24px_70px_rgba(52,38,31,0.22)]"
             id={popupId}
             role="dialog"
           >
-            <span className="flex items-center justify-between gap-4 border-b border-wine/10 px-4 py-4">
+            <span className="flex items-center justify-between gap-4 border-b border-wine-burgundy/10 px-4 py-4">
               <span
                 id={popupTitleId}
                 className="min-w-0 text-sm font-semibold leading-tight text-muted"
@@ -1174,7 +1174,7 @@ function DealBreakerPicker({
                 {copy.dealBreakers.choose}
               </span>
               <button
-                className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold leading-tight text-lipstick underline underline-offset-4 transition hover:text-wine"
+                className="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-sm font-semibold leading-tight text-lipstick-red underline underline-offset-4 transition hover:text-wine-burgundy"
                 onClick={closePicker}
                 type="button"
               >
@@ -1195,10 +1195,10 @@ function DealBreakerPicker({
                     className={cn(
                       "inline-flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-left text-sm font-extrabold leading-tight transition",
                       selected
-                        ? "border-lipstick bg-lipstick text-white shadow-sm"
-                        : "border-lipstick/20 bg-white text-lipstick hover:border-lipstick/45 hover:bg-lipstick/8",
+                        ? "border-lipstick-red bg-lipstick-red text-white shadow-sm"
+                        : "border-lipstick-red/20 bg-white text-lipstick-red hover:border-lipstick-red/45 hover:bg-lipstick-red/8",
                       disabled &&
-                        "cursor-not-allowed opacity-50 hover:border-lipstick/20 hover:bg-white",
+                        "cursor-not-allowed opacity-50 hover:border-lipstick-red/20 hover:bg-white",
                     )}
                     disabled={disabled}
                     key={option.value}
@@ -1211,16 +1211,16 @@ function DealBreakerPicker({
                 );
               })}
               {isOtherSelected ? (
-                <span className="mt-1 grid gap-2 rounded-md border border-lipstick/20 bg-lipstick/8 p-3">
+                <span className="mt-1 grid gap-2 rounded-md border border-lipstick-red/20 bg-lipstick-red/8 p-3">
                   <label
-                    className="text-sm font-semibold leading-tight text-wine"
+                    className="text-sm font-semibold leading-tight text-wine-burgundy"
                     htmlFor={`${popupId}-other-details`}
                   >
                     {copy.dealBreakers.whatElse}
                   </label>
                   <textarea
                     aria-label={copy.fields.otherDealBreaker}
-                    className="min-h-24 w-full resize-y rounded-md border border-lipstick/25 bg-white px-3 py-2 text-sm font-semibold leading-6 text-ink shadow-none outline-none placeholder:text-faint focus:border-lipstick focus:bg-white"
+                    className="min-h-24 w-full resize-y rounded-md border border-lipstick-red/25 bg-white px-3 py-2 text-sm font-semibold leading-6 text-ink shadow-none outline-none placeholder:text-faint focus:border-lipstick-red focus:bg-white"
                     id={`${popupId}-other-details`}
                     onChange={handleOtherDetailsChange}
                     placeholder={copy.dealBreakers.tellUsMore}
@@ -1231,7 +1231,7 @@ function DealBreakerPicker({
                 </span>
               ) : null}
             </span>
-            <span className="border-t border-wine/10 px-4 py-3 text-sm font-semibold leading-6 text-muted">
+            <span className="border-t border-wine-burgundy/10 px-4 py-3 text-sm font-semibold leading-6 text-muted">
               {selectedValues.length} {copy.dealBreakers.selectedSuffix}
             </span>
           </span>
@@ -1243,7 +1243,7 @@ function DealBreakerPicker({
 
 function MissingStory({ copy }: { copy: ProfileCopy }) {
   return (
-    <div className="rounded-lg border border-lipstick/15 bg-lipstick/8 p-4 text-sm font-semibold leading-6 text-wine">
+    <div className="rounded-lg border border-lipstick-red/15 bg-lipstick-red/8 p-4 text-sm font-semibold leading-6 text-wine-burgundy">
       {copy.missing}
     </div>
   );
@@ -1908,7 +1908,7 @@ function StoryNarrative({
               value={anythingElse}
             />
             <button
-              className="max-w-full text-left text-xl font-extrabold leading-tight text-lipstick underline decoration-lipstick/30 underline-offset-4 transition hover:text-wine sm:text-2xl"
+              className="max-w-full text-left text-xl font-extrabold leading-tight text-lipstick-red underline decoration-lipstick-red/30 underline-offset-4 transition hover:text-wine-burgundy sm:text-2xl"
               onClick={() => setShowAnythingElse(true)}
               type="button"
             >

@@ -124,7 +124,7 @@ function statusLabel(status: string, locale: Locale) {
 
 function eventStatusClassName(status: string) {
   if (status === "waitlisted" || status === "host" || status === "attended") {
-    return "text-ocean";
+    return "text-ocean-blue";
   }
 
   if (
@@ -136,7 +136,7 @@ function eventStatusClassName(status: string) {
     return "text-muted";
   }
 
-  return "text-lipstick";
+  return "text-lipstick-red";
 }
 
 function EventStatusText({
@@ -246,20 +246,20 @@ function WaitlistConfirmation({
 
   if (status === "joined") {
     return (
-      <div className="fixed inset-0 z-50 grid place-items-center bg-wine/35 px-4 py-8 backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 grid place-items-center bg-wine-burgundy/35 px-4 py-8 backdrop-blur-sm">
         <div
           aria-labelledby="waitlist-confirmation-title"
           aria-modal="true"
-          className="grid w-full max-w-md gap-5 rounded-lg border border-wine/10 bg-white p-6 shadow-2xl"
+          className="grid w-full max-w-md gap-5 rounded-lg border border-wine-burgundy/10 bg-white p-6 shadow-2xl"
           role="dialog"
         >
           <div className="grid gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-ocean text-white">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-ocean-blue text-white">
               <Check className="h-6 w-6" aria-hidden="true" strokeWidth={3} />
             </span>
             <div className="grid gap-2">
               <h2
-                className="font-display text-2xl font-extrabold leading-tight text-wine"
+                className="font-display text-2xl font-extrabold leading-tight text-wine-burgundy"
                 id="waitlist-confirmation-title"
               >
                 {dictionary.goingOut.waitlistModalTitle}
@@ -267,7 +267,7 @@ function WaitlistConfirmation({
               <div className="grid gap-2 text-sm leading-6 text-muted">
                 <p>{dictionary.goingOut.waitlistModalBody1}</p>
                 <p>
-                  <span className="font-semibold text-wine">{dictionary.goingOut.important}</span>{" "}
+                  <span className="font-semibold text-wine-burgundy">{dictionary.goingOut.important}</span>{" "}
                   {dictionary.goingOut.waitlistModalImportant}
                 </p>
               </div>
@@ -311,7 +311,7 @@ function EventMeta({
     <div className="grid gap-2 text-sm font-semibold text-muted">
       <div className="flex flex-wrap items-center gap-2">
         <span className="inline-flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-lipstick" />
+          <CalendarDays className="h-4 w-4 text-lipstick-red" />
           {formatDateTime(event?.starts_at, locale)}
         </span>
         {showCalendar && event?.starts_at ? (
@@ -330,7 +330,7 @@ function EventMeta({
       </div>
       {displayLocation ? (
         <span className="inline-flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-lipstick" />
+          <MapPin className="h-4 w-4 text-lipstick-red" />
           {displayLocation}
         </span>
       ) : null}
@@ -350,9 +350,9 @@ function EmptyEventState({
   title: string;
 }) {
   return (
-    <div className="grid gap-3 rounded-lg border border-dashed border-wine/15 bg-blush p-5">
+    <div className="grid gap-3 rounded-lg border border-dashed border-wine-burgundy/15 bg-blush-pink p-5">
       <div className="grid gap-1">
-        <p className="font-display text-lg font-extrabold leading-tight text-wine">
+        <p className="font-display text-lg font-extrabold leading-tight text-wine-burgundy">
           {title}
         </p>
         <p className="max-w-2xl text-base font-medium leading-6 text-muted">
@@ -363,7 +363,7 @@ function EmptyEventState({
         <p className="max-w-2xl text-sm leading-6 text-muted">
           <Link
             href={ctaHref}
-            className="font-semibold text-lipstick underline decoration-lipstick/35 underline-offset-4 transition hover:text-wine hover:decoration-wine"
+            className="font-semibold text-lipstick-red underline decoration-lipstick-red/35 underline-offset-4 transition hover:text-wine-burgundy hover:decoration-wine-burgundy"
           >
             {ctaLabel}
           </Link>
@@ -386,7 +386,7 @@ function EventSection({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Icon className="h-5 w-5 text-lipstick" />
+          <Icon className="h-5 w-5 text-lipstick-red" />
           {title}
         </CardTitle>
       </CardHeader>
@@ -415,15 +415,15 @@ function CollapsibleEventSection({
       <details className="group">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-5 [&::-webkit-details-marker]:hidden">
           <span className="flex min-w-0 flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-2 font-display text-lg font-extrabold leading-tight text-wine">
-              <Icon className="h-5 w-5 text-lipstick" />
+            <span className="inline-flex items-center gap-2 font-display text-lg font-extrabold leading-tight text-wine-burgundy">
+              <Icon className="h-5 w-5 text-lipstick-red" />
               {title}
             </span>
             <span className="text-sm font-semibold text-muted">
               {countLabel}
             </span>
           </span>
-          <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-wine/10 bg-white px-3 text-xs font-semibold text-wine shadow-sm">
+          <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-wine-burgundy/10 bg-white px-3 text-xs font-semibold text-wine-burgundy shadow-sm">
             <span className="group-open:hidden">{expandLabel}</span>
             <span className="hidden group-open:inline">{hideLabel}</span>
           </span>
@@ -459,7 +459,7 @@ function PendingInvitationCard({
 
   return (
     <article
-      className={`grid gap-4 rounded-lg border border-wine/10 bg-blush p-4 ${
+      className={`grid gap-4 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 ${
         hasAction ? "lg:grid-cols-[minmax(0,1fr)_auto]" : ""
       }`}
     >
@@ -470,7 +470,7 @@ function PendingInvitationCard({
             locale={locale}
             status={invitation.status}
           />
-          <h2 className="font-display text-lg font-extrabold text-wine">
+          <h2 className="font-display text-lg font-extrabold text-wine-burgundy">
             {eventTitle(invitation.events, dictionary, locale)}
           </h2>
         </div>
@@ -502,7 +502,7 @@ function UpcomingEventCard({
     item.status === "waitlisted" && Boolean(item.invitation?.responded_at);
 
   return (
-    <article className="grid gap-4 rounded-lg border border-wine/10 bg-white p-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+    <article className="grid gap-4 rounded-lg border border-wine-burgundy/10 bg-white p-4 lg:grid-cols-[minmax(0,1fr)_auto]">
       <div className="grid min-w-0 gap-2">
         <div className="grid gap-1">
           <EventStatusText
@@ -510,11 +510,11 @@ function UpcomingEventCard({
             locale={locale}
             status={item.status}
           />
-          <h2 className="font-display text-lg font-extrabold text-wine">
+          <h2 className="font-display text-lg font-extrabold text-wine-burgundy">
             {eventTitle(item.event, dictionary, locale)}
           </h2>
           {isWaitlisted ? (
-            <p className="text-sm font-semibold text-ocean">
+            <p className="text-sm font-semibold text-ocean-blue">
               {dictionary.goingOut.waitlistNote}
             </p>
           ) : null}
@@ -560,11 +560,11 @@ function PastEventCard({
   return (
     <Link
       href={`/events/${attendee.event_id}`}
-      className="grid gap-2 rounded-lg border border-wine/10 bg-blush p-4 transition hover:border-lipstick/25 hover:bg-white"
+      className="grid gap-2 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 transition hover:border-lipstick-red/25 hover:bg-white"
     >
       <div className="grid gap-1">
         <EventStatusText locale={locale} status={attendee.status} />
-        <h2 className="font-display text-lg font-extrabold text-wine">
+        <h2 className="font-display text-lg font-extrabold text-wine-burgundy">
           {eventTitle(attendee.events, dictionary, locale)}
         </h2>
       </div>
@@ -608,9 +608,9 @@ function PreferencesStrip({
   );
 
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-wine/10 bg-white/88 p-4 shadow-[0_14px_35px_rgba(68,10,18,0.05)] sm:flex-row sm:items-center sm:justify-between">
+    <section className="flex flex-col gap-3 rounded-lg border border-wine-burgundy/10 bg-white/88 p-4 shadow-[0_14px_35px_rgba(68,10,18,0.05)] sm:flex-row sm:items-center sm:justify-between">
       <div className="grid gap-2">
-        <p className="font-display text-base font-extrabold text-wine">
+        <p className="font-display text-base font-extrabold text-wine-burgundy">
           {dictionary.goingOut.preferencesTitle}
         </p>
         <div className="flex flex-wrap gap-2">
@@ -622,16 +622,16 @@ function PreferencesStrip({
           ) : null}
           {hasOtherEventIdeas ? <Badge>{dictionary.goingOut.otherEventIdeas}</Badge> : null}
           {hasLocationPreferences ? (
-            <Badge variant="wine">{dictionary.goingOut.locationPreferences}</Badge>
+            <Badge variant="wine-burgundy">{dictionary.goingOut.locationPreferences}</Badge>
           ) : null}
           {hasDietaryPreferences ? (
-            <Badge variant="wine">{dictionary.goingOut.dietaryPreferences}</Badge>
+            <Badge variant="wine-burgundy">{dictionary.goingOut.dietaryPreferences}</Badge>
           ) : null}
           {preferences?.wants_to_host ? (
-            <Badge variant="ocean">{dictionary.goingOut.openToHost}</Badge>
+            <Badge variant="ocean-blue">{dictionary.goingOut.openToHost}</Badge>
           ) : null}
           {hasOtherPreferences ? (
-            <Badge variant="wine">{dictionary.goingOut.otherPreferences}</Badge>
+            <Badge variant="wine-burgundy">{dictionary.goingOut.otherPreferences}</Badge>
           ) : null}
           {!hasAnyPreference ? <Badge variant="muted">{dictionary.goingOut.notSet}</Badge> : null}
         </div>
@@ -713,7 +713,7 @@ export default async function GoingOutPage({
   return (
     <>
       <section className="grid gap-2">
-        <h1 className="font-display text-3xl font-black text-wine">
+        <h1 className="font-display text-3xl font-black text-wine-burgundy">
           {dictionary.goingOut.title}
         </h1>
       </section>

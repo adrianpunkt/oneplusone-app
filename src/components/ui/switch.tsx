@@ -12,7 +12,7 @@ export const Switch = React.forwardRef<
   <SwitchPrimitive.Root
     ref={ref}
     className={cn(
-      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-transparent bg-wine/15 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick/25 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-lipstick",
+      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border border-transparent bg-wine-burgundy/15 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/25 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-lipstick-red",
       className,
     )}
     {...props}

@@ -51,18 +51,18 @@ export default async function EventDetailPage({
   return (
     <>
       <section className="grid gap-2">
-        <Badge variant="wine">{dictionary.events.formats[event.event_format]}</Badge>
-        <h1 className="font-display text-3xl font-black text-wine">
+        <Badge variant="wine-burgundy">{dictionary.events.formats[event.event_format]}</Badge>
+        <h1 className="font-display text-3xl font-black text-wine-burgundy">
           {title}
         </h1>
         <div className="flex flex-wrap gap-3 text-sm font-semibold text-muted">
           <span className="inline-flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-lipstick" />
+            <CalendarDays className="h-4 w-4 text-lipstick-red" />
             {formatDateTime(event.starts_at, locale)}
           </span>
           {event.city ? (
             <span className="inline-flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-lipstick" />
+              <MapPin className="h-4 w-4 text-lipstick-red" />
               {event.city}
             </span>
           ) : null}
@@ -77,21 +77,21 @@ export default async function EventDetailPage({
           </CardHeader>
           <CardContent className="grid gap-4">
             <dl className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg bg-blush p-3">
+              <div className="rounded-lg bg-blush-pink p-3">
                 <dt className="text-xs font-semibold uppercase text-faint">{dictionary.events.venue}</dt>
-                <dd className="mt-1 text-sm font-semibold text-wine">
+                <dd className="mt-1 text-sm font-semibold text-wine-burgundy">
                   {event.venue_name || dictionary.events.sharedAfterConfirmation}
                 </dd>
               </div>
-              <div className="rounded-lg bg-blush p-3">
+              <div className="rounded-lg bg-blush-pink p-3">
                 <dt className="text-xs font-semibold uppercase text-faint">{dictionary.events.status}</dt>
-                <dd className="mt-1 text-sm font-semibold capitalize text-wine">
+                <dd className="mt-1 text-sm font-semibold capitalize text-wine-burgundy">
                   {statusLabel(event.status, locale)}
                 </dd>
               </div>
             </dl>
             {memberNotes ? (
-              <p className="rounded-lg border border-ocean/15 bg-ocean/8 p-4 text-sm leading-6 text-ocean">
+              <p className="rounded-lg border border-ocean-blue/15 bg-ocean-blue/8 p-4 text-sm leading-6 text-ocean-blue">
                 {memberNotes}
               </p>
             ) : null}
@@ -102,7 +102,7 @@ export default async function EventDetailPage({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <UsersRound className="h-5 w-5 text-lipstick" />
+              <UsersRound className="h-5 w-5 text-lipstick-red" />
               {dictionary.events.peopleFromTable}
             </CardTitle>
             <CardDescription>
@@ -112,9 +112,9 @@ export default async function EventDetailPage({
           <CardContent className="grid gap-4">
             {canMessage && eventAttendees.length ? (
               eventAttendees.map((person) => (
-                <article key={person.member_id} className="grid gap-3 rounded-lg border border-wine/10 bg-blush p-4">
+                <article key={person.member_id} className="grid gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <p className="font-display text-lg font-extrabold text-wine">{person.first_name}</p>
+                    <p className="font-display text-lg font-extrabold text-wine-burgundy">{person.first_name}</p>
                     <Badge variant="muted">{dictionary.events.pastEvent}</Badge>
                   </div>
                   <StartConversationForm
@@ -130,7 +130,7 @@ export default async function EventDetailPage({
                 </article>
               ))
             ) : (
-              <p className="rounded-lg bg-blush p-4 text-sm font-semibold text-muted">
+              <p className="rounded-lg bg-blush-pink p-4 text-sm font-semibold text-muted">
                 {dictionary.events.messagingAfterEvent}
               </p>
             )}

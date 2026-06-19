@@ -100,10 +100,10 @@ export function CancelInvitationForm({
           </Button>
         </Dialog.Trigger>
         <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 z-50 bg-wine/35 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine/10 bg-white p-5 shadow-2xl">
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/35 backdrop-blur-sm" />
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine-burgundy/10 bg-white p-5 shadow-2xl">
             <div className="grid gap-2">
-              <Dialog.Title className="font-display text-xl font-extrabold text-wine">
+              <Dialog.Title className="font-display text-xl font-extrabold text-wine-burgundy">
                 {title}
               </Dialog.Title>
               <Dialog.Description className="text-sm leading-6 text-muted">
