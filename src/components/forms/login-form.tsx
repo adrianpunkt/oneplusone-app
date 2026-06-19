@@ -320,9 +320,16 @@ export function LoginForm({
               id="code"
               name="code"
               ref={codeInputRef}
+              type="text"
               inputMode="numeric"
               autoComplete="one-time-code"
+              autoCapitalize="none"
+              autoCorrect="off"
+              enterKeyHint="go"
+              maxLength={12}
+              pattern="[0-9]*"
               placeholder={copy.codePlaceholder}
+              spellCheck={false}
               required
             />
           </div>
