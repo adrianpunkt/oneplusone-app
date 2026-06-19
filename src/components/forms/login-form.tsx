@@ -1,7 +1,8 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ExternalLink, KeyRound, Mail, RotateCcw, UserPlus, X } from "lucide-react";
 
 import { requestOtpAction, type AuthActionState, verifyOtpAction } from "@/lib/actions/auth";
@@ -10,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/toast";
 import type { Locale } from "@/lib/i18n/locales";
-import type { MemberLoginOtpType } from "@/lib/auth-link";
+import { encodeEmailHint, type MemberLoginOtpType } from "@/lib/auth-link";
 
 const initialState: AuthActionState = {};
 const joinUrl = "https://oneplusoneclub.com/your-story";
@@ -153,6 +154,12 @@ export function LoginForm({
   next?: string;
 }) {
   const [hideVerifyError, setHideVerifyError] = useState(false);
+  const submittedRequestBaselineRef = useRef<AuthActionState | null>(null);
+  const handledRequestStateRef = useRef<AuthActionState | null>(null);
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchParamString = searchParams.toString();
   const { showToast } = useToast();
   const initialRequestState: AuthActionState = {
     email: initialEmail || undefined,
@@ -180,20 +187,69 @@ export function LoginForm({
         ? requestState.error
         : verifyState.error || requestState.error;
 
+  function handleRequestSubmit() {
+    submittedRequestBaselineRef.current = requestState;
+  }
+
   useEffect(() => {
-    if (!requestState.sent || !requestState.email) return;
+    if (
+      !submittedRequestBaselineRef.current ||
+      submittedRequestBaselineRef.current === requestState ||
+      handledRequestStateRef.current === requestState
+    ) {
+      return;
+    }
+
+    handledRequestStateRef.current = requestState;
+    submittedRequestBaselineRef.current = null;
+
+    if (!requestState.sent || !requestState.email) {
+      return;
+    }
 
     showToast({
       description: requestState.email,
       title: copy.codeSentToast,
     });
-  }, [copy.codeSentToast, requestState, showToast]);
+
+    const params = new URLSearchParams(searchParamString);
+    params.set("email_hint", encodeEmailHint(requestState.email));
+    params.set("otp_type", otpType);
+    params.set("sent", "1");
+
+    if (activeNext === "/dashboard") {
+      params.delete("next");
+    } else {
+      params.set("next", activeNext);
+    }
+
+    const queryString = params.toString();
+    const currentPath = `${pathname}${searchParamString ? `?${searchParamString}` : ""}`;
+    const nextPath = `${pathname}${queryString ? `?${queryString}` : ""}`;
+
+    if (nextPath !== currentPath) {
+      router.replace(nextPath, { scroll: false });
+    }
+  }, [
+    activeNext,
+    copy.codeSentToast,
+    otpType,
+    pathname,
+    requestState,
+    router,
+    searchParamString,
+    showToast,
+  ]);
 
   if (notRegistered) {
     return (
       <div className="grid gap-4">
         <LoginIntro copy={copy} />
-        <form action={requestAction} className="grid gap-4">
+        <form
+          action={requestAction}
+          className="grid gap-4"
+          onSubmit={handleRequestSubmit}
+        >
           <input type="hidden" name="locale" value={locale} />
           <input type="hidden" name="next" value={next} />
           <div className="grid gap-2">
@@ -275,7 +331,10 @@ export function LoginForm({
         <form
           action={requestAction}
           className="flex flex-wrap gap-2"
-          onSubmit={() => setHideVerifyError(true)}
+          onSubmit={() => {
+            setHideVerifyError(true);
+            handleRequestSubmit();
+          }}
         >
           <input type="hidden" name="email" value={email} />
           <input type="hidden" name="locale" value={locale} />
@@ -296,7 +355,11 @@ export function LoginForm({
   return (
     <div className="grid gap-4">
       <LoginIntro copy={copy} />
-      <form action={requestAction} className="grid gap-4">
+      <form
+        action={requestAction}
+        className="grid gap-4"
+        onSubmit={handleRequestSubmit}
+      >
         <input type="hidden" name="locale" value={locale} />
         <input type="hidden" name="next" value={next} />
         <div className="grid gap-2">
