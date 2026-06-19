@@ -40,10 +40,9 @@ const en = {
     introBodyPrefix: "Use the email from your story to login to the ",
     introBodyAppName: "one plus one app",
     introBodySuffix: ". We will send you a private code to login.",
-    confirmTitle: "Confirm login",
-    confirmBody: (email: string) =>
-      email ? `Continue with the private link for ${email}.` : "Continue with this private link.",
-    confirmButton: "Continue",
+    confirmTitle: "Continue to one plus one app",
+    confirmBody: "Click the button below to log into the app",
+    confirmButton: "Login",
     missingCode:
       "That login link was issued for a different auth flow. Request a fresh link from this page.",
     expiredLink:
@@ -282,7 +281,7 @@ const en = {
     affordable: "Somewhere affordable and relaxed",
     michelin: "Michelin-guide territory",
     dietary: "Dietary preferences",
-    dietaryQuestion: "Select any that apply.",
+    dietaryQuestion: "Do you have any dietary preferences or restrictions?",
     dietaryEverythingWorks: "Everything works",
     dietaryVegetarian: "Vegetarian",
     dietaryVegan: "Vegan",
@@ -822,10 +821,9 @@ const es: typeof en = {
     introBodyPrefix: "Usa el email de tu historia para entrar en la ",
     introBodyAppName: "one plus one app",
     introBodySuffix: ". Te enviaremos un código privado para iniciar sesión.",
-    confirmTitle: "Confirmar acceso",
-    confirmBody: (email: string) =>
-      email ? `Continúa con el enlace privado para ${email}.` : "Continúa con este enlace privado.",
-    confirmButton: "Continuar",
+    confirmTitle: "Continuar a one plus one app",
+    confirmBody: "Pulsa el botón de abajo para entrar en la app",
+    confirmButton: "Login",
     missingCode:
       "Ese enlace de acceso pertenece a otro flujo de autenticación. Pide un enlace nuevo desde esta página.",
     expiredLink:

@@ -202,7 +202,6 @@ export default async function ConfirmLoginPage({
   const type = firstValue(params.type);
   const next = safeInternalPath(firstValue(params.next), "/dashboard");
   const emailHint = firstValue(params.email_hint);
-  const email = decodeEmailHint(emailHint);
 
   if (!tokenHash || !allowedEmailOtpTypes.has(type)) {
     redirect(loginRedirectPath("expired-link", next, emailHint));
@@ -227,7 +226,7 @@ export default async function ConfirmLoginPage({
                 {dictionary.login.confirmTitle}
               </h1>
               <p className="text-sm leading-6 text-muted">
-                {dictionary.login.confirmBody(email)}
+                {dictionary.login.confirmBody}
               </p>
             </div>
             <form action={confirmLoginAction} className="grid gap-4">
