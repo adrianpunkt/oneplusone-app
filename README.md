@@ -29,8 +29,9 @@ Optional analytics env:
 PostHog initialization keeps the `/flags` remote config request and feature flag
 evaluation enabled so project-side session recording settings, sampling, and
 linked-flag triggers can start recordings correctly. It uses cookie persistence
-with cross-subdomain cookies and identifies signed-in users with `members.id`,
-matching the onboarding website identity.
+with cross-subdomain cookies and identifies signed-in users with `members.id`
+and email as PostHog person properties, matching the onboarding website
+identity.
 
 Local development is configured to use the Supabase development project:
 
