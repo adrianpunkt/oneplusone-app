@@ -23,6 +23,9 @@
   "vars": {
     "APP_URL": "https://app.oneplusoneclub.com",
     "NEXT_PUBLIC_APP_URL": "https://app.oneplusoneclub.com",
+    "NEXT_PUBLIC_POSTHOG_HOST": "https://e.oneplusoneclub.com",
+    "NEXT_PUBLIC_POSTHOG_KEY": "phc_xjFr8jciwE7Q6mD5DRB9PuqgbbjxgQTwZuPstiwY4cqy",
+    "NEXT_PUBLIC_POSTHOG_UI_HOST": "https://eu.posthog.com",
     "NEXTJS_ENV": "cloudflare",
     "SUPABASE_PROJECT_REF": "qevpnhaycygiyjxeucmj"
   },
@@ -38,6 +41,9 @@
       "vars": {
         "APP_URL": "https://dev-app.oneplusoneclub.com",
         "NEXT_PUBLIC_APP_URL": "https://dev-app.oneplusoneclub.com",
+        "NEXT_PUBLIC_POSTHOG_HOST": "https://e.oneplusoneclub.com",
+        "NEXT_PUBLIC_POSTHOG_KEY": "phc_xjFr8jciwE7Q6mD5DRB9PuqgbbjxgQTwZuPstiwY4cqy",
+        "NEXT_PUBLIC_POSTHOG_UI_HOST": "https://eu.posthog.com",
         "NEXTJS_ENV": "cloudflare",
         "SUPABASE_PROJECT_REF": "oackdojvcfrkzbnprovb"
       },

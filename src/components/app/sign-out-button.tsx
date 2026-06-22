@@ -1,6 +1,9 @@
+"use client";
+
 import { LogOut } from "lucide-react";
 
 import { signOutAction } from "@/lib/actions/auth";
+import { resetPostHogIdentity } from "@/lib/posthog/client";
 import { Button, type ButtonProps } from "@/components/ui/button";
 
 export function SignOutButton({
@@ -15,7 +18,7 @@ export function SignOutButton({
   variant?: ButtonProps["variant"];
 }) {
   return (
-    <form action={signOutAction}>
+    <form action={signOutAction} onSubmit={resetPostHogIdentity}>
       <Button className={className} variant={variant} size={size}>
         <LogOut className="h-4 w-4" />
         {label}

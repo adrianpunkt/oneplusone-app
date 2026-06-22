@@ -19,16 +19,18 @@ Required env:
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET` or `APP_STRIPE_WEBHOOK_SECRET`
 
-Optional PostHog analytics env:
+Optional analytics env:
 
-- `NEXT_PUBLIC_POSTHOG_ENABLED=true` opts the browser client into tracking.
-- `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` is the public PostHog project token.
-- `NEXT_PUBLIC_POSTHOG_HOST` defaults to `https://eu.i.posthog.com`.
+- `NEXT_PUBLIC_POSTHOG_KEY` (defaults to the website public key on `app.oneplusoneclub.com`; local/dev tracking stays off unless this is set)
+- `NEXT_PUBLIC_POSTHOG_HOST` (defaults to the first-party proxy at `https://e.oneplusoneclub.com`)
+- `NEXT_PUBLIC_POSTHOG_UI_HOST` (defaults to `https://eu.posthog.com`)
+- `NEXT_PUBLIC_POSTHOG_ENABLED=false` disables the browser client even when a key is configured.
 
-When PostHog is enabled, autocapture, session replay, and heatmaps are enabled.
-
-Leave `NEXT_PUBLIC_POSTHOG_ENABLED` unset or set to `false` for production
-deployments while the app and dev traffic share one PostHog project.
+PostHog initialization keeps the `/flags` remote config request and feature flag
+evaluation enabled so project-side session recording settings, sampling, and
+linked-flag triggers can start recordings correctly. It uses cookie persistence
+with cross-subdomain cookies and identifies signed-in users with `members.id`,
+matching the onboarding website identity.
 
 Local development is configured to use the Supabase development project:
 

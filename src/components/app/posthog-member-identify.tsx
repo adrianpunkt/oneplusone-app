@@ -2,7 +2,11 @@
 
 import { useEffect, useRef } from "react";
 
-import { loadPostHog } from "@/lib/posthog/client";
+import {
+  getPostHogPersistedUserId,
+  loadPostHog,
+  resetPostHogIdentity,
+} from "@/lib/posthog/client";
 import type { Locale } from "@/lib/i18n/locales";
 import type { Member } from "@/lib/types";
 
@@ -23,9 +27,23 @@ export function PostHogMemberIdentify({ locale, member }: PostHogMemberIdentifyP
     void loadPostHog().then((posthog) => {
       if (cancelled || !posthog) return;
 
-      posthog.identify(member.id, {
+      const persistedMemberId = getPostHogPersistedUserId();
+      if (persistedMemberId && persistedMemberId !== member.id) {
+        resetPostHogIdentity();
+      }
+
+      const properties = {
         locale,
+        member_app_authenticated: true,
+        member_id: member.id,
         membership_status: member.membership_status,
+      };
+
+      posthog.identify(member.id, {
+        ...properties,
+      });
+      posthog.register({
+        ...properties,
       });
 
       identifiedKeyRef.current = identifiedKey;
