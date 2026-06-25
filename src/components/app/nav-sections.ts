@@ -1,4 +1,4 @@
-import { Heart, Home, Utensils } from "lucide-react";
+import { BookOpen, Heart, Home, Utensils } from "lucide-react";
 
 export const navSections = [
   {
@@ -12,6 +12,12 @@ export const navSections = [
     labelKey: "goingOut",
     icon: Utensils,
     activePaths: ["/going-out", "/events", "/credits", "/preferences"],
+  },
+  {
+    href: "/collection",
+    labelKey: "collection",
+    icon: BookOpen,
+    activePaths: ["/collection"],
   },
   {
     href: "/messages",

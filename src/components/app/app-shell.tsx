@@ -115,6 +115,7 @@ export function AppShell({
   const navLabels = {
     dashboard: dictionary.nav.dashboard,
     goingOut: dictionary.nav.goingOut,
+    collection: dictionary.nav.collection,
     messages: dictionary.nav.messages,
     myStory: dictionary.nav.myStory,
   };

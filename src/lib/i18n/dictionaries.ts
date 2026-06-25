@@ -28,6 +28,7 @@ const en = {
   nav: {
     dashboard: "Welcome",
     goingOut: "Going-out",
+    collection: "Collection",
     messages: "Messages",
     myStory: "My Story",
     dashboardAria: "one plus one club dashboard",
@@ -129,6 +130,14 @@ const en = {
     incomplete: "Incomplete",
     photoSaved: "Photo saved.",
     closePhotoUploader: "Close photo uploader",
+  },
+  collection: {
+    title: "Collection",
+    intro: "A podcast shelf for stories, conversations, and ideas that pair well with one plus one club.",
+    openPodcast: "Open podcast",
+    languageLabel: "Language",
+    english: "English",
+    spanish: "Spanish",
   },
   goingOut: {
     title: "Going-out",
@@ -809,6 +818,7 @@ const es: typeof en = {
   nav: {
     dashboard: "Bienvenida",
     goingOut: "Salidas",
+    collection: "Colección",
     messages: "Mensajes",
     myStory: "Mi historia",
     dashboardAria: "panel de one plus one club",
@@ -910,6 +920,14 @@ const es: typeof en = {
     incomplete: "Incompleto",
     photoSaved: "Foto guardada.",
     closePhotoUploader: "Cerrar subida de foto",
+  },
+  collection: {
+    title: "Colección",
+    intro: "Una estantería de podcasts con historias, conversaciones e ideas que encajan con one plus one club.",
+    openPodcast: "Abrir podcast",
+    languageLabel: "Idioma",
+    english: "Inglés",
+    spanish: "Español",
   },
   goingOut: {
     title: "Salidas",

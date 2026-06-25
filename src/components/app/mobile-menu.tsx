@@ -19,6 +19,7 @@ type NavLabels = {
   closeMenu: string;
   dashboard: string;
   goingOut: string;
+  collection: string;
   messages: string;
   myStory: string;
   openMenu: string;

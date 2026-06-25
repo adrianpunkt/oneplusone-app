@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 type NavLabels = {
   dashboard: string;
   goingOut: string;
+  collection: string;
   messages: string;
   myStory: string;
 };
