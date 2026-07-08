@@ -46,7 +46,8 @@ export type LoginFormCopy = {
   needAssistance: string;
   password: string;
   passwordPlaceholder: string;
-  passwordStep: (email: string) => string;
+  passwordStepPrefix: string;
+  passwordStepSuffix: string;
   sendLoginCode: string;
   sendNewCode: string;
   sending: string;
@@ -405,7 +406,9 @@ export function LoginForm({
           <input type="hidden" name="locale" value={locale} />
           <input type="hidden" name="next" value={activeNext} />
           <p className="rounded-lg border border-ocean-blue/15 bg-ocean-blue/8 p-3 text-sm font-semibold leading-6 text-ocean-blue">
-            {copy.passwordStep(email)}
+            {copy.passwordStepPrefix}
+            {email}
+            {copy.passwordStepSuffix}
           </p>
           <div className="grid gap-2">
             <Label htmlFor="password">{copy.password}</Label>
