@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { Plus, X } from "lucide-react";
 
 import type { Dictionary } from "@/lib/i18n/dictionaries";
+import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 
 type Mode = "read" | "edit";
@@ -50,9 +51,11 @@ type LanguageItem = {
   aliases?: string[];
   code?: string;
   countries?: string[];
+  localizedNames?: Partial<Record<Locale, string>>;
   name: string;
   normalizedAliases?: string[];
   normalizedCode?: string;
+  normalizedLocalizedNames?: string[];
   normalizedName?: string;
   speakerScore?: number;
   storedLabel?: string;
@@ -75,6 +78,7 @@ type Selection = {
   code?: string;
   country?: string;
   countryCode?: string;
+  displayCode?: string;
   item: CityItem | LanguageItem;
   key: string;
   label: string;
@@ -120,6 +124,7 @@ export function StoryAutocompleteField({
   defaultValue,
   kind,
   label,
+  locale = "en",
   mode,
   name,
   onDirty,
@@ -129,6 +134,7 @@ export function StoryAutocompleteField({
   defaultValue?: string;
   kind: AutocompleteKind;
   label: string;
+  locale?: Locale;
   mode: Mode;
   name: string;
   onDirty?: () => void;
@@ -169,8 +175,8 @@ export function StoryAutocompleteField({
         : [];
     }
 
-    return languageData ? getLanguageSuggestions(languageData, selected, location, query) : [];
-  }, [cityData, copy.allAreas, kind, languageData, location, query, selected]);
+    return languageData ? getLanguageSuggestions(languageData, selected, location, query, locale) : [];
+  }, [cityData, copy.allAreas, kind, languageData, locale, location, query, selected]);
   const visibleSuggestions = suggestions.slice(0, resultLimit);
   const suggestionText =
     kind === "city"
@@ -207,14 +213,20 @@ export function StoryAutocompleteField({
         setLanguageData(data);
         if (canonicalizedRef.current || userChangedRef.current) return;
         canonicalizedRef.current = true;
-        setSelected((current) => canonicalizeLanguageSelections(data, current));
+        setSelected((current) => canonicalizeLanguageSelections(data, current, locale));
       });
     }
-  }, [copy.allAreas, kind]);
+  }, [copy.allAreas, kind, locale]);
 
   useEffect(() => {
     if (isOpen) loadResources();
   }, [isOpen, loadResources]);
+
+  useEffect(() => {
+    if (kind === "language" && (mode === "read" || locale !== "en")) {
+      loadResources();
+    }
+  }, [kind, loadResources, locale, mode]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -466,9 +478,9 @@ export function StoryAutocompleteField({
                         <span className="truncate text-xs font-medium text-muted">{item.meta}</span>
                       ) : null}
                     </span>
-                    {item.code ? (
+                    {item.displayCode || item.code ? (
                       <span className="rounded-full border border-lipstick-red/20 bg-lipstick-red/8 px-2 py-1 text-xs font-semibold uppercase text-lipstick-red">
-                        {item.code}
+                        {item.displayCode || item.code}
                       </span>
                     ) : null}
                   </button>
@@ -616,6 +628,9 @@ async function loadLanguageData() {
             .flatMap((alias) => [normalize(alias), normalizeLanguageCode(alias)])
             .filter(Boolean),
           normalizedCode: normalizeLanguageCode(language.code),
+          normalizedLocalizedNames: Object.values(language.localizedNames || {})
+            .flatMap((localizedName) => [normalize(localizedName), normalizeLanguageCode(localizedName)])
+            .filter(Boolean),
           normalizedName: normalize(language.name),
         })),
       }))
@@ -988,14 +1003,28 @@ function formatStoredLanguage(language: LanguageItem) {
   return language.storedLabel || language.name;
 }
 
-function makeLanguageSelection(language: LanguageItem, currentLanguageLabel = ""): Selection {
+function localizedLanguageName(language: LanguageItem, locale: Locale) {
+  return language.localizedNames?.[locale] || "";
+}
+
+function displayLanguageName(language: LanguageItem, locale: Locale, currentLanguageLabel = "") {
   const code = normalizeLanguageCode(language.code);
-  const label = code === "en" && currentLanguageLabel ? currentLanguageLabel : formatStoredLanguage(language);
+  if (code === "en" && currentLanguageLabel) return currentLanguageLabel;
+  return localizedLanguageName(language, locale) || formatStoredLanguage(language);
+}
+
+function makeLanguageSelection(
+  language: LanguageItem,
+  currentLanguageLabel = "",
+  locale: Locale = "en",
+): Selection {
+  const code = normalizeLanguageCode(language.code);
   return {
-    code: language.code ? displayLanguageCode(language.code) : undefined,
+    code: language.code ? code : undefined,
+    displayCode: language.code ? displayLanguageCode(language.code) : undefined,
     item: language,
     key: selectedLanguageKey(language),
-    label,
+    label: displayLanguageName(language, locale, currentLanguageLabel),
     storedLabel: formatStoredLanguage(language),
   };
 }
@@ -1012,16 +1041,18 @@ function findLanguageFromStored(data: LanguageData, value: string) {
   return (
     data.languages.find((language) => language.normalizedName === normalizedValue) ||
     data.languages.find((language) => language.normalizedCode === normalizedCode) ||
+    data.languages.find((language) => (language.normalizedLocalizedNames || []).includes(normalizedValue)) ||
+    data.languages.find((language) => (language.normalizedLocalizedNames || []).includes(normalizedCode)) ||
     data.languages.find((language) => (language.normalizedAliases || []).includes(normalizedValue)) ||
     data.languages.find((language) => (language.normalizedAliases || []).includes(normalizedCode)) ||
     null
   );
 }
 
-function canonicalizeLanguageSelections(data: LanguageData, selections: Selection[]) {
+function canonicalizeLanguageSelections(data: LanguageData, selections: Selection[], locale: Locale) {
   return selections.map((selection) => {
     const language = findLanguageFromStored(data, selection.storedLabel);
-    return language ? makeLanguageSelection(language) : selection;
+    return language ? makeLanguageSelection(language, "", locale) : selection;
   });
 }
 
@@ -1030,6 +1061,7 @@ function getLanguageSuggestions(
   selected: Selection[],
   location: LocationData,
   rawQuery: string,
+  locale: Locale,
 ) {
   const query = normalize(rawQuery);
   return data.languages
@@ -1048,9 +1080,9 @@ function getLanguageSuggestions(
       const speakerDifference = Number(b.speakerScore || 0) - Number(a.speakerScore || 0);
       if (speakerDifference) return speakerDifference;
 
-      return String(a.name).localeCompare(String(b.name));
+      return displayLanguageName(a, locale).localeCompare(displayLanguageName(b, locale), locale);
     })
-    .map((language) => makeLanguageSelection(language));
+    .map((language) => makeLanguageSelection(language, "", locale));
 }
 
 function isLanguageSelected(language: LanguageItem, selected: Selection[]) {
@@ -1058,7 +1090,12 @@ function isLanguageSelected(language: LanguageItem, selected: Selection[]) {
   const languageCode = normalizeLanguageCode(language.code);
   const languageName = normalize(formatStoredLanguage(language));
   const languageAliases = new Set(
-    [language.normalizedName, language.normalizedCode, ...(language.normalizedAliases || [])]
+    [
+      language.normalizedName,
+      language.normalizedCode,
+      ...(language.normalizedLocalizedNames || []),
+      ...(language.normalizedAliases || []),
+    ]
       .filter(isNonEmptyString)
       .flatMap((value) => [value, normalizeLanguageCode(value)]),
   );
@@ -1105,6 +1142,7 @@ function languageMatchRank(language: LanguageItem, query: string) {
     language.normalizedName,
     language.normalizedCode,
     normalizeLanguageCode(language.code),
+    ...(language.normalizedLocalizedNames || []),
     ...(language.normalizedAliases || []),
   ].filter(isNonEmptyString);
 

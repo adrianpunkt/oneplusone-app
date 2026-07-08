@@ -40,6 +40,7 @@ export default async function MyStoryPage({ searchParams }: MyStoryPageProps) {
           autocompleteCopy={dictionary.autocomplete}
           copy={dictionary.profile}
           imageUploaderCopy={dictionary.imageUploader}
+          locale={locale}
           profile={profile}
           profileImage={{
             currentImageUrl: imageUrl,

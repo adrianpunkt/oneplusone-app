@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { recordMemberAppLoginEvent } from "@/lib/app-login-events";
 import { normalizeMemberLoginNextPath } from "@/lib/auth-link";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { localeCookieName, normalizeLocale } from "@/lib/i18n/locales";
@@ -36,6 +37,7 @@ export async function GET(request: NextRequest) {
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle<{ locale: string | null }>(),
+      recordMemberAppLoginEvent({ method: "auth_callback", next, userId: user.id }),
     ]);
     resolvedLocale = normalizeLocale(member?.preferred_locale || profile?.locale);
   }

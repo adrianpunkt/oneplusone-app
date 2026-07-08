@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { saveProfileAction, type FormActionState } from "@/lib/actions/profile";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
+import type { Locale } from "@/lib/i18n/locales";
 import type { ProfileRegistration } from "@/lib/types";
 import { cn, storyValue } from "@/lib/utils";
 
@@ -1254,6 +1255,7 @@ function StoryNarrative({
   copy,
   imageUploaderCopy,
   isDirty = false,
+  locale = "en",
   mode,
   onCancel,
   onDirty,
@@ -1265,6 +1267,7 @@ function StoryNarrative({
   copy: ProfileCopy;
   imageUploaderCopy: ProfileImageUploaderCopy;
   isDirty?: boolean;
+  locale?: Locale;
   mode: Mode;
   onCancel?: () => void;
   onDirty?: () => void;
@@ -1568,6 +1571,7 @@ function StoryNarrative({
             copy={autocompleteCopy}
             kind="city"
             label={copy.fields.cities}
+            locale={locale}
             mode={mode}
             name="profile.event_location"
             onDirty={onDirty}
@@ -1601,6 +1605,7 @@ function StoryNarrative({
             copy={autocompleteCopy}
             kind="language"
             label={copy.fields.languages}
+            locale={locale}
             mode={mode}
             name="profile.date_languages"
             onDirty={onDirty}
@@ -2005,12 +2010,14 @@ export function ProfileStory({
   autocompleteCopy,
   copy,
   imageUploaderCopy,
+  locale = "en",
   profile,
   profileImage,
 }: {
   autocompleteCopy: StoryAutocompleteCopy;
   copy: ProfileCopy;
   imageUploaderCopy: ProfileImageUploaderCopy;
+  locale?: Locale;
   profile: ProfileRegistration | null;
   profileImage?: ProfileImageConfig;
 }) {
@@ -2019,6 +2026,7 @@ export function ProfileStory({
       autocompleteCopy={autocompleteCopy}
       copy={copy}
       imageUploaderCopy={imageUploaderCopy}
+      locale={locale}
       mode="read"
       profile={profile}
       profileImage={profileImage}
@@ -2030,12 +2038,14 @@ export function ProfileForm({
   autocompleteCopy,
   copy,
   imageUploaderCopy,
+  locale = "en",
   profile,
   profileImage,
 }: {
   autocompleteCopy: StoryAutocompleteCopy;
   copy: ProfileCopy;
   imageUploaderCopy: ProfileImageUploaderCopy;
+  locale?: Locale;
   profile: ProfileRegistration | null;
   profileImage?: ProfileImageConfig;
 }) {
@@ -2113,6 +2123,7 @@ export function ProfileForm({
           key={formResetKey}
           imageUploaderCopy={imageUploaderCopy}
           isDirty={isDirty}
+          locale={locale}
           mode="edit"
           onCancel={handleCancel}
           onDirty={scheduleDirtyCheck}
