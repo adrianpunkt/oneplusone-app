@@ -5,7 +5,12 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ExternalLink, KeyRound, Mail, RotateCcw, UserPlus, X } from "lucide-react";
 
-import { requestOtpAction, type AuthActionState, verifyOtpAction } from "@/lib/actions/auth";
+import {
+  requestOtpAction,
+  type AuthActionState,
+  verifyDemoPasswordAction,
+  verifyOtpAction,
+} from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,6 +44,9 @@ export type LoginFormCopy = {
   notRegisteredBody: string;
   notRegisteredTitle: string;
   needAssistance: string;
+  password: string;
+  passwordPlaceholder: string;
+  passwordStep: (email: string) => string;
   sendLoginCode: string;
   sendNewCode: string;
   sending: string;
@@ -141,6 +149,7 @@ export function LoginForm({
   copy,
   initialEmail = "",
   initialOtpType = "email",
+  initialPasswordRequired = false,
   initialSent = false,
   locale,
   next = "/dashboard",
@@ -149,6 +158,7 @@ export function LoginForm({
   copy: LoginFormCopy;
   initialEmail?: string;
   initialOtpType?: MemberLoginOtpType;
+  initialPasswordRequired?: boolean;
   initialSent?: boolean;
   locale: Locale;
   next?: string;
@@ -157,6 +167,7 @@ export function LoginForm({
   const submittedRequestBaselineRef = useRef<AuthActionState | null>(null);
   const handledRequestStateRef = useRef<AuthActionState | null>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -166,27 +177,36 @@ export function LoginForm({
     email: initialEmail || undefined,
     next,
     otpType: initialOtpType,
-    sent: initialSent || undefined,
+    passwordRequired: initialPasswordRequired || undefined,
+    sent: initialPasswordRequired ? undefined : initialSent || undefined,
   };
   const [requestState, requestAction, requestPending] = useActionState(
     requestOtpAction,
     initialRequestState,
   );
+  const [passwordState, passwordAction, passwordPending] = useActionState(
+    verifyDemoPasswordAction,
+    initialState,
+  );
   const [verifyState, verifyAction, verifyPending] = useActionState(
     verifyOtpAction,
     initialState,
   );
-  const email = verifyState.email || requestState.email || initialEmail;
-  const activeNext = verifyState.next || requestState.next || next;
+  const email = passwordState.email || verifyState.email || requestState.email || initialEmail;
+  const activeNext = passwordState.next || verifyState.next || requestState.next || next;
   const otpType = verifyState.otpType || requestState.otpType || initialOtpType;
-  const codeStep = Boolean(requestState.sent || verifyState.sent);
-  const notRegistered = requestState.notRegistered || verifyState.notRegistered;
+  const passwordStep = Boolean(requestState.passwordRequired || passwordState.passwordRequired);
+  const codeStep = !passwordStep && Boolean(requestState.sent || verifyState.sent);
+  const notRegistered =
+    requestState.notRegistered || verifyState.notRegistered || passwordState.notRegistered;
   const codeStepError =
     requestPending || verifyPending
       ? undefined
       : hideVerifyError
         ? requestState.error
         : verifyState.error || requestState.error;
+  const passwordStepError =
+    requestPending || passwordPending ? undefined : passwordState.error || requestState.error;
 
   function handleRequestSubmit() {
     submittedRequestBaselineRef.current = requestState;
@@ -197,6 +217,12 @@ export function LoginForm({
 
     codeInputRef.current?.focus();
   }, [codeStep]);
+
+  useEffect(() => {
+    if (!passwordStep) return;
+
+    passwordInputRef.current?.focus();
+  }, [passwordStep]);
 
   useEffect(() => {
     if (
@@ -362,6 +388,47 @@ export function LoginForm({
             <RotateCcw className="h-4 w-4 transition-transform duration-150 group-hover:-rotate-45" />
             {requestPending ? copy.sending : copy.sendNewCode}
           </button>
+        </form>
+      </div>
+    );
+  }
+
+  if (passwordStep) {
+    return (
+      <div className="grid gap-4">
+        <form
+          action={passwordAction}
+          className="grid gap-4"
+          onSubmit={() => setHideVerifyError(false)}
+        >
+          <input type="hidden" name="email" value={email} />
+          <input type="hidden" name="locale" value={locale} />
+          <input type="hidden" name="next" value={activeNext} />
+          <p className="rounded-lg border border-ocean-blue/15 bg-ocean-blue/8 p-3 text-sm font-semibold leading-6 text-ocean-blue">
+            {copy.passwordStep(email)}
+          </p>
+          <div className="grid gap-2">
+            <Label htmlFor="password">{copy.password}</Label>
+            <Input
+              id="password"
+              name="password"
+              ref={passwordInputRef}
+              type="password"
+              autoComplete="current-password"
+              enterKeyHint="go"
+              placeholder={copy.passwordPlaceholder}
+              required
+            />
+          </div>
+          <Button disabled={passwordPending} size="lg">
+            <KeyRound className="h-4 w-4" />
+            {passwordPending ? copy.checking : copy.login}
+          </Button>
+          {passwordStepError ? (
+            <p className="text-sm font-semibold text-lipstick-red" role="status">
+              {passwordStepError}
+            </p>
+          ) : null}
         </form>
       </div>
     );

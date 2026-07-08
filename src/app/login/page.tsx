@@ -6,6 +6,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { LoginForm } from "@/components/forms/login-form";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getOptionalMemberContextForRender } from "@/lib/data/member";
+import { isDemoMemberEmail } from "@/lib/demo-member";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
 import {
@@ -39,6 +40,7 @@ function authMessage(
 ) {
   if (auth === "missing-code") return dictionary.login.missingCode;
   if (auth === "expired-link-sent") {
+    if (email && isDemoMemberEmail(email)) return dictionary.login.expiredLink;
     return email ? dictionary.login.expiredLinkSent(email) : dictionary.login.expiredLink;
   }
   if (auth === "expired-link") return dictionary.login.expiredLink;
@@ -69,6 +71,7 @@ export default async function LoginPage({
 
   const initialEmail = decodeEmailHint(emailHint);
   const message = authMessage(auth, dictionary, initialEmail);
+  const initialPasswordRequired = Boolean(initialEmail && isDemoMemberEmail(initialEmail));
   const initialSent = Boolean(initialEmail && (auth === "expired-link-sent" || sent === "1"));
   const initialOtpType = normalizeOtpType(firstSearchParam(otpTypeParam));
   const codeStepMessage = auth === "expired-link-sent"
@@ -118,6 +121,9 @@ export default async function LoginPage({
               needAssistance: dictionary.login.needAssistance,
               notRegisteredBody: dictionary.login.notRegisteredBody,
               notRegisteredTitle: dictionary.login.notRegisteredTitle,
+              password: dictionary.login.password,
+              passwordPlaceholder: dictionary.login.passwordPlaceholder,
+              passwordStep: dictionary.login.passwordStep,
               sendLoginCode: dictionary.login.sendLoginCode,
               sendNewCode: dictionary.login.sendNewCode,
               sending: dictionary.login.sending,
@@ -126,6 +132,7 @@ export default async function LoginPage({
             }}
             initialEmail={initialEmail}
             initialOtpType={initialOtpType}
+            initialPasswordRequired={initialPasswordRequired}
             initialSent={initialSent}
             locale={locale}
             next={next}

@@ -8,6 +8,7 @@ import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { recordMemberAppLoginEvent } from "@/lib/app-login-events";
 import {
   decodeEmailHint,
   MEMBER_LOGIN_LINK_TTL_MINUTES,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/auth-link";
 import { resolveAppOrigin } from "@/lib/app-origin";
 import { getOptionalMemberContextForRender } from "@/lib/data/member";
+import { isDemoMemberEmail } from "@/lib/demo-member";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
 import { localeCookieName, normalizeLocale } from "@/lib/i18n/locales";
@@ -126,6 +128,7 @@ async function verifyAuthLink(
 async function expiredLinkRedirectPath(origin: string, next: string, emailHint: string) {
   const email = decodeEmailHint(emailHint);
   if (!email) return loginRedirectPath("expired-link", next, emailHint);
+  if (isDemoMemberEmail(email)) return loginRedirectPath("expired-link", next, emailHint);
 
   try {
     const serviceClient = getSupabaseServiceClient();
@@ -224,6 +227,8 @@ export async function confirmLoginAction(formData: FormData) {
       sameSite: "lax",
     });
   }
+
+  await recordMemberAppLoginEvent({ method: "magic_link_confirm", next, userId: user.id });
 
   redirect(next);
 }

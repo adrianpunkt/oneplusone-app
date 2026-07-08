@@ -26,6 +26,10 @@ Optional analytics env:
 - `NEXT_PUBLIC_POSTHOG_UI_HOST` (defaults to `https://eu.posthog.com`)
 - `NEXT_PUBLIC_POSTHOG_ENABLED=false` disables the browser client even when a key is configured.
 
+Demo account env:
+
+- `DEMO_MEMBER_PASSWORD` enables password login for `hello@oneplusoneclub.com`.
+
 PostHog initialization keeps the `/flags` remote config request and feature flag
 evaluation enabled so project-side session recording settings, sampling, and
 linked-flag triggers can start recordings correctly. It uses cookie persistence
