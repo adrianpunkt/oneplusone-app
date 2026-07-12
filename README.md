@@ -144,6 +144,14 @@ The app has a dedicated credit-pack checkout endpoint:
 
 The app webhook only completes sessions where `metadata.purchase = credit_pack`, so it does not process the website membership sessions.
 
+Credit-pack Checkout Sessions enable Stripe automatic tax with automatic billing
+address collection. Credit prices in `credit_products.price_amount_cents` are
+gross/tax-inclusive, so the displayed package amount remains the customer total
+and Stripe splits VAT/tax out of that total when the account has the required
+Stripe Tax setup and registrations. Set `STRIPE_CREDIT_TAX_CODE` to apply a
+specific Stripe Tax code to inline credit products; otherwise Stripe uses the
+preset product tax code configured in Stripe Tax settings.
+
 ## Commands
 
 ```bash

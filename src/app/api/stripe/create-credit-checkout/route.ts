@@ -16,6 +16,7 @@ const payloadSchema = z.object({
 });
 
 export const runtime = "nodejs";
+const TAX_BEHAVIOR = "inclusive";
 
 export async function POST(request: NextRequest) {
   const context = await getOptionalMemberContext();
@@ -56,16 +57,19 @@ export async function POST(request: NextRequest) {
     context.locale,
     "description",
   );
+  const taxCode = normalizeStripeTaxCode(process.env.STRIPE_CREDIT_TAX_CODE);
   const lineItem: Stripe.Checkout.SessionCreateParams.LineItem = {
     quantity: 1,
     price_data: {
       currency: product.currency,
       unit_amount: product.price_amount_cents,
+      tax_behavior: TAX_BEHAVIOR,
       product_data: {
         name: productName,
         description:
           productDescription ||
           dictionary.credits.attendEvents(product.credits),
+        ...(taxCode ? { tax_code: taxCode } : {}),
       },
     },
   };
@@ -73,6 +77,8 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
+      automatic_tax: { enabled: true },
+      billing_address_collection: "auto",
       locale: context.locale,
       client_reference_id: context.member.id,
       customer_email: context.member.email || context.user.email || undefined,
@@ -121,4 +127,8 @@ function getCheckoutOrigin(request: NextRequest) {
   if (isLocalOrigin(requestOrigin)) return requestOrigin;
 
   return resolveAppOrigin(requestOrigin);
+}
+
+function normalizeStripeTaxCode(value: string | undefined) {
+  return String(value || "").trim().replace(/\s+/g, "");
 }
