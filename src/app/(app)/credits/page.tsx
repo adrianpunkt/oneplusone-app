@@ -12,6 +12,7 @@ import {
 } from "@/lib/credit-purchases";
 import { requireMemberContextForRender } from "@/lib/data/member";
 import {
+  getCreditBalance,
   getCreditLedger,
   getCreditProducts,
   getReferralCode,
@@ -40,7 +41,8 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
       ? await syncCreditCheckoutSessionForMember(sessionId, member.id)
       : null;
 
-  const [ledger, products, referralCode] = await Promise.all([
+  const [creditBalance, ledger, products, referralCode] = await Promise.all([
+    getCreditBalance(member.id),
     getCreditLedger(member.id),
     getCreditProducts(),
     getReferralCode(member.id),
@@ -61,6 +63,13 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
         purchase={purchase}
         result={checkoutResult}
         sessionId={sessionId}
+      />
+
+      <CreditHistorySection
+        balance={creditBalance}
+        dictionary={dictionary}
+        entries={ledger}
+        locale={locale}
       />
 
       <Card>
@@ -190,7 +199,6 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
         </CardContent>
       </Card>
 
-      <CreditHistorySection dictionary={dictionary} entries={ledger} locale={locale} />
     </>
   );
 }

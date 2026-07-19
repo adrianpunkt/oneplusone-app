@@ -71,6 +71,10 @@ export async function sendLoopsTransactionalEmail(input: LoopsTransactionalEmail
 
   const result = await readLoopsResponse(response);
 
+  if (response.status === 409) {
+    return { ...result, success: true };
+  }
+
   if (!response.ok || result.success !== true) {
     throw new Error(result.message || `Loops transactional email failed with ${response.status}.`);
   }

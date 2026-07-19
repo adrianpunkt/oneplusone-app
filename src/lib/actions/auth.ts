@@ -63,6 +63,20 @@ async function findActiveMemberByEmail(email: string) {
   return { error: null, member };
 }
 
+async function sessionStillBelongsToActiveMember(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+) {
+  const { data: member } = await supabase
+    .from("members")
+    .select("membership_status")
+    .eq("user_id", userId)
+    .maybeSingle<{ membership_status: string | null }>();
+  if (member?.membership_status === "active") return true;
+  await supabase.auth.signOut();
+  return false;
+}
+
 function getFormLocale(formData: FormData): Locale | null {
   const value = formData.get("locale");
   if (typeof value !== "string" || !value.trim()) return null;
@@ -281,6 +295,9 @@ export async function verifyDemoPasswordAction(
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
+    if (!(await sessionStillBelongsToActiveMember(supabase, user.id))) {
+      return { email, next, notRegistered: true, passwordRequired: true };
+    }
     await recordMemberAppLoginEvent({ method: "demo_password", next, userId: user.id });
   }
 
@@ -337,6 +354,9 @@ export async function verifyOtpAction(
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
+    if (!(await sessionStillBelongsToActiveMember(supabase, user.id))) {
+      return { email, next, notRegistered: true, sent: true };
+    }
     await recordMemberAppLoginEvent({ method: "otp_code", next, userId: user.id });
   }
 

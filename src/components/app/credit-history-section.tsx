@@ -8,12 +8,14 @@ import type { CreditLedgerEntry } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 
 type CreditHistorySectionProps = {
+  balance: number;
   dictionary: Dictionary;
   entries: CreditLedgerEntry[];
   locale: Locale;
 };
 
 export function CreditHistorySection({
+  balance,
   dictionary,
   entries,
   locale,
@@ -25,12 +27,14 @@ export function CreditHistorySection({
           <span className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-2 font-display text-lg font-extrabold leading-tight text-wine-burgundy">
               <History className="h-5 w-5 text-lipstick-red" />
-              {dictionary.creditHistory.title}
+              {dictionary.creditHistory.availableCredits(balance)}
             </span>
           </span>
           <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-wine-burgundy/10 bg-white px-3 text-xs font-semibold text-wine-burgundy shadow-sm">
-            <span className="group-open:hidden">{dictionary.common.expand}</span>
-            <span className="hidden group-open:inline">{dictionary.common.hide}</span>
+            <span className="group-open:hidden">{dictionary.creditHistory.viewHistory}</span>
+            <span className="hidden group-open:inline">
+              {dictionary.creditHistory.hideHistory}
+            </span>
           </span>
         </summary>
         <CardContent className="grid gap-2">

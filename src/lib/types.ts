@@ -61,28 +61,142 @@ export type EventRecord = {
   title: string;
   description: string | null;
   localized_content: JsonObject;
+  language_code: "en" | "es" | null;
   event_format: "dinner" | "brunch" | "other";
   status: "draft" | "inviting" | "confirmed" | "completed" | "cancelled";
   starts_at: string;
   ends_at: string | null;
   city: string | null;
+  timezone: string;
   venue_name: string | null;
   venue_address: string | null;
-  capacity: number | null;
+  restaurant_image_url: string | null;
+  event_instructions: string | null;
+  capacity: number;
+  invitation_limit: number;
+  credit_cost: number;
+  minimum_confirmed_count: number;
+  minimum_run_count: number;
+  invitation_send_at: string | null;
+  rsvp_deadline_at: string;
+  prepared_at: string | null;
+  invitations_opened_at: string | null;
+  venue_confirmed_at: string | null;
+  confirmation_released_at: string | null;
+  completed_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
   member_notes: string | null;
 };
+
+export type InvitationResponseStatus = "invited" | "accepted" | "declined" | "expired";
+export type InvitationSeatStatus =
+  | "none"
+  | "held"
+  | "confirmed"
+  | "waitlisted"
+  | "cancelled"
+  | "replaced";
+export type InvitationPaymentStatus = "not_required" | "pending" | "paid" | "failed" | "expired";
+export type InvitationWaitlistReason = "capacity" | "balance" | "payment_hold_expired" | null;
 
 export type EventInvitation = {
   id: string;
   event_id: string;
   member_id: string;
   status: "invited" | "confirmed" | "waitlisted" | "declined" | "cancelled" | "expired";
+  response_status: InvitationResponseStatus;
+  seat_status: InvitationSeatStatus;
+  payment_status: InvitationPaymentStatus;
+  waitlist_reason: InvitationWaitlistReason;
+  priority_at: string | null;
+  member_status_at_invite: "active" | "pending";
+  held_at: string | null;
+  waitlisted_at: string | null;
+  payment_completed_at: string | null;
   invited_at: string;
   responded_at: string | null;
   confirmed_at: string | null;
   cancelled_at: string | null;
   notes: string | null;
+  replacement_found?: boolean;
+  response_mode?: "apply_waitlist" | "closed" | "confirm" | "waitlist";
   events?: EventRecord | null;
+};
+
+export type EventSummarySnapshot = {
+  event_id: string;
+  stage: "proposed" | "confirmed";
+  age_min: number | null;
+  age_max: number | null;
+  primary_language: "en" | "es" | null;
+  additional_languages: string[];
+  majority_intention: string | null;
+  source_count: number;
+};
+
+export type EventHost = {
+  event_id: string;
+  member_id: string;
+  invitation_id: string;
+  public_intro: string | null;
+  assigned_at: string;
+  first_name?: string;
+};
+
+export type EventMaterial = {
+  id: string;
+  event_id: string;
+  locale: "en" | "es";
+  kind: "host_guide" | "questions_pdf" | "event_guide";
+  version: string;
+  public_url: string;
+};
+
+export type EventFeedback = {
+  id: string;
+  event_id: string;
+  member_id: string;
+  submitted_at: string;
+};
+
+export type PublicInvitationSession = {
+  ok: true;
+  event: {
+    id: string;
+    startsAt: string;
+    endsAt: string | null;
+    timezone: string;
+    city: string | null;
+    eventFormat: "dinner" | "brunch" | "other";
+    languageCode: "en" | "es" | null;
+    ageRange: { min: number | null; max: number | null };
+    majorityIntention: string | null;
+    additionalLanguages: string[];
+    preferenceNudge: boolean;
+    rsvpDeadlineAt: string;
+    creditCost: number;
+  };
+  invitation: {
+    responseStatus: InvitationResponseStatus;
+    seatStatus: InvitationSeatStatus;
+    paymentStatus: InvitationPaymentStatus;
+    waitlistReason: InvitationWaitlistReason;
+    priorityAt: string | null;
+  };
+  canApply: boolean;
+  locale: "en" | "es";
+};
+
+export type PublicEventPaymentResult = {
+  ok: boolean;
+  status: "confirmed" | "waitlisted" | "payment_pending" | "failed";
+  eventId: string;
+  seatStatus: "confirmed" | "waitlisted" | "held" | "none";
+  paymentStatus: "pending" | "paid" | "failed" | "expired";
+  waitlistReason: InvitationWaitlistReason;
+  creditAvailable: boolean;
+  loginNext: string;
 };
 
 export type EventAttendee = {
@@ -93,6 +207,23 @@ export type EventAttendee = {
   status: "confirmed" | "attended" | "host" | "no_show" | "cancelled";
   is_host: boolean;
   events?: EventRecord | null;
+};
+
+export type EventGroupGender = "female" | "male" | "other" | "unspecified";
+
+export type EventGroupSummary = {
+  additionalLanguages: string[];
+  ageMax: number | null;
+  ageMin: number | null;
+  approved: boolean;
+  genderShares: Array<{
+    gender: EventGroupGender;
+    percentage: number;
+  }>;
+  participantCount: number | null;
+  participantMax: number;
+  participantMin: number;
+  majorityIntention: string | null;
 };
 
 export type Conversation = {

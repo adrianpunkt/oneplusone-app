@@ -1,6 +1,9 @@
 import Link from "next/link";
-import { CalendarDays, MapPin } from "lucide-react";
+import { connection } from "next/server";
+import { CalendarDays } from "lucide-react";
 
+import { EventLanguage } from "@/components/app/event-language";
+import { EventLocation } from "@/components/app/event-location";
 import {
   InvitationDecisionForms,
 } from "@/components/forms/invitation-actions";
@@ -8,10 +11,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireMemberContextForRender } from "@/lib/data/member";
-import { getAttendedEvents, getInvitations } from "@/lib/data/portal";
-import { getDictionary } from "@/lib/i18n/dictionaries";
+import {
+  getAttendedEvents,
+  getCreditBalance,
+  getInvitations,
+  getPreferences,
+} from "@/lib/data/portal";
+import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
 import type { Locale } from "@/lib/i18n/locales";
+import type { EventInvitation } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -35,12 +44,44 @@ function statusLabel(status: string, locale: Locale) {
   return statusLabels[locale][status] || status;
 }
 
+function invitationDisplayStatus(
+  invitation: EventInvitation,
+  dictionary: Dictionary,
+  locale: Locale,
+) {
+  if (invitation.status === "waitlisted" && invitation.responded_at) {
+    return dictionary.goingOut.status.onWaitlist;
+  }
+
+  if (!invitation.responded_at && invitation.response_mode === "waitlist") {
+    return dictionary.goingOut.status.waitlistAvailable;
+  }
+
+  if (
+    !invitation.responded_at &&
+    invitation.status === "waitlisted" &&
+    invitation.response_mode === "confirm"
+  ) {
+    return statusLabel("invited", locale);
+  }
+
+  return statusLabel(invitation.status, locale);
+}
+
+async function getRequestTimestamp() {
+  await connection();
+  return Date.now();
+}
+
 export default async function EventsPage() {
   const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
-  const [invitations, attendedEvents] = await Promise.all([
+  const [invitations, attendedEvents, creditBalance, preferences, now] = await Promise.all([
     getInvitations(member.id),
     getAttendedEvents(member.id),
+    getCreditBalance(member.id),
+    getPreferences(member.id),
+    getRequestTimestamp(),
   ]);
 
   return (
@@ -69,7 +110,9 @@ export default async function EventsPage() {
               >
                 <div className="grid gap-2">
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge>{statusLabel(invitation.status, locale)}</Badge>
+                    <Badge className="uppercase">
+                      {invitationDisplayStatus(invitation, dictionary, locale)}
+                    </Badge>
                     <h2 className="font-display text-lg font-extrabold text-wine-burgundy">
                       {localizeText(invitation.events?.title, invitation.events?.localized_content, locale, "title") || dictionary.common.event}
                     </h2>
@@ -78,18 +121,35 @@ export default async function EventsPage() {
                     <CalendarDays className="h-4 w-4 text-lipstick-red" />
                     {formatDateTime(invitation.events?.starts_at, locale)}
                   </p>
-                  {invitation.events?.city ? (
-                    <p className="flex items-center gap-2 text-sm font-semibold text-muted">
-                      <MapPin className="h-4 w-4 text-lipstick-red" />
-                      {invitation.events.city}
-                    </p>
+                  <EventLocation
+                    event={invitation.events}
+                    pendingTooltip={dictionary.events.venuePendingTooltip}
+                  />
+                  {invitation.events?.language_code ? (
+                    <EventLanguage
+                      languageCode={invitation.events.language_code}
+                      locale={locale}
+                      tooltip={dictionary.events.languageTooltips[invitation.events.language_code]}
+                    />
                   ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                   <Button asChild variant="secondary">
                     <Link href={`/events/${invitation.event_id}`}>{dictionary.common.details}</Link>
                   </Button>
-                  <InvitationDecisionForms copy={dictionary.actions} invitation={invitation} />
+                  <InvitationDecisionForms
+                    copy={dictionary.actions}
+                    creditBalance={creditBalance}
+                    eventCopy={{
+                      languageTooltips: dictionary.events.languageTooltips,
+                      venuePendingTooltip: dictionary.events.venuePendingTooltip,
+                    }}
+                    hostingCopy={dictionary.preferences}
+                    invitation={invitation}
+                    locale={locale}
+                    now={now}
+                    wantsToHost={preferences?.wants_to_host ?? false}
+                  />
                 </div>
               </article>
             ))

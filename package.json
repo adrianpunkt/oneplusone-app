@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --port 3030",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:event-contract": "node scripts/verify-event-contract.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "node scripts/deploy-cloudflare-production.mjs",
     "deploy:dev": "node scripts/deploy-cloudflare-production.mjs --env dev",

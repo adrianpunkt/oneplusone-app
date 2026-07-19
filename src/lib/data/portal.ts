@@ -6,7 +6,11 @@ import type {
   CreditLedgerEntry,
   CreditProduct,
   EventAttendee,
+  EventGroupSummary,
+  EventFeedback,
+  EventHost,
   EventInvitation,
+  EventMaterial,
   EventPreferences,
   Message,
   NotificationRecord,
@@ -31,9 +35,14 @@ type ParticipantLookupRow = {
   conversation_id: string;
   last_read_at: string | null;
 };
+type InvitationResponseModeRow = {
+  invitation_id: string;
+  response_mode: "apply_waitlist" | "closed" | "confirm" | "waitlist";
+};
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const EVENT_FIELDS = "id,title,description,localized_content,language_code,event_format,status,starts_at,ends_at,timezone,city,capacity,invitation_limit,credit_cost,minimum_confirmed_count,minimum_run_count,invitation_send_at,rsvp_deadline_at,prepared_at,invitations_opened_at,venue_confirmed_at,confirmation_released_at,completed_at,cancelled_at,cancellation_reason";
 
 function normalizeEventRelation<T extends { events?: EventRecord | null }>(
   row: WithEventRelation<Omit<T, "events">>,
@@ -388,17 +397,57 @@ export async function getPreferences(memberId: string) {
 
 export async function getInvitations(memberId: string) {
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
-    .from("event_invitations")
-    .select(
-      "id,event_id,member_id,status,invited_at,responded_at,confirmed_at,cancelled_at,notes,events(id,title,description,localized_content,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
-    )
-    .eq("member_id", memberId)
-    .order("invited_at", { ascending: false });
+  const [{ data }, { data: responseModeData }] = await Promise.all([
+    supabase
+      .from("event_invitations")
+      .select(
+        `id,event_id,member_id,status,response_status,seat_status,payment_status,waitlist_reason,priority_at,member_status_at_invite,held_at,waitlisted_at,payment_completed_at,invited_at,responded_at,confirmed_at,cancelled_at,notes,events(${EVENT_FIELDS})`,
+      )
+      .eq("member_id", memberId)
+      .order("invited_at", { ascending: false }),
+    supabase.rpc("get_event_invitation_response_modes"),
+  ]);
 
-  return ((data || []) as unknown as WithEventRelation<EventInvitation>[]).map((row) =>
-    normalizeEventRelation<EventInvitation>(row),
+  const responseModes = new Map(
+    ((responseModeData || []) as InvitationResponseModeRow[]).map((row) => [
+      row.invitation_id,
+      row.response_mode,
+    ]),
   );
+
+  const invitations = (
+    (data || []) as unknown as WithEventRelation<EventInvitation>[]
+  ).map((row) => {
+    const invitation = normalizeEventRelation<EventInvitation>(row);
+    return {
+      ...invitation,
+      response_mode: responseModes.get(invitation.id),
+    };
+  });
+  const cancelledInvitationIds = invitations
+    .filter(
+      (invitation) =>
+        invitation.status === "cancelled" && Boolean(invitation.confirmed_at),
+    )
+    .map((invitation) => invitation.id);
+
+  if (!cancelledInvitationIds.length) return invitations;
+
+  const { data: replacementRefunds } = await supabase
+    .from("credit_ledger_entries")
+    .select("source_id")
+    .eq("member_id", memberId)
+    .eq("reason", "event_waitlist_replacement_refund")
+    .eq("source_type", "event_invitation")
+    .in("source_id", cancelledInvitationIds);
+  const replacedInvitationIds = new Set(
+    (replacementRefunds || []).map((entry) => entry.source_id).filter(Boolean),
+  );
+
+  return invitations.map((invitation) => ({
+    ...invitation,
+    replacement_found: replacedInvitationIds.has(invitation.id),
+  }));
 }
 
 export async function getAttendedEvents(memberId: string) {
@@ -406,7 +455,7 @@ export async function getAttendedEvents(memberId: string) {
   const { data } = await supabase
     .from("event_attendees")
     .select(
-      "id,event_id,member_id,invitation_id,status,is_host,events(id,title,description,localized_content,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
+      `id,event_id,member_id,invitation_id,status,is_host,events(${EVENT_FIELDS})`,
     )
     .eq("member_id", memberId)
     .order("created_at", { ascending: false });
@@ -416,24 +465,152 @@ export async function getAttendedEvents(memberId: string) {
   );
 }
 
+export async function getEventGroupSummaries(
+  events: Array<EventRecord | null | undefined>,
+) {
+  const uniqueEvents = Array.from(
+    new Map(
+      events
+        .filter((event): event is EventRecord =>
+          Boolean(event?.id && UUID_PATTERN.test(event.id)),
+        )
+        .map((event) => [event.id, event]),
+    ).values(),
+  );
+  const summaries: Record<string, EventGroupSummary> = Object.fromEntries(
+    uniqueEvents.map((event) => [event.id, emptyEventGroupSummary(event)]),
+  );
+  if (!uniqueEvents.length) return summaries;
+
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("event_summary_snapshots")
+    .select("event_id,stage,age_min,age_max,majority_intention,additional_languages,source_count")
+    .in("event_id", uniqueEvents.map((event) => event.id));
+  const snapshots = (data || []) as Array<{
+    additional_languages: string[];
+    age_max: number | null;
+    age_min: number | null;
+    event_id: string;
+    majority_intention: string | null;
+    source_count: number;
+    stage: "proposed" | "confirmed";
+  }>;
+
+  for (const event of uniqueEvents) {
+    const preferredStage = event.confirmation_released_at ? "confirmed" : "proposed";
+    const snapshot = snapshots.find(
+      (candidate) => candidate.event_id === event.id && candidate.stage === preferredStage,
+    );
+    if (!snapshot) continue;
+    summaries[event.id] = {
+      ...summaries[event.id],
+      additionalLanguages: snapshot.additional_languages || [],
+      ageMax: snapshot.age_max,
+      ageMin: snapshot.age_min,
+      majorityIntention: snapshot.majority_intention,
+      participantCount: snapshot.source_count,
+    };
+  }
+
+  return summaries;
+}
+
+function emptyEventGroupSummary(event: EventRecord): EventGroupSummary {
+  return {
+    ageMax: null,
+    ageMin: null,
+    approved: event.status === "confirmed" || event.status === "completed",
+    genderShares: [],
+    participantCount: null,
+    participantMax: event.capacity,
+    participantMin: event.minimum_confirmed_count,
+    additionalLanguages: [],
+    majorityIntention: null,
+  };
+}
+
 export async function getEventDetail(eventId: string, memberId: string) {
   const invitations = await getInvitations(memberId);
   const attendees = await getAttendedEvents(memberId);
   const invitation = invitations.find((item) => item.event_id === eventId) || null;
   const attendee = attendees.find((item) => item.event_id === eventId) || null;
-  const event = invitation?.events || attendee?.events || null;
+  let event = invitation?.events || attendee?.events || null;
+
+  if (
+    event?.confirmation_released_at &&
+    invitation?.seat_status === "confirmed"
+  ) {
+    const { data: releasedDetails } = await getSupabaseServiceClient()
+      .from("events")
+      .select("venue_name,venue_address,restaurant_image_url,event_instructions,member_notes")
+      .eq("id", eventId)
+      .maybeSingle<Pick<
+        EventRecord,
+        "event_instructions" | "member_notes" | "restaurant_image_url" | "venue_address" | "venue_name"
+      >>();
+    if (releasedDetails) event = { ...event, ...releasedDetails };
+  }
 
   const supabase = await createSupabaseServerClient();
-  const { data: eventAttendees } = await supabase.rpc("get_past_event_attendees", {
-    p_event_id: eventId,
-  });
+  const [attendeeResult, hostResult, materialResult, feedbackResult, summaries] =
+    await Promise.all([
+      supabase.rpc("get_past_event_attendees", { p_event_id: eventId }),
+      supabase
+        .from("event_hosts")
+        .select("event_id,member_id,invitation_id,public_intro,assigned_at")
+        .eq("event_id", eventId)
+        .maybeSingle<EventHost>(),
+      supabase
+        .from("event_materials")
+        .select("id,event_id,locale,kind,version,public_url")
+        .eq("event_id", eventId),
+      supabase
+        .from("event_feedback")
+        .select("id,event_id,member_id,submitted_at")
+        .eq("event_id", eventId)
+        .eq("member_id", memberId)
+        .maybeSingle<EventFeedback>(),
+      event
+        ? getEventGroupSummaries([event])
+        : Promise.resolve({} as Record<string, EventGroupSummary>),
+    ]);
+  const host = hostResult.data
+    ? await attachEventHostFirstName(hostResult.data as EventHost)
+    : null;
 
   return {
     attendee,
     event,
-    eventAttendees: (eventAttendees || []) as Array<{ member_id: string; first_name: string }>,
+    eventAttendees: (attendeeResult.data || []) as Array<{ member_id: string; first_name: string }>,
+    feedback: (feedbackResult.data || null) as EventFeedback | null,
+    host,
+    isHost: host?.member_id === memberId,
     invitation,
+    materials: (materialResult.data || []) as EventMaterial[],
+    summary: event ? summaries[event.id] || emptyEventGroupSummary(event) : null,
   };
+}
+
+async function attachEventHostFirstName(host: EventHost): Promise<EventHost> {
+  const serviceSupabase = getSupabaseServiceClient();
+  const { data: member } = await serviceSupabase
+    .from("members")
+    .select("email_norm")
+    .eq("id", host.member_id)
+    .maybeSingle<{ email_norm: string | null }>();
+  if (!member?.email_norm) return { ...host, first_name: "Host" };
+
+  const { data: profile } = await serviceSupabase
+    .from("profile_registrations")
+    .select("profile_json")
+    .eq("contact_email_norm", member.email_norm)
+    .eq("status", "submitted")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ profile_json: JsonObject | null }>();
+  const firstName = storyValue(profile?.profile_json, "profile.first_name");
+  return { ...host, first_name: firstName ? capitalizeName(firstName) : "Host" };
 }
 
 export async function getConversations(
@@ -444,7 +621,7 @@ export async function getConversations(
   const { data } = await supabase
     .from("conversations")
     .select(
-      "id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at,events(id,title,description,localized_content,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
+      `id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at,events(${EVENT_FIELDS})`,
     )
     .or(`initiated_by_member_id.eq.${memberId},recipient_member_id.eq.${memberId}`)
     .order("updated_at", { ascending: false });
@@ -472,7 +649,7 @@ export async function getConversation(conversationId: string, memberId: string) 
     supabase
       .from("conversations")
       .select(
-        "id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at,events(id,title,description,localized_content,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
+        "id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at,events(id,title,description,localized_content,language_code,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
       )
       .eq("id", conversationId)
       .maybeSingle(),

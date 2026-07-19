@@ -37,7 +37,7 @@ export async function getOptionalMemberContext(): Promise<MemberContext | null> 
     .eq("user_id", user.id)
     .maybeSingle<Member>();
 
-  if (memberError || !member) return null;
+  if (memberError || !member || member.membership_status !== "active") return null;
 
   const { data: profile } = await supabase
     .from("profile_registrations")

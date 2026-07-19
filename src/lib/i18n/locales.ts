@@ -35,6 +35,10 @@ export function languageName(locale: Locale, displayLocale = locale) {
   return names[displayLocale][locale];
 }
 
+export function languageFlag(locale: Locale) {
+  return locale === "es" ? "🇪🇸" : "🇬🇧";
+}
+
 export function htmlLang(locale: Locale) {
   return locale === "es" ? "es" : "en";
 }

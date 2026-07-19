@@ -37,7 +37,8 @@ with cross-subdomain cookies and identifies signed-in users with `members.id`
 and email as PostHog person properties, matching the onboarding website
 identity.
 
-Local development is configured to use the Supabase development project:
+Local development runs at `http://localhost:3030` and is configured to use the
+Supabase development project:
 
 ```text
 opo-dev: https://oackdojvcfrkzbnprovb.supabase.co
@@ -66,12 +67,12 @@ checkouts; do not commit real keys. For Cloudflare production, prefer the
 Supabase `service_role` JWT in `SUPABASE_SERVICE_ROLE_KEY`; the app still keeps
 `SUPABASE_SECRET_KEY` as a fallback for local/dev compatibility.
 
-Supabase Auth redirects for the dev project allow the member app callbacks:
+Supabase Auth redirects for the dev project must allow the member app callbacks:
 
-- `http://localhost:3000/**`
-- `http://127.0.0.1:3000/**`
+- `http://localhost:3030/**`
+- `http://127.0.0.1:3030/**`
 
-Local login links should come back to `http://localhost:3000/auth/callback`.
+Local login links should come back to `http://localhost:3030/auth/callback`.
 If a new local login email opens `https://oneplusoneclub.com`, verify the app is
 running with `.env.local` and that the dev Auth config has been pushed.
 

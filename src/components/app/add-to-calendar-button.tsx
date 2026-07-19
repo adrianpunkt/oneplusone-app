@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { CalendarPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,9 +15,7 @@ type CalendarEvent = {
 
 export type CalendarCopy = {
   add: string;
-  apple: string;
   defaultDescription: string;
-  google: string;
 };
 
 function parseEventDates(startsAt: string | null | undefined, endsAt: string | null | undefined) {
@@ -56,9 +53,13 @@ function eventDescription(event: CalendarEvent, copy: CalendarCopy) {
   return event.description || copy.defaultDescription;
 }
 
-function downloadAppleCalendarEvent(event: CalendarEvent, copy: CalendarCopy) {
+function calendarFileName(event: CalendarEvent) {
+  return `${event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "event"}.ics`;
+}
+
+function createCalendarFile(event: CalendarEvent, copy: CalendarCopy) {
   const dates = parseEventDates(event.startsAt, event.endsAt);
-  if (!dates) return;
+  if (!dates) return null;
 
   const ics = [
     "BEGIN:VCALENDAR",
@@ -80,14 +81,30 @@ function downloadAppleCalendarEvent(event: CalendarEvent, copy: CalendarCopy) {
     .filter(Boolean)
     .join("\r\n");
 
-  const url = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" }));
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `${event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "event"}.ics`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  return { contents: ics, name: calendarFileName(event) };
+}
+
+function openAppleCalendarEvent(event: CalendarEvent, copy: CalendarCopy) {
+  const file = createCalendarFile(event, copy);
+  if (!file) return;
+
+  const form = document.createElement("form");
+  form.action = "/api/calendar/event.ics";
+  form.method = "POST";
+  form.target = "_blank";
+  form.hidden = true;
+
+  for (const [name, value] of Object.entries(file)) {
+    const input = document.createElement("input");
+    input.name = name;
+    input.type = "hidden";
+    input.value = value;
+    form.appendChild(input);
+  }
+
+  document.body.appendChild(form);
+  form.submit();
+  form.remove();
 }
 
 function openGoogleCalendarEvent(event: CalendarEvent, copy: CalendarCopy) {
@@ -104,6 +121,15 @@ function openGoogleCalendarEvent(event: CalendarEvent, copy: CalendarCopy) {
   window.open(url.toString(), "_blank", "noopener,noreferrer");
 }
 
+function preferredCalendar() {
+  const platform = navigator.platform || "";
+  const userAgent = navigator.userAgent || "";
+  const isIPad = platform === "MacIntel" && navigator.maxTouchPoints > 1;
+  const isApple = isIPad || /Mac|iPhone|iPad|iPod/i.test(`${platform} ${userAgent}`);
+
+  return isApple ? "apple" : "google";
+}
+
 export function AddToCalendarButton({
   copy,
   event,
@@ -111,56 +137,28 @@ export function AddToCalendarButton({
   copy: CalendarCopy;
   event: CalendarEvent;
 }) {
-  const [open, setOpen] = useState(false);
   const hasDate = Boolean(event.startsAt);
 
-  function addToAppleCalendar() {
-    downloadAppleCalendarEvent(event, copy);
-    setOpen(false);
-  }
+  function addToCalendar() {
+    if (preferredCalendar() === "apple") {
+      openAppleCalendarEvent(event, copy);
+      return;
+    }
 
-  function addToGoogleCalendar() {
     openGoogleCalendarEvent(event, copy);
-    setOpen(false);
   }
 
   return (
-    <div className="relative inline-flex">
-      <Button
-        aria-expanded={open}
-        aria-haspopup="menu"
-        disabled={!hasDate}
-        onClick={() => setOpen((current) => !current)}
-        size="sm"
-        type="button"
-        variant="secondary"
-      >
-        <CalendarPlus className="h-4 w-4" />
-        {copy.add}
-      </Button>
-      {open ? (
-        <div
-          className="absolute right-0 top-full z-20 mt-2 grid min-w-44 gap-1 rounded-lg border border-wine-burgundy/10 bg-white p-1.5 shadow-[0_18px_45px_rgba(68,10,18,0.12)]"
-          role="menu"
-        >
-          <button
-            className="rounded-md px-3 py-2 text-left text-sm font-semibold text-wine-burgundy hover:bg-blush-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35"
-            onClick={addToAppleCalendar}
-            role="menuitem"
-            type="button"
-          >
-            {copy.apple}
-          </button>
-          <button
-            className="rounded-md px-3 py-2 text-left text-sm font-semibold text-wine-burgundy hover:bg-blush-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35"
-            onClick={addToGoogleCalendar}
-            role="menuitem"
-            type="button"
-          >
-            {copy.google}
-          </button>
-        </div>
-      ) : null}
-    </div>
+    <Button
+      className="h-7 gap-1.5 px-2.5 text-[11px]"
+      disabled={!hasDate}
+      onClick={addToCalendar}
+      size="sm"
+      type="button"
+      variant="secondary"
+    >
+      <CalendarPlus className="h-3.5 w-3.5" />
+      {copy.add}
+    </Button>
   );
 }

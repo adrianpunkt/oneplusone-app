@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 
 import { completeCreditPackPurchaseFromSession } from "@/lib/credit-purchases";
+import { completeEventMembershipPurchaseFromSession } from "@/lib/event-membership-payments";
 import {
   getStripe,
   getStripeWebhookCryptoProvider,
@@ -43,12 +44,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  const result = await completeCreditPackPurchaseFromSession(
-    event.data.object as Stripe.Checkout.Session,
-  );
+  const checkoutSession = event.data.object as Stripe.Checkout.Session;
+  const result = checkoutSession.metadata?.purchase === "event_membership"
+    ? await completeEventMembershipPurchaseFromSession(checkoutSession, event.id)
+    : await completeCreditPackPurchaseFromSession(checkoutSession);
 
   if (result.status === "failed") {
-    console.error("Could not complete credit pack purchase", result.error);
+    console.error("Could not complete Stripe checkout reconciliation", result.error);
     return NextResponse.json(
       { ok: false, error: result.error || "Could not complete credit pack purchase." },
       { status: 500 },

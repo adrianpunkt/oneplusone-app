@@ -78,7 +78,8 @@ function CreditBalanceLink({
         </span>
       </span>
       <span className="leading-none text-lipstick-red">
-        {creditBalance} {creditLabel}
+        {creditBalance}
+        <span className="max-[379px]:sr-only"> {creditLabel}</span>
       </span>
     </Link>
   );
@@ -171,16 +172,16 @@ export function AppShell({
       </aside>
 
       <div className="min-w-0">
-        <header className="fixed inset-x-0 top-0 z-30 border-b border-wine-burgundy/10 bg-blush-pink/95 px-4 py-3 backdrop-blur md:hidden">
-          <div className="flex items-center justify-between gap-3">
+        <header className="fixed inset-x-0 top-0 z-30 border-b border-wine-burgundy/10 bg-blush-pink/95 px-3 py-2.5 backdrop-blur sm:px-4 sm:py-3 md:hidden">
+          <div className="flex items-center justify-between gap-2 sm:gap-3">
             <Link
               href="/dashboard"
               className="flex items-center"
               aria-label={dictionary.nav.dashboardAria}
             >
-              <BrandLogo className="w-24" priority />
+              <BrandLogo className="w-20 sm:w-24" priority />
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 items-center gap-1 sm:gap-2">
               {unreadCount > 0 ? (
                 <NotificationHeartLink
                   count={unreadCount}
@@ -190,6 +191,7 @@ export function AppShell({
               ) : null}
               <CreditBalanceLink
                 ariaLabel={creditAriaLabel}
+                className="max-[379px]:-ml-0 max-[379px]:min-w-10 max-[379px]:px-1.5"
                 creditBalance={creditBalance}
                 creditLabel={creditLabel}
               />
@@ -205,7 +207,7 @@ export function AppShell({
             </div>
           </div>
         </header>
-        <main className="mx-auto grid w-full max-w-6xl gap-6 px-4 pb-6 pt-24 sm:px-6 md:py-6 lg:px-8">
+        <main className="mx-auto grid w-full max-w-6xl gap-4 px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-20 sm:gap-6 sm:px-6 sm:pt-24 md:py-6 lg:px-8">
           {children}
         </main>
       </div>

@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
-import * as Dialog from "@radix-ui/react-dialog";
-import { Info, Save } from "lucide-react";
+import { Save } from "lucide-react";
 
 import { ActionStatus } from "@/components/forms/action-status";
+import { HostingInfoDialog } from "@/components/forms/hosting-info-dialog";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -385,54 +385,17 @@ export function PreferencesForm({
             </span>
           </label>
           <div className="pl-8">
-            <Dialog.Root>
-              <Dialog.Trigger asChild>
-                <Button type="button" variant="secondary" size="sm">
-                  <Info className="h-4 w-4" />
-                  {copy.learnMore}
-                </Button>
-              </Dialog.Trigger>
-              <Dialog.Portal>
-                <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/35 backdrop-blur-sm" />
-                <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine-burgundy/10 bg-white p-5 shadow-2xl">
-                  <div className="grid gap-2">
-                    <Dialog.Title className="font-display text-xl font-extrabold text-wine-burgundy">
-                      {copy.hostModalTitle}
-                    </Dialog.Title>
-                    <Dialog.Description className="grid gap-3 text-sm leading-6 text-muted">
-                      {copy.hostModalBody.map((paragraph) => (
-                        <span key={paragraph}>{paragraph}</span>
-                      ))}
-                    </Dialog.Description>
-                  </div>
-                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                    <Dialog.Close asChild>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => {
-                          setWantsToHost(false);
-                          scheduleDirtyCheck();
-                        }}
-                      >
-                        {copy.thinkAboutIt}
-                      </Button>
-                    </Dialog.Close>
-                    <Dialog.Close asChild>
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          setWantsToHost(true);
-                          scheduleDirtyCheck();
-                        }}
-                      >
-                        {copy.imIn}
-                      </Button>
-                    </Dialog.Close>
-                  </div>
-                </Dialog.Content>
-              </Dialog.Portal>
-            </Dialog.Root>
+            <HostingInfoDialog
+              copy={copy}
+              onAccept={() => {
+                setWantsToHost(true);
+                scheduleDirtyCheck();
+              }}
+              onDecline={() => {
+                setWantsToHost(false);
+                scheduleDirtyCheck();
+              }}
+            />
           </div>
         </div>
       </section>

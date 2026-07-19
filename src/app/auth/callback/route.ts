@@ -27,9 +27,9 @@ export async function GET(request: NextRequest) {
     const [{ data: member }, { data: profile }] = await Promise.all([
       supabase
         .from("members")
-        .select("preferred_locale")
+        .select("membership_status,preferred_locale")
         .eq("user_id", user.id)
-        .maybeSingle<{ preferred_locale: string | null }>(),
+        .maybeSingle<{ membership_status: string | null; preferred_locale: string | null }>(),
       supabase
         .from("profile_registrations")
         .select("locale")
@@ -37,9 +37,16 @@ export async function GET(request: NextRequest) {
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle<{ locale: string | null }>(),
-      recordMemberAppLoginEvent({ method: "auth_callback", next, userId: user.id }),
     ]);
+    if (member?.membership_status !== "active") {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(
+        new URL("/login?auth=inactive#_", requestUrl.origin),
+        { status: 303 },
+      );
+    }
     resolvedLocale = normalizeLocale(member?.preferred_locale || profile?.locale);
+    await recordMemberAppLoginEvent({ method: "auth_callback", next, userId: user.id });
   }
 
   const response = NextResponse.redirect(new URL(next, requestUrl.origin));

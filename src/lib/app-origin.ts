@@ -11,7 +11,7 @@ export function resolveAppOrigin(requestOrigin?: string | null) {
     normalizeOrigin(getRuntimeEnv("APP_URL")) ||
     normalizedRequestOrigin ||
     normalizeOrigin(getRuntimeEnv("NEXT_PUBLIC_APP_URL")) ||
-    "http://localhost:3000"
+    "http://localhost:3030"
   );
 }
 

@@ -151,12 +151,14 @@ const en = {
     gotIt: "Got it",
     newInvitations: "New invitations",
     upcomingEvents: "Upcoming events",
-    pastEvents: "Past events",
+    pastEvents: "Past or rejected events",
     noInvitationsTitle: "We're finding your people...",
     noInvitationsBody:
       "As soon as enough members share your intentions, you'll be invited to an event together.",
     updateStoryCta: "Click here in case you need to update your story",
     waitlistNote: "We'll let you know in case anyone cancels.",
+    hostOptInNote:
+      "You opted to be the host, we'll send the instructions if you are selected.",
     preferencesTitle: "Going-out preferences",
     saturdayDinner: "Saturday dinner",
     sundayBrunch: "Sunday brunch",
@@ -172,6 +174,8 @@ const en = {
       waitlistAvailable: "waitlist available",
       onWaitlist: "on waitlist",
       cannotMakeIt: "cannot make it",
+      replacementPending: "looking for a replacement",
+      seatConfirmed: "seat confirmed",
     },
   },
   events: {
@@ -189,6 +193,26 @@ const en = {
     eventDetails: "Event details",
     detailsFallback: "Details will appear here.",
     venue: "Venue",
+    venuePendingTooltip: "Venue will be announced soon",
+    language: "Language",
+    languageTooltips: {
+      en: "The event will be in English",
+      es: "The event will be in Spanish",
+    },
+    groupSummary: {
+      peopleRange: (minimum: number, maximum: number) => `${minimum}–${maximum} people`,
+      peopleRangeTooltip: "Exact number displayed once event is confirmed.",
+      peopleCount: (count: number) => `${count} ${count === 1 ? "person" : "people"}`,
+      ageRange: (minimum: number, maximum: number) =>
+        `Mainly between ${minimum} and ${maximum} years old`,
+      genderShare: (percentage: number, gender: string) => `${percentage}% ${gender}`,
+      genders: {
+        female: "women",
+        male: "men",
+        other: "other genders",
+        unspecified: "unspecified",
+      },
+    },
     sharedAfterConfirmation: "Shared after confirmation",
     status: "Status",
     peopleFromTable: "People from your table",
@@ -232,6 +256,10 @@ const en = {
   },
   creditHistory: {
     title: "Credits history",
+    availableCredits: (credits: number) =>
+      `${credits} ${credits === 1 ? "credit" : "credits"} available`,
+    viewHistory: "View history",
+    hideHistory: "Hide history",
     empty: "No credit entries yet.",
     labels: {
       credit_pack_purchase: (creditNoun: string) => `${creditNoun} PURCHASED`,
@@ -304,7 +332,7 @@ const en = {
       "We want the events to be relaxed and fun, and the host will be the one initiating the conversational games we have prepared. We'll send you all the instructions in advance.",
       "Please note anyone can opt to be the host at the event and we aim to give everyone a chance. As soon as the event is confirmed, you'll be notified if you were elected to be the host.",
     ],
-    thinkAboutIt: "I'll think about it",
+    thinkAboutIt: "Maybe later",
     imIn: "I'm in!",
     otherPreferences: "Other preferences?",
     otherQuestion: "What would make these events even better for you?",
@@ -729,17 +757,53 @@ const en = {
   },
   actions: {
     saved: "Saved.",
-    confirmSeat: "Confirm seat",
+    applyForSeat: "Apply for a seat",
+    applyTitle: "Apply for a seat?",
+    applyCreditCharge: "You will be charged 1 credit for attending this event.",
+    and: "and",
+    balance: "Your current balance",
+    applyRefundPolicy:
+      "Please note in case of cancellations, credits are only refunded when a replacement is found.",
+    confirmApplication: "Confirm and apply",
+    credit: "credit",
+    credits: "credits",
+    day: "day",
+    days: "days",
+    declineDescription:
+      "Tell us what got in the way. It helps us understand whether another date, place, or event could work better for you.",
+    declineReasonLabel: "Cannot make it?",
+    declineReasons: {
+      weekendUnavailable: "I cannot make it this weekend",
+      sundayBrunch: "I would prefer Sunday brunches instead",
+      eventFit: "This event isn't a good fit for me",
+      otherCommitment: "Something else came up",
+      preferNotToSay: "I prefer not to say",
+    },
+    declineDetailsLabel: "Anything else you'd like us to know? (optional)",
+    declineDetailsPlaceholder: "For example, what would have worked better?",
+    declineSubmit: "Send response",
+    declining: "Sending...",
+    eventStarted: "Event started",
+    getCredits: "Get credits",
+    hour: "hour",
+    hours: "hours",
+    notEnoughCredits: "You need at least 1 credit to apply for this seat.",
+    notNow: "Not now",
+    minute: "minute",
+    minutes: "minutes",
+    needToCancel: "Need to cancel?",
+    startsIn: "In",
+    startsSoon: "Starting now",
     confirming: "Confirming...",
     seatConfirmed: "Seat confirmed.",
     cancelWaitlist: "Cancel waitlist",
     cancel: "Cancel",
     cancelWaitlistTitle: "Cancel waitlist?",
-    cancelEventTitle: "Cancel this event?",
+    cancelEventTitle: "Cancel your reservation?",
     cancelWaitlistDescription:
       "This will remove you from the waitlist. You can rejoin later if it is still available.",
     cancelEventDescription:
-      "This will remove your current response for this event. You can rejoin the waitlist later if it is still available.",
+      "We will do our best to find a replacement and we'll return the credit for this event if we find someone to take your seat.",
     keepIt: "Keep it",
     cancelling: "Cancelling...",
     waitlistCancelled: "Waitlist cancelled.",
@@ -757,6 +821,8 @@ const en = {
     invitationMissing: "Invitation was not found.",
     waitlistUnavailable: "This waitlist is no longer available.",
     invitationDeclineUnavailable: "This invitation can no longer be declined here.",
+    invitationDeclineReasonRequired: "Choose a reason before sending your response.",
+    invitationDeclineDetailsTooLong: "Keep the extra details to 500 characters or fewer.",
     eventResponsesNotConfigured: "Event responses are not configured yet.",
     eventCancellationsNotConfigured: "Event cancellations are not configured yet.",
     invitationCancelUnavailable: "This invitation can no longer be cancelled.",
@@ -768,8 +834,23 @@ const en = {
   dbErrors: {
     "Member account is required.": "Member account is required.",
     "Invitation was not found.": "Invitation was not found.",
+    "Choose a reason before declining this invitation.":
+      "Choose a reason before sending your response.",
+    "Decline details must be 500 characters or fewer.":
+      "Keep the extra details to 500 characters or fewer.",
+    "This invitation can no longer be declined.":
+      "This invitation can no longer be declined here.",
+    "This waitlist is no longer available.":
+      "This waitlist is no longer available.",
+    "A seat is currently available for this invitation.":
+      "A seat is currently available for this invitation.",
     "This invitation cannot be confirmed.": "This invitation cannot be confirmed.",
     "This event is not open for confirmation.": "This event is not open for confirmation.",
+    "A seat is no longer available for this event.":
+      "A seat is no longer available for this event.",
+    "This invitation can no longer be restored.":
+      "This invitation can no longer be restored.",
+    "This seat has already been filled.": "This seat has already been filled.",
     "You need at least 1 credit to confirm this event.":
       "You need at least 1 credit to confirm this event.",
     "Only confirmed invitations can be cancelled here.":
@@ -938,12 +1019,14 @@ const es: typeof en = {
     gotIt: "Entendido",
     newInvitations: "Nuevas invitaciones",
     upcomingEvents: "Próximos eventos",
-    pastEvents: "Eventos anteriores",
+    pastEvents: "Eventos anteriores o rechazados",
     noInvitationsTitle: "Estamos encontrando a tu gente...",
     noInvitationsBody:
       "En cuanto haya suficientes miembros que compartan tus intenciones, recibirás una invitación a un evento juntos.",
     updateStoryCta: "Haz clic aquí si necesitas actualizar tu historia",
     waitlistNote: "Te avisaremos si alguien cancela.",
+    hostOptInNote:
+      "Te ofreciste para ser host; te enviaremos las instrucciones si eres seleccionado/a.",
     preferencesTitle: "Preferencias de salidas",
     saturdayDinner: "Cena de sábado",
     sundayBrunch: "Brunch de domingo",
@@ -959,6 +1042,8 @@ const es: typeof en = {
       waitlistAvailable: "lista de espera disponible",
       onWaitlist: "en lista de espera",
       cannotMakeIt: "no puedo asistir",
+      replacementPending: "buscando sustitución",
+      seatConfirmed: "plaza confirmada",
     },
   },
   events: {
@@ -976,6 +1061,26 @@ const es: typeof en = {
     eventDetails: "Detalles del evento",
     detailsFallback: "Los detalles aparecerán aquí.",
     venue: "Lugar",
+    venuePendingTooltip: "El lugar se anunciará pronto",
+    language: "Idioma",
+    languageTooltips: {
+      en: "El evento será en inglés",
+      es: "El evento será en español",
+    },
+    groupSummary: {
+      peopleRange: (minimum: number, maximum: number) => `${minimum}–${maximum} personas`,
+      peopleRangeTooltip: "Número exacto visible una vez confirmado el evento.",
+      peopleCount: (count: number) => `${count} ${count === 1 ? "persona" : "personas"}`,
+      ageRange: (minimum: number, maximum: number) =>
+        `Principalmente entre ${minimum} y ${maximum} años`,
+      genderShare: (percentage: number, gender: string) => `${percentage}% ${gender}`,
+      genders: {
+        female: "mujeres",
+        male: "hombres",
+        other: "otros géneros",
+        unspecified: "sin especificar",
+      },
+    },
     sharedAfterConfirmation: "Se comparte después de confirmar",
     status: "Estado",
     peopleFromTable: "Personas de tu mesa",
@@ -1019,6 +1124,10 @@ const es: typeof en = {
   },
   creditHistory: {
     title: "Historial de créditos",
+    availableCredits: (credits: number) =>
+      `${credits} ${credits === 1 ? "crédito disponible" : "créditos disponibles"}`,
+    viewHistory: "Ver historial",
+    hideHistory: "Ocultar historial",
     empty: "Aún no hay movimientos de créditos.",
     labels: {
       credit_pack_purchase: (creditNoun: string) => `${creditNoun} COMPRADOS`,
@@ -1091,7 +1200,7 @@ const es: typeof en = {
       "Queremos que los eventos sean relajados y divertidos, y la persona host inicia los juegos de conversación que hemos preparado. Te enviaremos todas las instrucciones con antelación.",
       "Ten en cuenta que cualquiera puede ofrecerse como host y queremos dar oportunidad a todos. En cuanto el evento esté confirmado, te avisaremos si has sido elegido.",
     ],
-    thinkAboutIt: "Me lo pensaré",
+    thinkAboutIt: "Quizá más adelante",
     imIn: "¡Me apunto!",
     otherPreferences: "¿Otras preferencias?",
     otherQuestion: "¿Qué haría que estos eventos fueran aún mejores para ti?",
@@ -1516,17 +1625,53 @@ const es: typeof en = {
   },
   actions: {
     saved: "Guardado.",
-    confirmSeat: "Confirmar plaza",
+    applyForSeat: "Solicitar una plaza",
+    applyTitle: "¿Solicitar esta plaza?",
+    applyCreditCharge: "Se te cobrará 1 crédito por asistir a este evento.",
+    and: "y",
+    balance: "Tu saldo actual",
+    applyRefundPolicy:
+      "Ten en cuenta que, en caso de cancelación, los créditos solo se devuelven cuando se encuentra un reemplazo.",
+    confirmApplication: "Confirmar y solicitar",
+    credit: "crédito",
+    credits: "créditos",
+    day: "día",
+    days: "días",
+    declineDescription:
+      "Cuéntanos qué te lo impide. Nos ayuda a saber si otra fecha, lugar o evento te vendría mejor.",
+    declineReasonLabel: "¿No puedes asistir?",
+    declineReasons: {
+      weekendUnavailable: "No puedo asistir este fin de semana",
+      sundayBrunch: "Preferiría los brunches de los domingos",
+      eventFit: "Este evento no encaja conmigo",
+      otherCommitment: "Me ha surgido otra cosa",
+      preferNotToSay: "Prefiero no decirlo",
+    },
+    declineDetailsLabel: "¿Quieres contarnos algo más? (opcional)",
+    declineDetailsPlaceholder: "Por ejemplo, ¿qué te habría venido mejor?",
+    declineSubmit: "Enviar respuesta",
+    declining: "Enviando...",
+    eventStarted: "El evento ya ha empezado",
+    getCredits: "Conseguir créditos",
+    hour: "hora",
+    hours: "horas",
+    notEnoughCredits: "Necesitas al menos 1 crédito para solicitar esta plaza.",
+    notNow: "Ahora no",
+    minute: "minuto",
+    minutes: "minutos",
+    needToCancel: "¿Necesitas cancelar?",
+    startsIn: "En",
+    startsSoon: "Empieza ahora",
     confirming: "Confirmando...",
     seatConfirmed: "Plaza confirmada.",
     cancelWaitlist: "Cancelar lista",
     cancel: "Cancelar",
     cancelWaitlistTitle: "¿Cancelar lista de espera?",
-    cancelEventTitle: "¿Cancelar este evento?",
+    cancelEventTitle: "¿Cancelar tu reserva?",
     cancelWaitlistDescription:
       "Esto te quitará de la lista de espera. Puedes apuntarte de nuevo más tarde si sigue disponible.",
     cancelEventDescription:
-      "Esto eliminará tu respuesta actual para este evento. Puedes apuntarte a la lista de espera más tarde si sigue disponible.",
+      "Haremos todo lo posible por encontrar a otra persona y te devolveremos el crédito de este evento si encontramos a alguien que ocupe tu plaza.",
     keepIt: "Mantener",
     cancelling: "Cancelando...",
     waitlistCancelled: "Lista de espera cancelada.",
@@ -1544,6 +1689,8 @@ const es: typeof en = {
     invitationMissing: "No se encontró la invitación.",
     waitlistUnavailable: "Esta lista de espera ya no está disponible.",
     invitationDeclineUnavailable: "Esta invitación ya no se puede rechazar aquí.",
+    invitationDeclineReasonRequired: "Elige un motivo antes de enviar tu respuesta.",
+    invitationDeclineDetailsTooLong: "Limita los detalles adicionales a 500 caracteres.",
     eventResponsesNotConfigured: "Las respuestas a eventos aún no están configuradas.",
     eventCancellationsNotConfigured: "Las cancelaciones de eventos aún no están configuradas.",
     invitationCancelUnavailable: "Esta invitación ya no se puede cancelar.",
@@ -1555,8 +1702,23 @@ const es: typeof en = {
   dbErrors: {
     "Member account is required.": "Se requiere una cuenta de miembro.",
     "Invitation was not found.": "No se encontró la invitación.",
+    "Choose a reason before declining this invitation.":
+      "Elige un motivo antes de enviar tu respuesta.",
+    "Decline details must be 500 characters or fewer.":
+      "Limita los detalles adicionales a 500 caracteres.",
+    "This invitation can no longer be declined.":
+      "Esta invitación ya no se puede rechazar aquí.",
+    "This waitlist is no longer available.":
+      "Esta lista de espera ya no está disponible.",
+    "A seat is currently available for this invitation.":
+      "Ahora mismo hay una plaza disponible para esta invitación.",
     "This invitation cannot be confirmed.": "Esta invitación no se puede confirmar.",
     "This event is not open for confirmation.": "Este evento no está abierto para confirmación.",
+    "A seat is no longer available for this event.":
+      "Ya no hay una plaza disponible para este evento.",
+    "This invitation can no longer be restored.":
+      "Esta invitación ya no se puede restaurar.",
+    "This seat has already been filled.": "Esta plaza ya ha sido ocupada.",
     "You need at least 1 credit to confirm this event.":
       "Necesitas al menos 1 crédito para confirmar este evento.",
     "Only confirmed invitations can be cancelled here.":
