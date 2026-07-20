@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 import { buildMemberLoginPath } from "@/lib/auth-link";
+import { isLocale, localeCookieName } from "@/lib/i18n/locales";
 import { getSupabaseAuthCookieOptions } from "@/lib/supabase/auth-cookie";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
 
@@ -22,6 +23,23 @@ function isMemberAppPath(pathname: string) {
 }
 
 export async function middleware(request: NextRequest) {
+  const requestedLocale = request.nextUrl.searchParams.get("locale");
+
+  if (isLocale(requestedLocale)) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.searchParams.delete("locale");
+
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    redirectResponse.cookies.set(localeCookieName, requestedLocale, {
+      httpOnly: false,
+      maxAge: 60 * 60 * 24 * 365,
+      path: "/",
+      sameSite: "lax",
+    });
+
+    return redirectResponse;
+  }
+
   let response = NextResponse.next({ request });
 
   const supabaseConfig = getPublicSupabaseConfig();
