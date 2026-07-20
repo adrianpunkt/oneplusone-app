@@ -27,6 +27,7 @@ import {
   type EventActionState,
 } from "@/lib/actions/events";
 import { eventCancellationReasons } from "@/lib/event-cancellation";
+import { canRestoreCancelledInvitation } from "@/lib/event-invitation-classification";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
 import type { EventInvitation, EventRecord } from "@/lib/types";
@@ -823,9 +824,7 @@ export function InvitationDecisionForms({
     !invitation.confirmed_at &&
     ["invited", "waitlisted"].includes(invitation.status);
   const canRestoreConfirmation =
-    invitation.status === "cancelled" &&
-    Boolean(invitation.confirmed_at) &&
-    !invitation.replacement_found;
+    canRestoreCancelledInvitation(invitation, now);
   const stackDecisionActions =
     canDecline && (canConfirm || waitlistAvailable);
   const stackActions = cardLayout || stackDecisionActions;

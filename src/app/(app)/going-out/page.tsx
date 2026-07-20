@@ -50,6 +50,11 @@ import {
 } from "@/lib/event-waitlist";
 import { getEventGenderBalanceMessage } from "@/lib/event-gender-balance";
 import {
+  canRestoreCancelledInvitation,
+  isPendingInvitation,
+  isRejectedInvitation,
+} from "@/lib/event-invitation-classification";
+import {
   getDictionary,
   profileOptionLabel,
   type Dictionary,
@@ -124,21 +129,6 @@ function isInvitationWaitlistAvailable(invitation: EventInvitation) {
 
   return invitation.status === "waitlisted" &&
     invitation.response_mode !== "confirm";
-}
-
-function isPendingInvitation(invitation: EventInvitation) {
-  if (invitation.status === "invited") return true;
-  if (invitation.status === "waitlisted") return !invitation.responded_at;
-  return invitation.status === "cancelled" &&
-    Boolean(invitation.confirmed_at) &&
-    !invitation.replacement_found;
-}
-
-function isRejectedInvitation(invitation: EventInvitation) {
-  if (["declined", "expired"].includes(invitation.status)) return true;
-
-  return invitation.status === "cancelled" &&
-    (!invitation.confirmed_at || Boolean(invitation.replacement_found));
 }
 
 function eventTimestamp(event: EventRecord | null | undefined) {
@@ -907,11 +897,16 @@ function PastEventCard({
   preferences: Awaited<ReturnType<typeof getPreferences>>;
   summary: EventGroupSummary | undefined;
 }) {
-  const canReapply =
+  const canReapplyAfterDeclining =
     item.invitation?.status === "declined" &&
     item.invitation.response_mode === "confirm" &&
     isActiveEvent(item.event) &&
     !isPastEvent(item.event, now);
+  const canRestoreAfterCancelling = item.invitation
+    ? canRestoreCancelledInvitation(item.invitation, now)
+    : false;
+  const canApplyForSeat =
+    canReapplyAfterDeclining || canRestoreAfterCancelling;
 
   return (
     <article className="grid gap-4 rounded-none border-x-0 border-b-0 border-t border-cement-gray bg-cement-gray/20 p-4 sm:rounded-lg sm:border lg:grid-cols-[minmax(0,1fr)_auto]">
@@ -942,7 +937,7 @@ function PastEventCard({
           venuePendingTooltip={dictionary.events.venuePendingTooltip}
         />
       </div>
-      {canReapply && item.invitation ? (
+      {canApplyForSeat && item.invitation ? (
         <div className="flex flex-wrap items-center gap-2 lg:justify-end">
           <ConfirmInvitationForm
             copy={dictionary.actions}
@@ -956,6 +951,7 @@ function PastEventCard({
             invitationId={item.invitation.id}
             locale={locale}
             now={now}
+            restore={canRestoreAfterCancelling}
             wantsToHost={preferences?.wants_to_host ?? false}
           />
         </div>
