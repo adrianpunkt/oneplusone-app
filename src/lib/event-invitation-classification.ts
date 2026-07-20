@@ -5,6 +5,11 @@ type ClassifiableInvitation = Pick<
   "responded_at" | "status"
 >;
 
+type ReapplicableInvitation = Pick<
+  EventInvitation,
+  "response_mode" | "status"
+>;
+
 type RestorableInvitation = Pick<
   EventInvitation,
   "confirmed_at" | "replacement_found" | "status"
@@ -19,6 +24,14 @@ export function isPendingInvitation(invitation: ClassifiableInvitation) {
 
 export function isRejectedInvitation(invitation: ClassifiableInvitation) {
   return ["cancelled", "declined", "expired"].includes(invitation.status);
+}
+
+export function canReapplyDeclinedInvitation(
+  invitation: ReapplicableInvitation,
+) {
+  return invitation.status === "declined" &&
+    invitation.response_mode !== undefined &&
+    invitation.response_mode !== "closed";
 }
 
 export function shouldShowCannotMakeItStatus(

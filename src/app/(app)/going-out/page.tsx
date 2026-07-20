@@ -50,6 +50,7 @@ import {
 } from "@/lib/event-waitlist";
 import { getEventGenderBalanceMessage } from "@/lib/event-gender-balance";
 import {
+  canReapplyDeclinedInvitation,
   canRestoreCancelledInvitation,
   isPendingInvitation,
   isRejectedInvitation,
@@ -331,7 +332,16 @@ function WaitlistConfirmation({
         >
           <div className="grid gap-3">
             <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-ocean-blue text-white">
-              <Check className="h-6 w-6" aria-hidden="true" strokeWidth={3} />
+              {status === "balance" ? (
+                <span
+                  aria-hidden="true"
+                  className="text-2xl font-bold leading-none"
+                >
+                  !
+                </span>
+              ) : (
+                <Check className="h-6 w-6" aria-hidden="true" strokeWidth={3} />
+              )}
             </span>
             <div className="grid gap-2">
               <h2
@@ -899,8 +909,8 @@ function PastEventCard({
   summary: EventGroupSummary | undefined;
 }) {
   const canReapplyAfterDeclining =
-    item.invitation?.status === "declined" &&
-    item.invitation.response_mode === "confirm" &&
+    item.invitation &&
+    canReapplyDeclinedInvitation(item.invitation) &&
     isActiveEvent(item.event) &&
     !isPastEvent(item.event, now);
   const canRestoreAfterCancelling = item.invitation

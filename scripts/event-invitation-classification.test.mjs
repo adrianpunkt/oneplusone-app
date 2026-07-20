@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  canReapplyDeclinedInvitation,
   canRestoreCancelledInvitation,
   isPendingInvitation,
   isRejectedInvitation,
@@ -35,6 +36,40 @@ test("declined and expired invitations are rejected", () => {
   assert.equal(isRejectedInvitation(invitation("declined")), true);
   assert.equal(isRejectedInvitation(invitation("expired")), true);
   assert.equal(isRejectedInvitation(invitation("confirmed")), false);
+});
+
+test("declined invitations can reapply while any response mode remains open", () => {
+  for (const responseMode of ["confirm", "apply_waitlist", "waitlist"]) {
+    assert.equal(
+      canReapplyDeclinedInvitation({
+        response_mode: responseMode,
+        status: "declined",
+      }),
+      true,
+    );
+  }
+
+  assert.equal(
+    canReapplyDeclinedInvitation({
+      response_mode: "closed",
+      status: "declined",
+    }),
+    false,
+  );
+  assert.equal(
+    canReapplyDeclinedInvitation({
+      response_mode: undefined,
+      status: "declined",
+    }),
+    false,
+  );
+  assert.equal(
+    canReapplyDeclinedInvitation({
+      response_mode: "confirm",
+      status: "invited",
+    }),
+    false,
+  );
 });
 
 test("member cancellations do not look like club event cancellations", () => {

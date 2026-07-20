@@ -143,9 +143,9 @@ const en = {
       "No credit has been spent. If you’re promoted, we’ll reserve your seat automatically and email you.",
     balanceWaitlistModalTitle: "We’re balancing your table",
     balanceWaitlistModalBody:
-      "Your application is saved and 1 credit is reserved. We need one more person to keep the group balanced.",
+      "You are on the waitlist. We need one more person to keep the group balanced.",
     balanceWaitlistModalImportant:
-      "You’re on the priority list. We’ll reserve your seat automatically as soon as the matching person joins. If we can’t complete the balance, we’ll return your credit automatically.",
+      "You’re next in line. We’ll reserve your seat automatically as soon as the matching person joins. If we can’t complete the balance, we’ll notify you and return your credit automatically.",
     paymentHoldExpiredWaitlistModalTitle: "Your priority is saved",
     paymentHoldExpiredWaitlistModalBody:
       "The 10-minute payment hold expired before checkout finished, so the seat was released. Your original application time is retained on the waitlist.",
@@ -1092,9 +1092,9 @@ const es: typeof en = {
       "No hemos gastado ningún crédito. Si te asignamos una plaza, la reservaremos automáticamente y te enviaremos un email.",
     balanceWaitlistModalTitle: "Estamos equilibrando tu mesa",
     balanceWaitlistModalBody:
-      "Tu solicitud está guardada y hemos reservado 1 crédito. Necesitamos una persona más para mantener el grupo equilibrado.",
+      "Estás en la lista de espera. Necesitamos una persona más para mantener el grupo equilibrado.",
     balanceWaitlistModalImportant:
-      "Estás en la lista prioritaria. Reservaremos tu plaza automáticamente en cuanto se una la persona que falta. Si no conseguimos completar el equilibrio, te devolveremos el crédito automáticamente.",
+      "Eres la siguiente persona en la lista. Reservaremos tu plaza automáticamente en cuanto se una la persona que falta. Si no conseguimos completar el equilibrio, te avisaremos y te devolveremos el crédito automáticamente.",
     paymentHoldExpiredWaitlistModalTitle: "Hemos guardado tu prioridad",
     paymentHoldExpiredWaitlistModalBody:
       "La reserva de pago de 10 minutos caducó antes de terminar el proceso, así que liberamos la plaza. Conservas en la lista de espera la hora original de tu solicitud.",
