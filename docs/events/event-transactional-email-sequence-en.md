@@ -10,7 +10,7 @@ currently published in the `one plus one club` Loops team.
 
 The event system has:
 
-- 17 operational transactional email types with published English templates;
+- 16 operational transactional email types with published English templates;
 - four current English drafts with changes that have not been published or
   sent yet;
 - one post-event promotional credit offer sent through a Loops Workflow event,
@@ -35,7 +35,7 @@ flowchart TD
   C --> E{"Response before deadline"}
   D --> E
   E -->|No response after 24h| F["3. RSVP reminder"]
-  E -->|Declines| G["4. Cancellation received"]
+  E -->|Declines| G["4. Cannot make it"]
   E -->|Accepts / pays| H{"Seat result"}
   H -->|Confirmed| I["5. Seat confirmed"]
   H -->|Balance waitlist| J["6. Balance waitlist"]
@@ -48,13 +48,12 @@ flowchart TD
   N --> P["11. Host package, host only"]
   N --> Q["12. Event reminder, due 12h before"]
   I --> R{"Participant cancels reservation"}
-  R --> S["13. Reservation cancellation received"]
-  S -.->|Published, no current ops control| T["14. Late cancellation notice"]
+  R --> S["13. Reservation cancelled"]
   S --> U{"Replacement outcome"}
-  U -->|Replacement confirmed| V["15. Replacement refund"]
-  U -->|None by 6h before| W["16. No replacement"]
+  U -->|Replacement confirmed| V["14. Replacement refund"]
+  U -->|None by 6h before| W["15. No replacement"]
   N --> X["Event ends and founder marks complete"]
-  X --> Y["17. Feedback request, due 3h after"]
+  X --> Y["16. Feedback request, due 3h after"]
   Y --> Z["Marketing credit-offer workflow, due 20h after"]
 ```
 
@@ -75,19 +74,36 @@ flowchart TD
 | 11 | `host_package` | Confirmed attendee assigned as host | Founder assigns the host after confirmation |
 | 12 | `event_reminder` | Confirmed attendees | Due 12 hours before the event |
 | 13 | `reservation_cancellation_received` | Confirmed attendee or accepted waitlisted member who cancels their reservation | Immediate member-action result |
-| 14 | `late_cancellation_notice` | Cancelling member with a replacement record still marked eligible | Published, but no dedicated current ops action exposes this send |
-| 15 | `replacement_refund` | Cancelling member after a replacement is confirmed | Founder records replacement; credit is returned when eligible |
-| 16 | `no_replacement` | Cancelling member when no replacement is found | Due 6 hours before the event; founder records the outcome |
-| 17 | `feedback_request` | Confirmed, non-cancelled attendee who has not submitted feedback | Event must be marked complete; due 3 hours after event end |
+| 14 | `replacement_refund` | Cancelling member after a replacement is confirmed | Founder records replacement; credit is returned when eligible |
+| 15 | `no_replacement` | Cancelling member when no replacement is found | Due 6 hours before the event; founder records the outcome |
+| 16 | `feedback_request` | Confirmed, non-cancelled attendee who has not submitted feedback | Event must be marked complete; due 3 hours after event end |
 | Separate | `credit_offer` | Feedback-complete, marketing-eligible attendee | Loops Workflow event due 20 hours after event end; not transactional |
 
 The replacement branch can happen before or after the event reminder, depending
 on when the participant cancels and when a replacement is confirmed. The club
 cancellation branch can stop the normal sequence at any point before completion.
 
-## Shared content in all 17 transactionals
+### CTA destinations
 
-All 17 are styled English messages with sender name `one plus one club`, sender
+The member-app origin is environment-specific: production uses
+`https://app.oneplusoneclub.com`, deployed development uses
+`https://dev-app.oneplusoneclub.com`, and local sends use the configured local
+member-app origin.
+
+- Every `View event`, `View events`, or `View your events` CTA resolves to
+  `/going-out` on that origin. RSVP reminders also return active members to
+  `/going-out`, where the invitation action is available.
+- Active-member invitations use a one-click login link whose protected next
+  destination is `/going-out`. Pending-member invitations retain their
+  tokenized invitation-access URL.
+- Replacement-refund credit CTAs resolve to `/credits`.
+- Host-package CTAs retain their generated public material URL.
+- Feedback-request CTAs retain the member event URL because the feedback form
+  currently lives on that page; they are not event-list CTAs.
+
+## Shared content in all 16 transactionals
+
+All 16 are styled English messages with sender name `one plus one club`, sender
 local part `hello` on the team's configured sending domain, and no explicit
 reply-to address.
 
@@ -188,7 +204,7 @@ button labels are preserved from the published LMX.
 >
 > **Button:** `RSVP` → `{data.ctaUrl}`
 
-### 4. Cancellation received
+### 4. Cannot make it
 
 - **Email type:** `cancellation_received`
 - **Transactional ID:** `cmrs2pmd501ww0jz12tb2byqh`
@@ -436,11 +452,11 @@ button labels are preserved from the published LMX.
 >
 > **Button:** `View event` → `{data.ctaUrl}`
 
-### 13. Reservation cancellation received
+### 13. Reservation cancelled
 
 - **Email type:** `reservation_cancellation_received`
 - **Transactional ID:** `cmrt70cwq02ep0iv7zaew1zck`
-- **Published message ID:** `cmrt70cwn02eo0iv7d0jeudf7`
+- **Published message ID:** `cmrtm5mbn0avo0jwa7plns1hz`
 - **Unpublished draft exists:** No
 - **Subject:** `We received your cancellation`
 - **Preview:** `Your reservation update and what happens next.`
@@ -449,96 +465,51 @@ button labels are preserved from the published LMX.
 
 > We've received your cancellation and updated your place for this event.
 >
-> **What happens now**<br>
-> {data.cancellationOutcome}
+> We will try to find a replacement and invite other members to join this event.
+> In case someone will take your seat, we'll refund your credit and notify you.
 >
-> **Reason recorded:** {data.cancellationReason}
->
-> **Button:** `View your events` → `{data.ctaUrl}`
+> And in case you change your mind and can still attend, you can apply for a
+> seat again.
 
-The `{data.cancellationOutcome}` value is generated by the app and resolves to
-one of these exact English messages:
+This email has no CTA button and no cancellation-reason or outcome block.
 
-- **`not_spent`:** "We have removed you from the waitlist. No credit was used."
-- **`refunded`:** "The credit reserved for this place has been returned to your
-  account automatically."
-- **`replacement_pending`:** "Your credit stays assigned while we look for
-  someone to take your place. If we confirm a replacement, we will return it
-  automatically and email you. If we cannot find one, we will let you know six
-  hours before the event, and you can still attend."
-
-The `{data.cancellationReason}` value resolves to `Not feeling well`, `My plans
-changed`, `No longer interested in this event`, or `Something else` (with
-`Another reason` as the fallback).
-
-### 14. Late cancellation notice
-
-- **Email type:** `late_cancellation_notice`
-- **Transactional ID:** `cmrs2ppwb33ng0j1dw0bannx8`
-- **Published message ID:** `cmrs3lu0p03w90j0pxm98zqy3`
-- **Unpublished draft exists:** No
-- **Subject:** `We're looking for a replacement`
-- **Preview:** `Your late cancellation is recorded. We'll update you about the credit.`
-
-**Content**
-
-> We've recorded your late cancellation for this event.
->
-> We're now looking for another participant to take your place. If a
-> replacement is confirmed, your event credit will be returned automatically.
-> If no replacement is found, the credit will remain used.
->
-> We'll send you another update before the event.
->
-> **Button:** `View event` → `{data.ctaUrl}`
-
-### 15. Replacement refund
+### 14. Replacement refund
 
 - **Email type:** `replacement_refund`
 - **Transactional ID:** `cmrs2pp170miy0j0025gaqeed`
-- **Published message ID:** `cmrs3lqtc05mx0j36p6xg1uwl`
+- **Published message ID:** `cmrtmpjg60br30jymctd7cs6d`
 - **Unpublished draft exists:** No
 - **Subject:** `Your replacement was found`
 - **Preview:** `A replacement joined and your event credit has been returned.`
 
 **Content**
 
-> We found someone to take your place at this event.
->
-> Your cancellation is complete and your event credit has been returned
-> automatically. You can see the updated balance in the app.
+> We found someone to take your place at this event. Your cancellation is
+> complete and your event credit has been returned automatically.
 >
 > You are no longer included in the attendee list and messaging for this event
 > will not be enabled for you.
 >
 > **Button:** `View your credits` → `{data.ctaUrl}`
 
-### 16. No replacement
+### 15. No replacement
 
 - **Email type:** `no_replacement`
 - **Transactional ID:** `cmrs2ppfi00a30jzb2xgjnrut`
-- **Published message ID:** `cmrs3lsfj00180j2mwyn3l3cp`
+- **Published message ID:** `cmrtmqjqm0c9n0jw81nv9cvjk`
 - **Unpublished draft exists:** No
 - **Subject:** `We couldn't find a replacement`
-- **Preview:** `Your seat was not replaced, so the event credit remains used.`
+- **Preview:** `We hope to see you next time!`
 
 **Content**
 
-> We're sorry, but we couldn't find someone to take your place before the
-> event.
+> We're sorry, but we couldn't find someone to take your place for the event.
 >
-> Because the seat was not replaced, your event credit has not been returned
-> automatically.
->
-> You remain marked as cancelled and messaging for this event will not be
-> enabled for you.
->
-> If your plans have changed and you may still be able to attend, open the
-> event now. Availability and the final attendee list may have changed.
->
-> **Button:** `View event` → `{data.ctaUrl}`
+> We hope to see you next time!
 
-### 17. Feedback request
+This email has no CTA button.
+
+### 16. Feedback request
 
 - **Email type:** `feedback_request`
 - **Transactional ID:** `cmrs2pqbo039i0jzaxctucsfx`
@@ -702,25 +673,14 @@ This send is intentionally not one of the 17 transactionals above.
 
 These are inventory observations, not proposed edits:
 
-1. Seven of the 17 subjects have empty preview text.
+1. Seven of the 16 subjects have empty preview text.
 2. `invitation_member`, `invitation_pending`, `waitlist_balance`, and
    `waitlist_capacity` have unpublished changes recorded above. Publishing them
    will replace the corresponding production versions in the sent snapshot.
-3. `late_cancellation_notice` is published and selectable by the database
-   delivery contract, but the current ops control centre has no dedicated
-   action that sends it.
-4. `cancellation_received` now covers more than its copy suggests: it is used
+3. `cancellation_received` now covers more than its copy suggests: it is used
    for an invitation decline and can also acknowledge a voluntarily released
    balance-waitlist place after a refund.
-5. `reservation_cancellation_received` and `late_cancellation_notice` overlap:
-   both acknowledge a confirmed-seat cancellation and explain the replacement
-   search.
-6. `no_replacement` invites the cancelled member to open the event if they may
-   still attend. The app has a restore action, but its database rule only
-   permits restoration before the RSVP deadline, while this email is due six
-   hours before the event. At its intended send time, the suggested recovery
-   path is therefore normally closed.
-7. The repeated Instagram link still uses the onboarding attribution
+4. The repeated Instagram link still uses the onboarding attribution
    `utm_source=friends-email`, not an event-specific source.
 
 ## Source of truth used for this snapshot

@@ -94,12 +94,13 @@ active-member `email_hint`, the app sends a fresh Loops login email and redirect
 to `/login` in the same code-entry state as a normal login request.
 
 Active-member event invitations mint the same Supabase login token immediately
-before the Loops send, set the protected `next` destination to `/events/{id}`,
+before the Loops send, set the protected `next` destination to `/going-out`,
 and mark the confirmation for browser auto-submit. A normal browser therefore
-lands on the event after one click, while a non-JavaScript email scanner cannot
+lands on Going Out after one click, while a non-JavaScript email scanner cannot
 consume the token. Automatic expired-link replacement preserves both the event
-destination and auto-submit behavior. Pending-member invitations continue to
-use the separate `/event-invitation/access` flow. Its GET page is a safe
+invitation's Going Out destination and auto-submit behavior. Pending-member
+invitations continue to use the separate `/event-invitation/access` flow. Its
+GET page is a safe
 interstitial: the one-time token is claimed only after the recipient presses
 Continue, so email security scanners cannot consume it by following the link.
 Continuing from a used or expired link automatically emails one fresh

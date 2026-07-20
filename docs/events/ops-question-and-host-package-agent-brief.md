@@ -10,7 +10,7 @@ Use `MEMBER_APP_URL` as the only base URL for links back to the member app:
 - deployed development: `https://dev-app.oneplusoneclub.com`
 - production: `https://app.oneplusoneclub.com`
 
-Never derive the member-app origin from the ops request URL. Validate that non-local values use HTTPS and build the host event link as `${MEMBER_APP_URL}/events/${eventId}`.
+Never derive the member-app origin from the ops request URL. Validate that non-local values use HTTPS. Generic member event destinations use `${MEMBER_APP_URL}/going-out`; host-package buttons use the generated public material URL.
 
 ## Existing contract to reuse
 
@@ -63,7 +63,7 @@ Keep host assignment manual. The host must have a confirmed, non-cancelled seat.
 - the member app event page shows the host-only playbook and the saved assigned questions;
 - ordinary participants see only the host's first name and public introduction after event details are released;
 - private host contact details remain hidden;
-- the host email links to the event page and the event-specific printable package.
+- the host email links to the event-specific printable package; its generic member-app event destination is Going Out.
 
 Update the host-package send preflight so it requires:
 
@@ -73,7 +73,7 @@ Update the host-package send preflight so it requires:
 - final event time and released venue details;
 - valid `MEMBER_APP_URL`.
 
-Use the existing durable `event_email_deliveries` and idempotent Loops sender. Do not send directly from a component. The email should include the event date/time, restaurant/address, event-page link, printable package link, and a concise reminder to arrive 10 minutes early. English and Spanish must use their matching package.
+Use the existing durable `event_email_deliveries` and idempotent Loops sender. Do not send directly from a component. The email should include the event date/time, restaurant/address, printable package link, and a concise reminder to arrive 10 minutes early. English and Spanish must use their matching package.
 
 ## Balance-waitlist correction that must travel with this work
 

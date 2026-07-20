@@ -260,7 +260,7 @@ async function eventEmailVariables(
   const timezone = objectString(payload, "timezone") || "UTC";
   const rsvpDeadlineAt = objectString(payload, "rsvpDeadlineAt");
   const origin = resolveAppOrigin();
-  const memberEventUrl = `${origin}/events/${encodeURIComponent(delivery.event_id)}`;
+  const goingOutUrl = new URL("/going-out", origin).toString();
   const invitationAccessToken = claim.invitationAccessToken?.trim() || "";
   const invitationUrl = invitationAccessToken
     ? pendingInvitationUrl(origin, invitationAccessToken)
@@ -270,7 +270,7 @@ async function eventEmailVariables(
     : "";
   const eventUrl = delivery.email_type === "invitation_pending"
     ? invitationUrl
-    : memberEventUrl;
+    : goingOutUrl;
   const eventFormat = objectString(payload, "eventFormat");
   const majorityIntention = summary?.majority_intention
     || objectString(payload, "majorityIntention");

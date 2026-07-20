@@ -2,11 +2,11 @@
 <Component componentId="cmqcao6dm1wwz0kys84vjjm7h" paddingTop="20" paddingBottom="30">
   <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlfw8ho03sf0jxsbxf18x0a.png" alt="Hola {data.firstName}," width="202" dynamicSrc="https://oneplusoneclub.com/email/es/welcome/{data.firstName}.png" paddingTop="20" paddingBottom="30" />
 </Component>
-<Paragraph>Hemos recibido tu cancelación y actualizado tu plaza para este evento.</Paragraph>
+<Paragraph>Hemos encontrado a alguien para ocupar tu plaza en este evento. Tu cancelación se ha completado y tu crédito del evento se ha devuelto automáticamente.</Paragraph>
 <Paragraph></Paragraph>
-<Paragraph>Intentaremos encontrar un reemplazo e invitar a otros miembros a unirse a este evento. Si alguien ocupa tu plaza, te devolveremos el crédito y te avisaremos.</Paragraph>
+<Paragraph>Ya no formas parte de la lista de asistentes y no se habilitarán los mensajes de este evento para ti.</Paragraph>
 <Paragraph></Paragraph>
-<Paragraph>Y si cambias de opinión y aún puedes asistir, puedes volver a solicitar una plaza.</Paragraph>
+<Button href="{data.ctaUrl}">Ver tus créditos</Button>
 <Component componentId="cmqcdwxlt1oyx0jxfjrrwxls0" paddingTop="20" paddingBottom="20">
   <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlg3fsz050i0jxqp5h3c8c0.png" alt="one plus one club" href="https://oneplusoneclub.com" width="222" dynamicSrc="https://oneplusoneclub.com/email/es/with-love-oneplusoneclub.png" paddingTop="20" paddingBottom="20" />
 </Component>

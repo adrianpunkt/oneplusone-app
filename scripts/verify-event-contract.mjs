@@ -12,6 +12,7 @@ const paymentResumeMigrationPath = new URL("../supabase/migrations/2026072016300
 const pendingDeclineMigrationPath = new URL("../supabase/migrations/20260720172000_add_pending_member_event_type_decline.sql", import.meta.url);
 const pendingDeclineOptOutMigrationPath = new URL("../supabase/migrations/20260720180000_opt_out_after_pending_event_type_decline.sql", import.meta.url);
 const paidConfirmationMigrationPath = new URL("../supabase/migrations/20260720174000_preserve_paid_status_during_event_confirmation.sql", import.meta.url);
+const genderBalanceMigrationPath = new URL("../supabase/migrations/20260720182000_apply_capacity_aware_gender_balance.sql", import.meta.url);
 const contractPath = new URL("../docs/events/frozen-database-contract.md", import.meta.url);
 const accessPagePath = new URL("../src/app/event-invitation/access/page.tsx", import.meta.url);
 const accessRoutePath = new URL("../src/app/event-invitation/access/claim/route.ts", import.meta.url);
@@ -45,6 +46,7 @@ const [
   pendingDeclineMigration,
   pendingDeclineOptOutMigration,
   paidConfirmationMigration,
+  genderBalanceMigration,
   contract,
   accessPage,
   accessRoute,
@@ -77,6 +79,7 @@ const [
   readFile(pendingDeclineMigrationPath, "utf8"),
   readFile(pendingDeclineOptOutMigrationPath, "utf8"),
   readFile(paidConfirmationMigrationPath, "utf8"),
+  readFile(genderBalanceMigrationPath, "utf8"),
   readFile(contractPath, "utf8"),
   readFile(accessPagePath, "utf8"),
   readFile(accessRoutePath, "utf8"),
@@ -183,6 +186,18 @@ assert.equal(
   2,
 );
 assert.doesNotMatch(paidConfirmationMigration, /payment_status = 'not_required'/i);
+assert.match(genderBalanceMigration, /create or replace function public\.event_gender_balance_requires_waitlist\b/i);
+assert.match(genderBalanceMigration, /when coalesce\(p_event_capacity, 8\) >= 10 then 4/i);
+assert.match(genderBalanceMigration, /p_eligible_opposite_waiter_exists/i);
+assert.match(genderBalanceMigration, /invitations\.waitlist_reason = 'balance'/i);
+assert.match(genderBalanceMigration, /public\.event_invitation_has_credit_debit/i);
+assert.match(genderBalanceMigration, /public\.event_gender_balance_requires_waitlist\(\s*member_gender,\s*female_count,\s*male_count,\s*event_record\.capacity,\s*eligible_opposite_waiter_exists\s*\)/i);
+assert.doesNotMatch(genderBalanceMigration, /female_count > male_count|male_count > female_count/i);
+assert.ok(
+  genderBalanceMigration.indexOf("if occupied_count >= event_record.capacity")
+    < genderBalanceMigration.indexOf("if public.event_gender_balance_requires_waitlist"),
+  "Capacity must be evaluated before gender balance",
+);
 
 for (const functionName of [
   "confirm_event_invitation",

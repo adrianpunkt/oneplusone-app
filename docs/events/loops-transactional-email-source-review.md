@@ -67,7 +67,6 @@ The Instagram components currently use onboarding-oriented UTM values
 | `event_reminder` | Your date is coming up | Short source reminder retained with dynamic facts |
 | `replacement_refund` | No direct source | New copy |
 | `no_replacement` | No direct source | New copy |
-| `late_cancellation_notice` | No direct source | New copy based on the database recipient cohort |
 | `feedback_request` | No direct source | New copy based on the feedback and messaging flow |
 
 ## Per-email review
@@ -176,7 +175,7 @@ Review:
   true for every city or cohort.
 - It should state explicitly that a capacity waitlist does not spend a credit.
 
-### 6. Cancellation received
+### 6. Cannot make it
 
 Source: **Not this time**
 
@@ -302,39 +301,14 @@ Review:
 
 Source: no direct source.
 
-Implemented: no-replacement outcome, no automatic credit return, and event
-link.
+Implemented: a short no-replacement outcome and invitation to attend another
+event in the future.
 
 Review:
 
-- No `hoursUntilEvent` or explicit cutoff variable is supplied for the agreed
-  six-hour notice.
-- The copy invites the cancelled member to open the event if they can attend
-  after all, but there is no confirmed self-service "restore attendance"
-  action in the app.
 - There is no source-approved tone or wording.
 
-### 14. Late cancellation notice
-
-Source: no direct source.
-
-Implemented:
-
-- The email is written to the cancelling member, explaining that a replacement
-  search has started and how the credit outcome works. This matches the current
-  database cohort, where `late_cancellation_notice` selects a replacement
-  record with status `eligible`.
-
-Review:
-
-- There is no founder control in the current ops policy/UI that dispatches this
-  email type directly.
-- Confirm whether this email should go to the cancelling member, the remaining
-  attendees, or both. A remaining-attendee notice would require a separate
-  recipient branch and different copy.
-- There is no source-approved tone or wording.
-
-### 15. Feedback request
+### 14. Feedback request
 
 Source: no direct source.
 

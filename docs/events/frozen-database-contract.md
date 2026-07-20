@@ -116,8 +116,8 @@ Delivery types are exactly:
 `waitlist_capacity`, `waitlist_balance`, `waitlist_balance_released`,
 `cancellation_received`, `reservation_cancellation_received`,
 `rsvp_reminder`, `event_confirmed`, `event_cancelled`, `host_package`,
-`event_reminder`, `replacement_refund`, `no_replacement`,
-`late_cancellation_notice`, `feedback_request`, `credit_offer`.
+`event_reminder`, `replacement_refund`, `no_replacement`, `feedback_request`,
+`credit_offer`.
 
 `credit_offer` is only prepared for marketing-eligible members and is consumed
 by the ops marketing workflow; it is not a transactional delivery.

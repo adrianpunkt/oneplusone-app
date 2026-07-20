@@ -3,6 +3,186 @@
 -- The transaction rolls back every fixture.
 
 begin;
+
+do $test$
+begin
+  if public.event_gender_balance_requires_waitlist('male', 0, 0, 8, false)
+    or public.event_gender_balance_requires_waitlist('male', 0, 1, 8, false)
+    or public.event_gender_balance_requires_waitlist('male', 0, 2, 8, false) then
+    raise exception 'The first three men must not be balance-waitlisted.';
+  end if;
+
+  if not public.event_gender_balance_requires_waitlist('male', 0, 3, 8, false)
+    or not public.event_gender_balance_requires_waitlist('male', 3, 3, 8, false) then
+    raise exception 'A fourth man must be balance-waitlisted unless men are behind.';
+  end if;
+
+  if public.event_gender_balance_requires_waitlist('male', 4, 3, 8, false) then
+    raise exception 'A fourth man must be admitted when he balances four women.';
+  end if;
+
+  if public.event_gender_balance_requires_waitlist('male', 3, 3, 8, true) then
+    raise exception 'The counterpart of an eligible balance waiter must be admitted.';
+  end if;
+
+  if public.event_gender_balance_requires_waitlist('female', 0, 0, 8, false)
+    or public.event_gender_balance_requires_waitlist('female', 0, 2, 8, false)
+    or not public.event_gender_balance_requires_waitlist('female', 3, 3, 8, false)
+    or public.event_gender_balance_requires_waitlist('female', 3, 4, 8, false) then
+    raise exception 'The three-person balance threshold must be symmetric.';
+  end if;
+
+  if public.event_gender_balance_requires_waitlist('male', 0, 3, 10, false)
+    or public.event_gender_balance_requires_waitlist('male', 3, 3, 10, false)
+    or public.event_gender_balance_requires_waitlist('female', 3, 0, 12, false)
+    or not public.event_gender_balance_requires_waitlist('male', 4, 4, 10, false)
+    or not public.event_gender_balance_requires_waitlist('female', 4, 4, 12, false)
+    or public.event_gender_balance_requires_waitlist('male', 4, 4, 10, true) then
+    raise exception 'Capacity 10 and 12 must use a four-person automatic threshold and paired admission.';
+  end if;
+end;
+$test$;
+
+do $test$
+declare
+  balance_event_id uuid := gen_random_uuid();
+  member_ids uuid[] := array[
+    gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
+    gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid()
+  ];
+  user_ids uuid[] := array[
+    gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid(),
+    gen_random_uuid(), gen_random_uuid(), gen_random_uuid(), gen_random_uuid()
+  ];
+  candidate_invitation_id uuid;
+  counterpart_invitation_id uuid;
+  index_value integer;
+begin
+  for index_value in 1..8 loop
+    insert into auth.users (id, email)
+    values (
+      user_ids[index_value],
+      'balance-pair-' || index_value::text || '@example.com'
+    );
+
+    insert into public.members (id, email, membership_status)
+    values (
+      member_ids[index_value],
+      'balance-pair-' || index_value::text || '@example.com',
+      'active'
+    );
+
+    insert into public.profile_registrations (
+      user_id, status, source_path, profile_json, contact_email,
+      terms_accepted_at, submitted_at
+    ) values (
+      user_ids[index_value],
+      'submitted',
+      '/story',
+      jsonb_build_object(
+        'profile.gender',
+        case when index_value in (1, 2, 3, 7) then 'Man' else 'Woman' end
+      ),
+      'balance-pair-' || index_value::text || '@example.com',
+      now(),
+      now()
+    );
+  end loop;
+
+  insert into public.events (
+    id, title, event_format, status, starts_at, ends_at, timezone, city,
+    capacity, invitation_limit, credit_cost, minimum_confirmed_count,
+    minimum_run_count, gender_balance_enabled, rsvp_deadline_at,
+    invitations_opened_at
+  ) values (
+    balance_event_id, 'Balance-pair regression', 'dinner', 'inviting',
+    now() + interval '2 days', now() + interval '2 days 2 hours',
+    'Europe/Lisbon', 'Lisbon', 8, 8, 1, 1, 1, true,
+    now() + interval '1 day', now()
+  );
+
+  for index_value in 1..6 loop
+    insert into public.event_invitations (
+      event_id, member_id, response_status, seat_status, payment_status,
+      member_status_at_invite, priority_at, responded_at, confirmed_at
+    ) values (
+      balance_event_id, member_ids[index_value], 'accepted', 'confirmed',
+      'not_required', 'active', now(), now(), now()
+    );
+  end loop;
+
+  perform public.grant_member_credit(
+    member_ids[7], 1, 'membership_join_credit', 'test_fixture',
+    member_ids[7]::text, null, 'Balance-pair regression fixture.', now()
+  );
+  insert into public.event_invitations (
+    event_id, member_id, response_status, seat_status, payment_status,
+    member_status_at_invite, priority_at, responded_at
+  ) values (
+    balance_event_id, member_ids[7], 'accepted', 'none', 'not_required',
+    'active', now() - interval '1 minute', now()
+  ) returning id into candidate_invitation_id;
+  update public.event_invitations
+  set seat_status = 'waitlisted', waitlist_reason = 'balance',
+      waitlisted_at = now(), updated_at = now()
+  where id = candidate_invitation_id;
+
+  if not public.event_invitation_has_credit_debit(
+    candidate_invitation_id, member_ids[7]
+  ) then
+    raise exception 'The balance waiter did not reserve a credit.';
+  end if;
+
+  perform public.grant_member_credit(
+    member_ids[8], 1, 'membership_join_credit', 'test_fixture',
+    member_ids[8]::text, null, 'Balance-pair regression fixture.', now()
+  );
+  insert into public.event_invitations (
+    event_id, member_id, response_status, seat_status, payment_status,
+    member_status_at_invite, priority_at, responded_at
+  ) values (
+    balance_event_id, member_ids[8], 'accepted', 'none', 'not_required',
+    'active', now(), now()
+  ) returning id into counterpart_invitation_id;
+
+  if public.event_seat_waitlist_reason(
+    balance_event_id, member_ids[8], counterpart_invitation_id
+  ) is not null then
+    raise exception 'The counterpart of the balance waiter was not admitted.';
+  end if;
+
+  update public.event_invitations
+  set seat_status = 'confirmed', confirmed_at = now(), updated_at = now()
+  where id = counterpart_invitation_id;
+
+  if (select seat_status from public.event_invitations
+      where id = candidate_invitation_id) <> 'confirmed'
+    or (select count(*) from public.event_invitations
+        where event_id = balance_event_id and seat_status = 'confirmed') <> 8
+    or not exists (
+      select 1 from public.event_attendees
+      where invitation_id = candidate_invitation_id and status = 'confirmed'
+    )
+    or not exists (
+      select 1 from public.event_email_deliveries
+      where invitation_id = candidate_invitation_id
+        and email_type = 'seat_confirmed'
+    )
+    or exists (
+      select 1 from public.event_email_deliveries
+      where invitation_id = candidate_invitation_id
+        and email_type = 'waitlist_balance_released'
+    )
+    or exists (
+      select 1 from public.credit_ledger_entries
+      where member_id = member_ids[7]
+        and reason = 'event_balance_waitlist_refund'
+    ) then
+    raise exception 'The completed gender-balance pair was not promoted cleanly.';
+  end if;
+end;
+$test$;
+
 set local role service_role;
 
 do $test$
