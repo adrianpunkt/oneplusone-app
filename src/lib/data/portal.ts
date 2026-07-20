@@ -12,6 +12,8 @@ import type {
   EventInvitation,
   EventMaterial,
   EventPreferences,
+  EventQuestion,
+  EventQuestionType,
   Message,
   NotificationRecord,
   EventRecord,
@@ -42,7 +44,7 @@ type InvitationResponseModeRow = {
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const EVENT_FIELDS = "id,title,description,localized_content,language_code,event_format,status,starts_at,ends_at,timezone,city,capacity,invitation_limit,credit_cost,minimum_confirmed_count,minimum_run_count,invitation_send_at,rsvp_deadline_at,prepared_at,invitations_opened_at,venue_confirmed_at,confirmation_released_at,completed_at,cancelled_at,cancellation_reason";
+const EVENT_FIELDS = "id,title,description,localized_content,language_code,event_format,status,starts_at,ends_at,timezone,city,capacity,invitation_limit,credit_cost,minimum_confirmed_count,minimum_run_count,gender_balance_enabled,invitation_send_at,rsvp_deadline_at,prepared_at,invitations_opened_at,venue_confirmed_at,confirmation_released_at,completed_at,cancelled_at,cancellation_reason";
 
 function normalizeEventRelation<T extends { events?: EventRecord | null }>(
   row: WithEventRelation<Omit<T, "events">>,
@@ -578,6 +580,8 @@ export async function getEventDetail(eventId: string, memberId: string) {
   const host = hostResult.data
     ? await attachEventHostFirstName(hostResult.data as EventHost)
     : null;
+  const isHost = host?.member_id === memberId;
+  const questions = isHost ? await getAssignedEventQuestions(eventId) : [];
 
   return {
     attendee,
@@ -585,11 +589,66 @@ export async function getEventDetail(eventId: string, memberId: string) {
     eventAttendees: (attendeeResult.data || []) as Array<{ member_id: string; first_name: string }>,
     feedback: (feedbackResult.data || null) as EventFeedback | null,
     host,
-    isHost: host?.member_id === memberId,
+    isHost,
     invitation,
     materials: (materialResult.data || []) as EventMaterial[],
+    questions,
     summary: event ? summaries[event.id] || emptyEventGroupSummary(event) : null,
   };
+}
+
+type AssignedQuestionRelation = {
+  assigned_at: string;
+  event_id: string;
+  id: string;
+  question_id: string;
+  questions:
+    | {
+        id: string;
+        localized_content: JsonObject;
+        prompt: string;
+        rating: number | null;
+        type: EventQuestionType;
+      }
+    | Array<{
+        id: string;
+        localized_content: JsonObject;
+        prompt: string;
+        rating: number | null;
+        type: EventQuestionType;
+      }>
+    | null;
+  sort_order: number;
+};
+
+async function getAssignedEventQuestions(eventId: string): Promise<EventQuestion[]> {
+  const { data, error } = await getSupabaseServiceClient()
+    .from("event_questions")
+    .select(
+      "id,event_id,question_id,sort_order,assigned_at,questions(id,type,prompt,localized_content,rating)",
+    )
+    .eq("event_id", eventId)
+    .order("sort_order", { ascending: true })
+    .order("assigned_at", { ascending: true });
+
+  if (error) throw new Error(`Unable to load the host questions: ${error.message}`);
+
+  return ((data || []) as unknown as AssignedQuestionRelation[]).flatMap((row) => {
+    const question = Array.isArray(row.questions) ? row.questions[0] : row.questions;
+    if (!question) return [];
+
+    return [{
+      assigned_at: row.assigned_at,
+      event_id: row.event_id,
+      id: row.id,
+      localized_content: question.localized_content || {},
+      prompt: question.prompt,
+      question_id: row.question_id,
+      rating: question.rating,
+      sort_order: row.sort_order,
+      type: question.type,
+    }];
+  });
 }
 
 async function attachEventHostFirstName(host: EventHost): Promise<EventHost> {

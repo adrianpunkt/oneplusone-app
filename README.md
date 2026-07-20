@@ -16,6 +16,7 @@ Required env:
 - `SUPABASE_SERVICE_ROLE_KEY` or `SUPABASE_SECRET_KEY`
 - `APP_URL`
 - `LOOPS_API_KEY`
+- `SUPPORT_MESSAGE_ENDPOINT` (optional; overrides the website support API used by the in-app question dialog)
 - `STRIPE_SECRET_KEY`
 - `STRIPE_WEBHOOK_SECRET` or `APP_STRIPE_WEBHOOK_SECRET`
 
@@ -91,6 +92,21 @@ Used or expired welcome/login links are one-time-use through Supabase
 `verifyOtp`. When a used/expired `/auth/confirm` link still carries a valid
 active-member `email_hint`, the app sends a fresh Loops login email and redirects
 to `/login` in the same code-entry state as a normal login request.
+
+Active-member event invitations mint the same Supabase login token immediately
+before the Loops send, set the protected `next` destination to `/events/{id}`,
+and mark the confirmation for browser auto-submit. A normal browser therefore
+lands on the event after one click, while a non-JavaScript email scanner cannot
+consume the token. Automatic expired-link replacement preserves both the event
+destination and auto-submit behavior. Pending-member invitations continue to
+use the separate `/event-invitation/access` flow. Its GET page is a safe
+interstitial: the one-time token is claimed only after the recipient presses
+Continue, so email security scanners cannot consume it by following the link.
+Continuing from a used or expired link automatically emails one fresh
+invitation link while the RSVP window remains open; both replacement links and
+their sessions are capped at the stored RSVP deadline. HTTP localhost previews
+use a development-only cookie name; production retains the Secure `__Host-`
+cookie.
 
 The shared Supabase Auth config sets email OTP expiry to 1 hour. Apply
 `../website/supabase/config.toml` to the target Supabase project when changing

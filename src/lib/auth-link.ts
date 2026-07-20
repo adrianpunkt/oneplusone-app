@@ -57,12 +57,14 @@ export function normalizeMemberLoginNextPath(
 }
 
 export function buildAuthConfirmUrl({
+  autoSubmit = false,
   email,
   next,
   origin,
   tokenHash,
   type = "magiclink",
 }: {
+  autoSubmit?: boolean;
   email: string;
   next: string;
   origin: string;
@@ -77,6 +79,7 @@ export function buildAuthConfirmUrl({
   }
   url.searchParams.set("next", nextPath);
   url.searchParams.set("email_hint", encodeEmailHint(email));
+  if (autoSubmit) url.searchParams.set("auto", "1");
   return url;
 }
 

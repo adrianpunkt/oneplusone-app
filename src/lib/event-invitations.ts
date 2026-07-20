@@ -9,6 +9,39 @@ import type {
 } from "@/lib/types";
 
 export const eventInvitationSessionCookie = "__Host-oneplusone-event-invitation";
+export const localEventInvitationSessionCookie = "oneplusone-event-invitation";
+
+type InvitationCookieReader = {
+  get(name: string): { value: string } | undefined;
+};
+
+export function readEventInvitationSessionToken(
+  cookieStore: InvitationCookieReader,
+  requestUrl?: URL,
+) {
+  const secureToken = cookieStore.get(eventInvitationSessionCookie)?.value || "";
+  if (secureToken) return secureToken;
+
+  const allowLocalCookie = requestUrl
+    ? isLocalHttpUrl(requestUrl)
+    : process.env.NODE_ENV !== "production";
+  return allowLocalCookie
+    ? cookieStore.get(localEventInvitationSessionCookie)?.value || ""
+    : "";
+}
+
+export function eventInvitationSessionCookieSettings(url: URL) {
+  const secure = !isLocalHttpUrl(url);
+  return {
+    name: secure ? eventInvitationSessionCookie : localEventInvitationSessionCookie,
+    secure,
+  };
+}
+
+function isLocalHttpUrl(url: URL) {
+  return url.protocol === "http:"
+    && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+}
 
 type InternalInvitationSession = {
   email: string;
@@ -48,13 +81,15 @@ export async function getPublicInvitationSession(
   const [{ data: event }, { data: summary }] = await Promise.all([
     supabase
       .from("events")
-      .select("id,starts_at,ends_at,timezone,city,event_format,language_code,rsvp_deadline_at,credit_cost,status")
+      .select("id,starts_at,ends_at,timezone,city,event_format,language_code,capacity,gender_balance_enabled,rsvp_deadline_at,credit_cost,status")
       .eq("id", session.eventId)
       .maybeSingle<{
+        capacity: number;
         city: string | null;
         credit_cost: number;
         ends_at: string | null;
         event_format: "dinner" | "brunch" | "other";
+        gender_balance_enabled: boolean;
         id: string;
         language_code: "en" | "es" | null;
         rsvp_deadline_at: string;
@@ -92,10 +127,12 @@ export async function getPublicInvitationSession(
       city: event.city,
       eventFormat: event.event_format,
       languageCode: event.language_code,
+      capacity: event.capacity,
       ageRange: { min: summary?.age_min ?? null, max: summary?.age_max ?? null },
       majorityIntention: summary?.majority_intention || null,
       additionalLanguages: summary?.additional_languages || [],
       preferenceNudge: true,
+      genderBalanceEnabled: event.gender_balance_enabled,
       rsvpDeadlineAt: event.rsvp_deadline_at,
       creditCost: event.credit_cost,
     },

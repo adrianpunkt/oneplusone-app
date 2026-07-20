@@ -18,12 +18,14 @@ export type MemberLoginEmailResult = {
 };
 
 export async function sendMemberLoginEmail({
+  autoSubmit = false,
   email,
   locale,
   next,
   origin,
   reason = "login",
 }: {
+  autoSubmit?: boolean;
   email: string;
   locale: Locale;
   next: string;
@@ -35,7 +37,7 @@ export async function sendMemberLoginEmail({
   }
 
   const supabase = getSupabaseServiceClient();
-  const redirectTo = buildAuthConfirmUrl({ email, next, origin }).toString();
+  const redirectTo = buildAuthConfirmUrl({ autoSubmit, email, next, origin }).toString();
   const { data, error } = await supabase.auth.admin.generateLink({
     type: "magiclink",
     email,
@@ -60,6 +62,7 @@ export async function sendMemberLoginEmail({
 
   const otpType = normalizeGeneratedOtpType(properties?.verification_type);
   const loginUrl = buildAuthConfirmUrl({
+    autoSubmit,
     email,
     next,
     origin,

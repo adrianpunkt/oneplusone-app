@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { requireMemberContext } from "@/lib/data/member";
+import { isEventCancellationReason } from "@/lib/event-cancellation";
 import { deliverMemberEventEmailFromResult } from "@/lib/event-email-delivery";
+import { waitlistConfirmationParam } from "@/lib/event-waitlist";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeDbError } from "@/lib/i18n/errors";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -73,11 +75,14 @@ export async function confirmInvitationAction(
   revalidatePath("/credits");
   revalidatePath("/dashboard");
   revalidatePath("/preferences");
-  const result = data as { seatStatus?: "confirmed" | "waitlisted" } | null;
+  const result = data as {
+    seatStatus?: "confirmed" | "waitlisted";
+    waitlistReason?: "balance" | "capacity" | "payment_hold_expired" | null;
+  } | null;
   await deliverMemberEventEmailFromResult(data);
 
   if (result?.seatStatus === "waitlisted") {
-    redirect("/going-out?waitlist=joined");
+    redirect(`/going-out?waitlist=${waitlistConfirmationParam(result.waitlistReason)}`);
   }
 
   return {
@@ -159,7 +164,8 @@ export async function joinWaitlistAction(
   await deliverMemberEventEmailFromResult(data);
 
   revalidateEventMutationPaths(invitation.event_id);
-  redirect("/going-out?waitlist=joined");
+  const result = data as { waitlistReason?: string | null } | null;
+  redirect(`/going-out?waitlist=${waitlistConfirmationParam(result?.waitlistReason)}`);
 }
 
 export async function declineInvitationAction(
@@ -176,7 +182,6 @@ export async function declineInvitationAction(
     "prefers_sunday_brunch",
     "event_fit",
     "other_commitment",
-    "prefer_not_to_say",
   ]);
   const supabase = await createSupabaseServerClient();
 
@@ -209,9 +214,17 @@ export async function cancelInvitationAction(
   const { locale, member } = await requireMemberContext();
   const dictionary = getDictionary(locale);
   const invitationId = String(formData.get("invitation_id") || "");
+  const cancellationReason = String(formData.get("cancellation_reason") || "").trim();
+  const cancellationDetails = String(formData.get("cancellation_details") || "").trim();
   const supabase = await createSupabaseServerClient();
 
   if (!invitationId) return { error: dictionary.actionErrors.invitationMissing };
+  if (!isEventCancellationReason(cancellationReason)) {
+    return { error: dictionary.actionErrors.invitationCancellationReasonRequired };
+  }
+  if (cancellationDetails.length > 500) {
+    return { error: dictionary.actionErrors.invitationCancellationDetailsTooLong };
+  }
 
   const { data: invitation, error: invitationError } = await supabase
     .from("event_invitations")
@@ -230,7 +243,9 @@ export async function cancelInvitationAction(
   }
 
   const { data, error } = await supabase.rpc("cancel_event_confirmation", {
+    p_details: cancellationDetails || null,
     p_invitation_id: invitationId,
+    p_reason: cancellationReason,
   });
 
   if (error) return { error: localizeDbError(error.message, dictionary) };

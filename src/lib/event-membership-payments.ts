@@ -70,7 +70,7 @@ export async function completeEventMembershipPurchaseFromSession(
       paymentStatus: internal.paymentStatus || "pending",
       waitlistReason: internal.waitlistReason || null,
       creditAvailable: Boolean(internal.creditAvailable),
-      loginNext: `/events/${internal.eventId}`,
+      loginNext: "/going-out",
     },
     status: "completed",
   };

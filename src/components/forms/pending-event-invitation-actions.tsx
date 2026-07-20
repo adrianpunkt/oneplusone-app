@@ -103,14 +103,14 @@ export function PendingEventInvitationActions({ copy }: { copy: Copy }) {
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="mx-auto grid w-full max-w-sm gap-3">
       <Button disabled={busy !== null} onClick={accept} type="button">
         {busy === "accept" ? copy.saving : copy.accept}
       </Button>
       <Button disabled={busy !== null} onClick={() => setDeclining(true)} type="button" variant="secondary">
         {copy.decline}
       </Button>
-      {error ? <p className="text-sm font-semibold text-red-700 sm:col-span-2">{error}</p> : null}
+      {error ? <p className="text-sm font-semibold text-red-700">{error}</p> : null}
     </div>
   );
 }

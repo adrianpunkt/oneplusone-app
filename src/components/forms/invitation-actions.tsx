@@ -12,6 +12,7 @@ import {
   HostingInfoDialog,
   type HostingInfoCopy,
 } from "@/components/forms/hosting-info-dialog";
+import type { SupportQuestionCopy } from "@/components/forms/support-question-dialog";
 import { SubmitButton } from "@/components/forms/submit-button";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -24,6 +25,7 @@ import {
   restoreInvitationAction,
   type EventActionState,
 } from "@/lib/actions/events";
+import { eventCancellationReasons } from "@/lib/event-cancellation";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
 import type { EventInvitation, EventRecord } from "@/lib/types";
@@ -41,6 +43,15 @@ export type InvitationActionCopy = {
   cancel: string;
   cancelEventDescription: string;
   cancelEventTitle: string;
+  cancellationDetailsLabel: string;
+  cancellationDetailsPlaceholder: string;
+  cancellationReasonLabel: string;
+  cancellationReasons: {
+    illness: string;
+    noLongerInterested: string;
+    scheduleChanged: string;
+    somethingElse: string;
+  };
   cancelWaitlist: string;
   cancelWaitlistDescription: string;
   cancelWaitlistTitle: string;
@@ -59,7 +70,6 @@ export type InvitationActionCopy = {
   declineReasons: {
     eventFit: string;
     otherCommitment: string;
-    preferNotToSay: string;
     sundayBrunch: string;
     weekendUnavailable: string;
   };
@@ -81,6 +91,7 @@ export type InvitationActionCopy = {
   seatConfirmed: string;
   startsIn: string;
   startsSoon: string;
+  support: SupportQuestionCopy;
   eventStarted: string;
   updating: string;
   waitlistCancelled: string;
@@ -118,26 +129,19 @@ function relativeEventTime(
   if (differenceMinutes < 0) return copy.eventStarted;
   if (differenceMinutes === 0) return copy.startsSoon;
 
-  const days = Math.floor(differenceMinutes / (24 * 60));
-  const hours = Math.floor((differenceMinutes % (24 * 60)) / 60);
-  const minutes = differenceMinutes % 60;
-  const parts: string[] = [];
-
-  if (days > 0) {
-    parts.push(`${days} ${days === 1 ? copy.day : copy.days}`);
-    if (hours > 0) {
-      parts.push(`${hours} ${hours === 1 ? copy.hour : copy.hours}`);
-    }
-  } else if (hours > 0) {
-    parts.push(`${hours} ${hours === 1 ? copy.hour : copy.hours}`);
-    if (minutes > 0) {
-      parts.push(`${minutes} ${minutes === 1 ? copy.minute : copy.minutes}`);
-    }
-  } else {
-    parts.push(`${minutes} ${minutes === 1 ? copy.minute : copy.minutes}`);
+  if (differenceMinutes >= 24 * 60) {
+    const days = Math.floor(differenceMinutes / (24 * 60));
+    return `${copy.startsIn} ${days} ${days === 1 ? copy.day : copy.days}`;
   }
 
-  return `${copy.startsIn} ${parts.join(` ${copy.and} `)}`;
+  if (differenceMinutes >= 60) {
+    const hours = Math.floor(differenceMinutes / 60);
+    return `${copy.startsIn} ${hours} ${hours === 1 ? copy.hour : copy.hours}`;
+  }
+
+  return `${copy.startsIn} ${differenceMinutes} ${
+    differenceMinutes === 1 ? copy.minute : copy.minutes
+  }`;
 }
 
 function canConfirmInvitation(invitation: InvitationDecisionTarget) {
@@ -267,6 +271,7 @@ export function ConfirmInvitationForm({
                     <EventLocation
                       event={event}
                       pendingTooltip={eventCopy.venuePendingTooltip}
+                      showCountryFlag
                     />
                     {event.language_code ? (
                       <EventLanguage
@@ -402,6 +407,12 @@ export function CancelInvitationForm({
     ? copy.cancelWaitlistDescription
     : copy.cancelEventDescription;
   const submitLabel = isWaitlist ? copy.cancelWaitlist : copy.cancel;
+  const reasonLabels = {
+    illness: copy.cancellationReasons.illness,
+    no_longer_interested: copy.cancellationReasons.noLongerInterested,
+    schedule_changed: copy.cancellationReasons.scheduleChanged,
+    something_else: copy.cancellationReasons.somethingElse,
+  } as const;
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -423,33 +434,76 @@ export function CancelInvitationForm({
         </Dialog.Trigger>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/35 backdrop-blur-sm" />
-          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine-burgundy/10 bg-white p-5 shadow-2xl">
-            <div className="grid gap-2">
-              <Dialog.Title className="font-display text-xl font-extrabold text-wine-burgundy">
+          <Dialog.Content className="fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-wine-burgundy/10 bg-white shadow-2xl outline-none sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)]">
+            <div className="relative shrink-0 border-b border-wine-burgundy/10 px-4 py-4 sm:border-b-0 sm:px-5 sm:pb-3 sm:pt-5">
+              <Dialog.Title className="pr-10 font-display text-xl font-extrabold leading-tight text-wine-burgundy">
                 {title}
               </Dialog.Title>
-              <Dialog.Description className="text-sm leading-6 text-muted">
-                {description}
-              </Dialog.Description>
-            </div>
-            <form action={action} className="grid gap-4">
-              <input type="hidden" name="invitation_id" value={invitationId} />
-              {state.error ? (
-                <ActionStatus error={state.error} toastKey={state} />
-              ) : null}
-              <div className="flex flex-wrap justify-end gap-2">
-                <Dialog.Close asChild>
-                  <Button type="button" variant="secondary">
-                    {copy.keepIt}
-                  </Button>
-                </Dialog.Close>
-                <SubmitButton
-                  variant="destructive"
-                  pendingLabel={copy.cancelling}
+              <Dialog.Close asChild>
+                <button
+                  aria-label={copy.keepIt}
+                  className="absolute right-2.5 top-2.5 grid h-11 w-11 place-items-center rounded-full text-muted transition hover:bg-blush-pink hover:text-wine-burgundy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
+                  type="button"
                 >
-                  <XCircle className="h-4 w-4" />
-                  {submitLabel}
-                </SubmitButton>
+                  <X aria-hidden="true" className="h-5 w-5" />
+                </button>
+              </Dialog.Close>
+            </div>
+            <form action={action} className="flex min-h-0 flex-1 flex-col">
+              <input type="hidden" name="invitation_id" value={invitationId} />
+              <div className="grid min-h-0 flex-auto content-start gap-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5 sm:pt-0">
+                <Dialog.Description className="text-sm leading-6 text-muted">
+                  {description}
+                </Dialog.Description>
+                <fieldset className="grid gap-2">
+                  <legend className="mb-1 text-sm font-semibold text-wine-burgundy">
+                    {copy.cancellationReasonLabel}
+                  </legend>
+                  {eventCancellationReasons.map((value) => (
+                    <label
+                      className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-white p-3 text-sm font-semibold text-wine-burgundy transition has-[:checked]:border-lipstick-red/40 has-[:checked]:bg-blush-pink hover:bg-blush-pink/60"
+                      key={value}
+                    >
+                      <input
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-lipstick-red"
+                        name="cancellation_reason"
+                        required
+                        type="radio"
+                        value={value}
+                      />
+                      <span>{reasonLabels[value]}</span>
+                    </label>
+                  ))}
+                </fieldset>
+                <label className="grid gap-2 text-sm font-semibold text-wine-burgundy">
+                  {copy.cancellationDetailsLabel}
+                  <Textarea
+                    className="min-h-20 resize-none font-normal"
+                    maxLength={500}
+                    name="cancellation_details"
+                    placeholder={copy.cancellationDetailsPlaceholder}
+                  />
+                </label>
+              </div>
+              <div className="grid shrink-0 gap-3 border-t border-wine-burgundy/10 bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 sm:px-5 sm:pb-5">
+                {state.error ? (
+                  <ActionStatus error={state.error} toastKey={state} />
+                ) : null}
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <Dialog.Close asChild>
+                    <Button className="h-11 w-full sm:h-10 sm:w-auto" type="button" variant="secondary">
+                      {copy.keepIt}
+                    </Button>
+                  </Dialog.Close>
+                  <SubmitButton
+                    className="h-11 w-full sm:h-10 sm:w-auto"
+                    variant="destructive"
+                    pendingLabel={copy.cancelling}
+                  >
+                    <XCircle className="h-4 w-4" />
+                    {submitLabel}
+                  </SubmitButton>
+                </div>
               </div>
             </form>
           </Dialog.Content>
@@ -519,7 +573,6 @@ export function DeclineInvitationForm({
     ["prefers_sunday_brunch", copy.declineReasons.sundayBrunch],
     ["event_fit", copy.declineReasons.eventFit],
     ["other_commitment", copy.declineReasons.otherCommitment],
-    ["prefer_not_to_say", copy.declineReasons.preferNotToSay],
   ] as const;
 
   return (
@@ -648,6 +701,7 @@ export function DeclineInvitationForm({
 }
 
 export function InvitationDecisionForms({
+  cardLayout = false,
   confirmedCancelLink = false,
   creditBalance,
   eventCopy,
@@ -658,6 +712,7 @@ export function InvitationDecisionForms({
   now,
   wantsToHost,
 }: {
+  cardLayout?: boolean;
   confirmedCancelLink?: boolean;
   creditBalance: number;
   eventCopy: InvitationEventCopy;
@@ -681,6 +736,7 @@ export function InvitationDecisionForms({
     !invitation.replacement_found;
   const stackDecisionActions =
     canDecline && (canConfirm || waitlistAvailable);
+  const stackActions = cardLayout || stackDecisionActions;
 
   if (invitation.status === "confirmed") {
     return (
@@ -722,7 +778,9 @@ export function InvitationDecisionForms({
     return (
       <div
         className={
-          stackDecisionActions
+          cardLayout
+            ? "mx-auto grid w-full max-w-sm content-center gap-3"
+            : stackDecisionActions
             ? "grid w-full content-center gap-2 sm:w-52 lg:justify-self-end"
             : "grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center lg:justify-end"
         }
@@ -737,7 +795,7 @@ export function InvitationDecisionForms({
             invitationId={invitation.id}
             locale={locale}
             now={now}
-            stacked={stackDecisionActions}
+            stacked={stackActions}
             wantsToHost={wantsToHost}
           />
         ) : null}
@@ -745,14 +803,14 @@ export function InvitationDecisionForms({
           <JoinWaitlistForm
             copy={copy}
             invitationId={invitation.id}
-            stacked={stackDecisionActions}
+            stacked={stackActions}
           />
         ) : null}
         {canDecline ? (
           <DeclineInvitationForm
             copy={copy}
             invitationId={invitation.id}
-            stacked={stackDecisionActions}
+            stacked={stackActions}
           />
         ) : null}
       </div>

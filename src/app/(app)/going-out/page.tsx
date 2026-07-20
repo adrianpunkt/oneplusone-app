@@ -1,13 +1,20 @@
+import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import {
-  ArrowRight,
   CalendarDays,
   Check,
   CircleCheck,
+  Clock3,
+  Heart,
   History,
   House,
+  Info,
   Inbox,
+  Languages,
+  MapPin,
+  UsersRound,
+  VenusAndMars,
   type LucideIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
@@ -27,6 +34,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { requireMemberContextForRender } from "@/lib/data/member";
 import {
   getAttendedEvents,
@@ -35,9 +43,18 @@ import {
   getInvitations,
   getPreferences,
 } from "@/lib/data/portal";
-import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
+import {
+  parseWaitlistConfirmationStatus,
+  type WaitlistConfirmationStatus,
+} from "@/lib/event-waitlist";
+import { getEventGenderBalanceMessage } from "@/lib/event-gender-balance";
+import {
+  getDictionary,
+  profileOptionLabel,
+  type Dictionary,
+} from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
-import type { Locale } from "@/lib/i18n/locales";
+import { languageFlag, type Locale } from "@/lib/i18n/locales";
 import type {
   EventAttendee,
   EventGroupSummary,
@@ -63,8 +80,6 @@ type GoingOutPageProps = {
   }>;
 };
 
-type WaitlistConfirmationStatus = "joined" | "cancelled";
-
 const upcomingAttendeeStatuses: readonly EventAttendee["status"][] = [
   "confirmed",
 ];
@@ -78,6 +93,11 @@ const pastInvitationStatuses: readonly EventInvitation["status"][] = [
   "confirmed",
   "waitlisted",
 ];
+
+const eventFormatImagePaths = {
+  brunch: "/events/event-brunch.webp",
+  dinner: "/events/event-dinner.webp",
+} as const;
 
 function isJoinedWaitlistInvitation(invitation: EventInvitation) {
   return invitation.status === "waitlisted" && Boolean(invitation.responded_at);
@@ -215,48 +235,13 @@ function EventStatusText({
   );
 }
 
-function pendingInvitationStatusLabel(
-  invitation: EventInvitation,
-  dictionary: Dictionary,
-  locale: Locale,
-) {
-  if (isJoinedWaitlistInvitation(invitation)) {
-    return dictionary.goingOut.status.onWaitlist;
-  }
-
-  if (isInvitationWaitlistAvailable(invitation)) {
-    return dictionary.goingOut.status.waitlistAvailable;
-  }
-
-  if (isInvitationConfirmAvailable(invitation)) {
-    return statusLabel("invited", locale);
-  }
-
-  if (
-    invitation.status === "cancelled" &&
-    invitation.confirmed_at &&
-    !invitation.replacement_found
-  ) {
-    return dictionary.goingOut.status.replacementPending;
-  }
-
-  if (
-    (invitation.status === "declined" || invitation.status === "cancelled") &&
-    !invitation.confirmed_at
-  ) {
-    return dictionary.goingOut.status.cannotMakeIt;
-  }
-
-  return statusLabel(invitation.status, locale);
-}
-
 function upcomingEventStatusLabel(
   item: EventListItem,
   dictionary: Dictionary,
   locale: Locale,
 ) {
   if (item.status === "waitlisted" && item.invitation?.responded_at) {
-    return dictionary.goingOut.status.onWaitlist;
+    return joinedWaitlistStatusLabel(item.invitation, dictionary);
   }
 
   return statusLabel(item.status, locale);
@@ -276,16 +261,55 @@ function eventCalendarLocation(event: EventRecord | null | undefined) {
     .join(", ");
 }
 
-function waitlistConfirmationStatus(
-  value: string | string[] | undefined,
-): WaitlistConfirmationStatus | null {
-  const status = Array.isArray(value) ? value[0] : value;
-
-  if (status === "joined" || status === "cancelled") {
-    return status;
+function joinedWaitlistStatusLabel(
+  invitation: EventInvitation,
+  dictionary: Dictionary,
+) {
+  if (invitation.waitlist_reason === "balance") {
+    return dictionary.goingOut.status.awaitingBalance;
   }
+  if (invitation.waitlist_reason === "payment_hold_expired") {
+    return dictionary.goingOut.status.paymentPriorityRetained;
+  }
+  return dictionary.goingOut.status.onCapacityWaitlist;
+}
 
-  return null;
+function joinedWaitlistNote(
+  invitation: EventInvitation | undefined,
+  dictionary: Dictionary,
+) {
+  if (invitation?.waitlist_reason === "balance") {
+    return dictionary.goingOut.balanceWaitlistNote;
+  }
+  if (invitation?.waitlist_reason === "payment_hold_expired") {
+    return dictionary.goingOut.paymentHoldExpiredWaitlistNote;
+  }
+  return dictionary.goingOut.capacityWaitlistNote;
+}
+
+function waitlistConfirmationCopy(
+  dictionary: Dictionary,
+  status: Exclude<WaitlistConfirmationStatus, "cancelled">,
+) {
+  if (status === "balance") {
+    return {
+      body: dictionary.goingOut.balanceWaitlistModalBody,
+      important: dictionary.goingOut.balanceWaitlistModalImportant,
+      title: dictionary.goingOut.balanceWaitlistModalTitle,
+    };
+  }
+  if (status === "payment-hold-expired") {
+    return {
+      body: dictionary.goingOut.paymentHoldExpiredWaitlistModalBody,
+      important: dictionary.goingOut.paymentHoldExpiredWaitlistModalImportant,
+      title: dictionary.goingOut.paymentHoldExpiredWaitlistModalTitle,
+    };
+  }
+  return {
+    body: dictionary.goingOut.capacityWaitlistModalBody,
+    important: dictionary.goingOut.capacityWaitlistModalImportant,
+    title: dictionary.goingOut.capacityWaitlistModalTitle,
+  };
 }
 
 function searchParamValue(value: string | string[] | undefined) {
@@ -301,7 +325,8 @@ function WaitlistConfirmation({
 }) {
   if (!status) return null;
 
-  if (status === "joined") {
+  if (status !== "cancelled") {
+    const confirmationCopy = waitlistConfirmationCopy(dictionary, status);
     return (
       <div className="fixed inset-0 z-50 grid place-items-center bg-wine-burgundy/35 px-4 py-8 backdrop-blur-sm">
         <div
@@ -319,13 +344,15 @@ function WaitlistConfirmation({
                 className="font-display text-2xl font-extrabold leading-tight text-wine-burgundy"
                 id="waitlist-confirmation-title"
               >
-                {dictionary.goingOut.waitlistModalTitle}
+                {confirmationCopy.title}
               </h2>
               <div className="grid gap-2 text-sm leading-6 text-muted">
-                <p>{dictionary.goingOut.waitlistModalBody1}</p>
+                <p>
+                  {confirmationCopy.body}
+                </p>
                 <p>
                   <span className="font-semibold text-wine-burgundy">{dictionary.goingOut.important}</span>{" "}
-                  {dictionary.goingOut.waitlistModalImportant}
+                  {confirmationCopy.important}
                 </p>
               </div>
             </div>
@@ -382,6 +409,123 @@ function EventMeta({
       ) : null}
     </div>
   );
+}
+
+function PendingInvitationImage({
+  dictionary,
+  event,
+}: {
+  dictionary: Dictionary;
+  event: EventRecord | null | undefined;
+}) {
+  const format = event?.event_format;
+  if (format !== "brunch" && format !== "dinner") return null;
+
+  return (
+    <div className="relative aspect-[16/9] w-full overflow-hidden bg-blush-pink">
+      <Image
+        alt={dictionary.events.imageAlt[format]}
+        className="object-cover object-center"
+        fill
+        sizes="(max-width: 704px) calc(100vw - 2rem), 672px"
+        src={eventFormatImagePaths[format]}
+      />
+    </div>
+  );
+}
+
+function PendingInvitationFact({
+  alignTop = false,
+  children,
+  className = "",
+  icon,
+}: {
+  alignTop?: boolean;
+  children: ReactNode;
+  className?: string;
+  icon?: ReactNode;
+}) {
+  return (
+    <div
+      className={`flex ${alignTop ? "items-start" : "items-center"} gap-2 rounded-lg bg-blush-pink p-3 text-sm font-semibold text-wine-burgundy ${className}`}
+    >
+      {icon}
+      {children}
+    </div>
+  );
+}
+
+function PendingInvitationInfo({ label }: { label: string }) {
+  return (
+    <span
+      aria-label={label}
+      className="group relative inline-flex cursor-help rounded-full outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/40 focus-visible:ring-offset-2"
+      tabIndex={0}
+    >
+      <Info aria-hidden="true" className="h-4 w-4 text-ocean-blue" />
+      <HoverTooltip className="w-56 whitespace-normal text-left leading-4 sm:w-64">
+        {label}
+      </HoverTooltip>
+    </span>
+  );
+}
+
+function PendingInvitationFlaggedLabel({
+  flag,
+  prefix,
+  trailing,
+  tooltip,
+  value,
+}: {
+  flag?: string;
+  prefix: string;
+  trailing?: ReactNode;
+  tooltip?: string;
+  value: string;
+}) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      {prefix ? <span>{prefix}</span> : null}
+      {flag && tooltip ? (
+        <span
+          aria-label={tooltip}
+          className="group relative inline-flex rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/40 focus-visible:ring-offset-2"
+          tabIndex={0}
+        >
+          <span aria-hidden="true" className="text-xl leading-none">
+            {flag}
+          </span>
+          <HoverTooltip>{tooltip}</HoverTooltip>
+        </span>
+      ) : null}
+      <span>{value}</span>
+      {trailing}
+    </span>
+  );
+}
+
+function pendingInvitationCountryDetails(timezone: string, locale: Locale) {
+  if (["Europe/Madrid", "Atlantic/Canary"].includes(timezone)) {
+    return { flag: "🇪🇸", label: locale === "es" ? "España" : "Spain" };
+  }
+  if (["Europe/Lisbon", "Atlantic/Azores", "Atlantic/Madeira"].includes(timezone)) {
+    return { flag: "🇵🇹", label: "Portugal" };
+  }
+  return null;
+}
+
+function formatPendingInvitationDate(
+  value: string | null | undefined,
+  timezone: string | undefined,
+  locale: Locale,
+) {
+  if (!value) return formatDateTime(value, locale);
+
+  return new Intl.DateTimeFormat(locale === "es" ? "es-ES" : "en-GB", {
+    dateStyle: "full",
+    timeStyle: "short",
+    timeZone: timezone,
+  }).format(new Date(value));
 }
 
 function EmptyEventState({
@@ -506,7 +650,6 @@ function PendingInvitationCard({
   const canDecline =
     !invitation.confirmed_at &&
     ["invited", "waitlisted"].includes(invitation.status);
-  const isWaitlist = isWaitlistAvailable || isOnWaitlist;
   const canRestoreConfirmation =
     invitation.status === "cancelled" &&
     Boolean(invitation.confirmed_at) &&
@@ -517,55 +660,137 @@ function PendingInvitationCard({
     isOnWaitlist ||
     canDecline ||
     canRestoreConfirmation;
+  const event = invitation.events;
+  const hasEventImage =
+    event?.event_format === "brunch" || event?.event_format === "dinner";
+  const intention = summary?.majorityIntention
+    ? profileOptionLabel(summary.majorityIntention, locale).toLocaleLowerCase(
+        locale === "es" ? "es-ES" : "en-GB",
+      )
+    : null;
+  const invitationCopy = dictionary.goingOut.pendingInvitationCard;
+  const eventFormat = invitationCopy.formats[event?.event_format || "other"];
+  const eventLanguage = event?.language_code || locale;
+  const eventLocation = invitationCopy.eventLocation(eventFormat, event?.city || null);
+  const eventCountry = event
+    ? pendingInvitationCountryDetails(event.timezone, locale)
+    : null;
+  const eventLanguageLabel = invitationCopy.language(eventLanguage);
+  const genderBalanceMessage = event
+    ? getEventGenderBalanceMessage(event.gender_balance_enabled, locale)
+    : null;
+  const hasSecondaryFacts = Boolean(genderBalanceMessage || intention);
 
   return (
     <article
-      className={`grid gap-4 rounded-none border-x-0 border-b-0 border-t border-wine-burgundy/10 bg-white p-4 sm:rounded-lg sm:border ${
-        hasAction ? "lg:grid-cols-[minmax(0,1fr)_auto]" : ""
-      }`}
+      className="mx-auto grid w-full max-w-2xl overflow-hidden rounded-none border-x-0 border-b-0 border-t border-wine-burgundy/10 bg-white shadow-[0_18px_45px_rgba(68,10,18,0.07)] sm:rounded-lg sm:border"
     >
-      <div className="grid min-w-0 gap-2">
-        <div className="grid gap-1">
-          <EventStatusText
-            label={pendingInvitationStatusLabel(invitation, dictionary, locale)}
-            locale={locale}
-            status={isWaitlist ? "waitlisted" : invitation.status}
-          />
-          <h2 className="font-display text-lg font-extrabold text-wine-burgundy">
-            {eventTitle(invitation.events, dictionary, locale)}
-          </h2>
-        </div>
-        <EventMeta
+      {hasEventImage ? (
+        <PendingInvitationImage
           dictionary={dictionary}
-          event={invitation.events}
-          locale={locale}
-        />
-        <EventGroupSummaryLine
-          copy={formatEventGroupSummaryCopy(
-            dictionary.events.groupSummary,
-            summary,
-          )}
-          event={invitation.events}
-          languageTooltips={dictionary.events.languageTooltips}
-          locale={locale}
-          venuePendingTooltip={dictionary.events.venuePendingTooltip}
-        />
-      </div>
-      {hasAction ? (
-        <InvitationDecisionForms
-          copy={dictionary.actions}
-          creditBalance={creditBalance}
-          eventCopy={{
-            languageTooltips: dictionary.events.languageTooltips,
-            venuePendingTooltip: dictionary.events.venuePendingTooltip,
-          }}
-          hostingCopy={dictionary.preferences}
-          invitation={invitation}
-          locale={locale}
-          now={now}
-          wantsToHost={preferences?.wants_to_host ?? false}
+          event={event}
         />
       ) : null}
+      <div className="grid gap-1.5 p-5">
+        <Badge className="w-fit" variant="wine-burgundy">
+          {invitationCopy.badge}
+        </Badge>
+        <h2 className="font-display text-3xl font-black leading-tight text-wine-burgundy">
+          {invitationCopy.title(
+            eventFormat,
+          )}
+        </h2>
+        <p className="text-sm leading-6 text-muted">
+          {invitationCopy.description}
+        </p>
+      </div>
+      <div className="grid gap-5 px-5 pb-5">
+        <div className={`grid gap-3 ${hasSecondaryFacts ? "sm:grid-cols-2" : ""}`}>
+          <div className="grid gap-3 sm:h-full sm:grid-rows-4">
+            <PendingInvitationFact icon={<MapPin className="h-5 w-5 shrink-0" />}>
+              <PendingInvitationFlaggedLabel
+                flag={event?.city ? eventCountry?.flag : undefined}
+                prefix={eventLocation.prefix}
+                trailing={event?.city ? (
+                  <PendingInvitationInfo label={invitationCopy.venueDisclaimer} />
+                ) : undefined}
+                tooltip={event?.city ? eventCountry?.label : undefined}
+                value={eventLocation.value}
+              />
+            </PendingInvitationFact>
+            <PendingInvitationFact icon={<CalendarDays className="h-5 w-5 shrink-0" />}>
+              {formatPendingInvitationDate(event?.starts_at, event?.timezone, locale)}
+            </PendingInvitationFact>
+            <PendingInvitationFact icon={<UsersRound className="h-5 w-5 shrink-0" />}>
+              {event
+                ? invitationCopy.groupProfile(
+                    event.capacity,
+                    summary?.ageMin ?? null,
+                    summary?.ageMax ?? null,
+                  )
+                : null}
+            </PendingInvitationFact>
+            <PendingInvitationFact icon={<Languages className="h-5 w-5 shrink-0" />}>
+              <PendingInvitationFlaggedLabel
+                flag={languageFlag(eventLanguage)}
+                prefix={eventLanguageLabel.prefix}
+                tooltip={eventLanguageLabel.value}
+                value={eventLanguageLabel.value}
+              />
+            </PendingInvitationFact>
+          </div>
+          {hasSecondaryFacts ? (
+            <div className="grid gap-3 sm:h-full sm:grid-rows-2">
+              {genderBalanceMessage ? (
+                <PendingInvitationFact
+                  alignTop
+                  className={intention ? "" : "sm:row-span-2"}
+                  icon={<VenusAndMars className="mt-0.5 h-5 w-5 shrink-0" />}
+                >
+                  {genderBalanceMessage}
+                </PendingInvitationFact>
+              ) : null}
+              {intention ? (
+                <PendingInvitationFact
+                  alignTop
+                  className={genderBalanceMessage ? "" : "sm:row-span-2"}
+                  icon={<Heart className="mt-0.5 h-5 w-5 shrink-0" />}
+                >
+                  {invitationCopy.intention(intention)}
+                </PendingInvitationFact>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        {event?.rsvp_deadline_at ? (
+          <p className="flex items-start gap-2 rounded-lg border border-ocean-blue/15 bg-ocean-blue/8 p-4 text-sm font-semibold leading-6 text-ocean-blue">
+            <Clock3 className="mt-0.5 h-5 w-5 shrink-0" />
+            {invitationCopy.deadline(
+              formatPendingInvitationDate(
+                event.rsvp_deadline_at,
+                event.timezone,
+                locale,
+              ),
+            )}
+          </p>
+        ) : null}
+        {hasAction ? (
+          <InvitationDecisionForms
+            cardLayout
+            copy={dictionary.actions}
+            creditBalance={creditBalance}
+            eventCopy={{
+              languageTooltips: dictionary.events.languageTooltips,
+              venuePendingTooltip: dictionary.events.venuePendingTooltip,
+            }}
+            hostingCopy={dictionary.preferences}
+            invitation={invitation}
+            locale={locale}
+            now={now}
+            wantsToHost={preferences?.wants_to_host ?? false}
+          />
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -625,7 +850,7 @@ function UpcomingEventCard({
         />
         {isWaitlisted ? (
           <p className="text-sm font-semibold text-ocean-blue">
-            {dictionary.goingOut.waitlistNote}
+            {joinedWaitlistNote(item.invitation, dictionary)}
           </p>
         ) : null}
         {isConfirmed && wantsToHost ? (
@@ -635,17 +860,7 @@ function UpcomingEventCard({
           </p>
         ) : null}
       </div>
-      <div className="grid w-full justify-items-center gap-3 pt-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-2 sm:pt-0 lg:flex-col lg:items-end lg:justify-between">
-        <Button
-          asChild
-          className="h-12 min-w-40 px-6 text-base sm:h-10 sm:min-w-0 sm:px-4 sm:text-sm"
-          variant="secondary"
-        >
-          <Link href={`/events/${item.eventId}`}>
-            {dictionary.common.details}
-            <ArrowRight className="h-5 w-5 sm:h-4 sm:w-4" />
-          </Link>
-        </Button>
+      <div className="grid w-full justify-items-center gap-3 pt-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-2 sm:pt-0 lg:flex-col lg:items-end lg:justify-end">
         {isConfirmed && item.invitation ? (
           <CancelInvitationForm
             copy={dictionary.actions}
@@ -717,14 +932,8 @@ function PastEventCard({
           venuePendingTooltip={dictionary.events.venuePendingTooltip}
         />
       </div>
-      <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-        <Button asChild variant="secondary">
-          <Link href={`/events/${item.eventId}`}>
-            {dictionary.common.details}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </Button>
-        {canReapply && item.invitation ? (
+      {canReapply && item.invitation ? (
+        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
           <ConfirmInvitationForm
             copy={dictionary.actions}
             creditBalance={creditBalance}
@@ -739,8 +948,8 @@ function PastEventCard({
             now={now}
             wantsToHost={preferences?.wants_to_host ?? false}
           />
-        ) : null}
-      </div>
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -827,7 +1036,7 @@ export default async function GoingOutPage({
   const dictionary = getDictionary(locale);
   const { preferences: preferencesParam, waitlist } = await searchParams;
   const preferencesSaved = searchParamValue(preferencesParam) === "saved";
-  const waitlistConfirmation = waitlistConfirmationStatus(waitlist);
+  const waitlistConfirmation = parseWaitlistConfirmationStatus(waitlist);
   const [invitations, attendedEvents, preferences, creditBalance] = await Promise.all([
     getInvitations(member.id),
     getAttendedEvents(member.id),
@@ -941,26 +1150,16 @@ export default async function GoingOutPage({
         toastKey={preferencesSaved ? "preferences-saved" : null}
       />
       <RouteToast
-        clearSearchParams={
-          waitlistConfirmation === "cancelled" ? ["waitlist"] : []
-        }
-        description={
-          waitlistConfirmation === "joined"
-            ? dictionary.goingOut.waitlistJoinedDescription
-            : dictionary.goingOut.waitlistCancelledDescription
-        }
-        title={
-          waitlistConfirmation === "joined"
-            ? dictionary.goingOut.waitlistJoinedTitle
-            : dictionary.goingOut.waitlistCancelledTitle
-        }
-        toastKey={
-          waitlistConfirmation ? `waitlist-${waitlistConfirmation}` : null
-        }
+        clearSearchParams={["waitlist"]}
+        description={dictionary.goingOut.waitlistCancelledDescription}
+        title={dictionary.goingOut.waitlistCancelledTitle}
+        toastKey={waitlistConfirmation === "cancelled" ? "waitlist-cancelled" : null}
       />
       <WaitlistConfirmation dictionary={dictionary} status={waitlistConfirmation} />
 
-      <PreferencesStrip dictionary={dictionary} preferences={preferences} />
+      {!pendingInvitations.length ? (
+        <PreferencesStrip dictionary={dictionary} preferences={preferences} />
+      ) : null}
 
       <section className="grid gap-4">
         {pendingInvitations.length || !upcomingEvents.length ? (
@@ -987,6 +1186,10 @@ export default async function GoingOutPage({
               />
             )}
           </EventSection>
+        ) : null}
+
+        {pendingInvitations.length ? (
+          <PreferencesStrip dictionary={dictionary} preferences={preferences} />
         ) : null}
 
         {upcomingEvents.length ? (

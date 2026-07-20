@@ -6,7 +6,7 @@ import { KeyRound } from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { BrandLogo } from "@/components/brand-logo";
-import { Button } from "@/components/ui/button";
+import { AutoSubmitButton } from "@/components/forms/auto-submit-button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { recordMemberAppLoginEvent } from "@/lib/app-login-events";
 import {
@@ -35,6 +35,7 @@ export const metadata: Metadata = {
 };
 
 type ConfirmSearchParams = {
+  auto?: string | string[];
   email_hint?: string | string[];
   next?: string | string[];
   token?: string | string[];
@@ -125,7 +126,12 @@ async function verifyAuthLink(
   return fallbackResult.error ? result : fallbackResult;
 }
 
-async function expiredLinkRedirectPath(origin: string, next: string, emailHint: string) {
+async function expiredLinkRedirectPath(
+  origin: string,
+  next: string,
+  emailHint: string,
+  autoSubmit = false,
+) {
   const email = decodeEmailHint(emailHint);
   if (!email) return loginRedirectPath("expired-link", next, emailHint);
   if (isDemoMemberEmail(email)) return loginRedirectPath("expired-link", next, emailHint);
@@ -144,6 +150,7 @@ async function expiredLinkRedirectPath(origin: string, next: string, emailHint: 
     }
 
     const loginEmail = await sendMemberLoginEmail({
+      autoSubmit,
       email,
       locale: normalizeLocale(member.preferred_locale),
       next,
@@ -171,6 +178,7 @@ export async function confirmLoginAction(formData: FormData) {
   const type = firstValue(formData.get("type"));
   const next = normalizeMemberLoginNextPath(firstValue(formData.get("next")));
   const emailHint = firstValue(formData.get("email_hint"));
+  const autoSubmit = firstValue(formData.get("auto")) === "1";
   const requestHeaders = await headers();
   const origin = resolveAppOrigin(requestHeaders.get("origin"));
 
@@ -183,7 +191,7 @@ export async function confirmLoginAction(formData: FormData) {
 
   if (error) {
     console.warn("Could not verify auth link", error.message);
-    redirect(await expiredLinkRedirectPath(origin, next, emailHint));
+    redirect(await expiredLinkRedirectPath(origin, next, emailHint, autoSubmit));
   }
 
   await supabase.rpc("link_member_for_current_user");
@@ -193,7 +201,7 @@ export async function confirmLoginAction(formData: FormData) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect(await expiredLinkRedirectPath(origin, next, emailHint));
+    redirect(await expiredLinkRedirectPath(origin, next, emailHint, autoSubmit));
   }
 
   const { data: member } = await supabase
@@ -245,6 +253,7 @@ export default async function ConfirmLoginPage({
   const type = firstValue(params.type);
   const next = normalizeMemberLoginNextPath(firstValue(params.next));
   const emailHint = firstValue(params.email_hint);
+  const autoSubmit = firstValue(params.auto) === "1";
   const context = await getOptionalMemberContextForRender();
   if (context) redirect(next);
 
@@ -256,7 +265,7 @@ export default async function ConfirmLoginPage({
   if (preflightStatus === "invalid") {
     const requestHeaders = await headers();
     const origin = resolveAppOrigin(requestHeaders.get("origin"));
-    redirect(await expiredLinkRedirectPath(origin, next, emailHint));
+    redirect(await expiredLinkRedirectPath(origin, next, emailHint, autoSubmit));
   }
 
   return (
@@ -286,10 +295,11 @@ export default async function ConfirmLoginPage({
               <input type="hidden" name="type" value={type} />
               <input type="hidden" name="next" value={next} />
               <input type="hidden" name="email_hint" value={emailHint} />
-              <Button size="lg">
+              <input type="hidden" name="auto" value={autoSubmit ? "1" : ""} />
+              <AutoSubmitButton autoSubmit={autoSubmit} size="lg">
                 <KeyRound className="h-4 w-4" />
                 {dictionary.login.confirmButton}
-              </Button>
+              </AutoSubmitButton>
             </form>
           </div>
         </CardContent>

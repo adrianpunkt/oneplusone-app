@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
-import { eventInvitationSessionCookie } from "@/lib/event-invitations";
+import { readEventInvitationSessionToken } from "@/lib/event-invitations";
 import { deliverMemberEventEmailFromResult } from "@/lib/event-email-delivery";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 
@@ -13,12 +13,11 @@ const payloadSchema = z.object({
     "prefers_sunday_brunch",
     "event_fit",
     "other_commitment",
-    "prefer_not_to_say",
   ]),
 });
 
 export async function POST(request: NextRequest) {
-  const sessionToken = request.cookies.get(eventInvitationSessionCookie)?.value || "";
+  const sessionToken = readEventInvitationSessionToken(request.cookies, request.nextUrl);
   const payload = payloadSchema.safeParse(await request.json().catch(() => null));
   if (!sessionToken || !payload.success) {
     return NextResponse.json({ ok: false, error: "Invalid invitation response." }, { status: 400 });

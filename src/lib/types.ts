@@ -77,6 +77,7 @@ export type EventRecord = {
   credit_cost: number;
   minimum_confirmed_count: number;
   minimum_run_count: number;
+  gender_balance_enabled: boolean;
   invitation_send_at: string | null;
   rsvp_deadline_at: string;
   prepared_at: string | null;
@@ -153,6 +154,20 @@ export type EventMaterial = {
   public_url: string;
 };
 
+export type EventQuestionType = "sharing_time" | "spicy_time";
+
+export type EventQuestion = {
+  id: string;
+  event_id: string;
+  question_id: string;
+  sort_order: number;
+  assigned_at: string;
+  type: EventQuestionType;
+  prompt: string;
+  localized_content: JsonObject;
+  rating: number | null;
+};
+
 export type EventFeedback = {
   id: string;
   event_id: string;
@@ -170,10 +185,12 @@ export type PublicInvitationSession = {
     city: string | null;
     eventFormat: "dinner" | "brunch" | "other";
     languageCode: "en" | "es" | null;
+    capacity: number;
     ageRange: { min: number | null; max: number | null };
     majorityIntention: string | null;
     additionalLanguages: string[];
     preferenceNudge: boolean;
+    genderBalanceEnabled: boolean;
     rsvpDeadlineAt: string;
     creditCost: number;
   };

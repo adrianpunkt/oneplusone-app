@@ -3,7 +3,7 @@ import type Stripe from "stripe";
 
 import { getRuntimeEnv } from "@/lib/env";
 import {
-  eventInvitationSessionCookie,
+  readEventInvitationSessionToken,
   resolveInternalInvitationSession,
 } from "@/lib/event-invitations";
 import { isLocalOrigin, resolveAppOrigin } from "@/lib/app-origin";
@@ -16,7 +16,7 @@ const MEMBERSHIP_AMOUNT_CENTS = 1500;
 const MEMBERSHIP_CURRENCY = "eur";
 
 export async function POST(request: NextRequest) {
-  const sessionToken = request.cookies.get(eventInvitationSessionCookie)?.value || "";
+  const sessionToken = readEventInvitationSessionToken(request.cookies, request.nextUrl);
   const invitationSession = await resolveInternalInvitationSession(sessionToken);
   if (!invitationSession) {
     return NextResponse.json({ ok: false, error: "Invitation session expired." }, { status: 401 });

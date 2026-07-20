@@ -1,19 +1,34 @@
+import Image from "next/image";
 import Link from "next/link";
 import { cookies } from "next/headers";
-import { CalendarDays, Clock3, Languages, MapPin, UsersRound } from "lucide-react";
+import {
+  CalendarDays,
+  Clock3,
+  Heart,
+  Info,
+  Languages,
+  MapPin,
+  UsersRound,
+  VenusAndMars,
+} from "lucide-react";
 
-import { BrandLogo } from "@/components/brand-logo";
 import { PendingEventInvitationActions } from "@/components/forms/pending-event-invitation-actions";
+import { SupportQuestionDialog } from "@/components/forms/support-question-dialog";
+import { PublicInvitationLogo } from "@/components/public-invitation-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { reconcileEventMembershipCheckout } from "@/lib/event-membership-payments";
 import {
-  eventInvitationSessionCookie,
   getPublicInvitationSession,
   getPublicPaymentResult,
+  readEventInvitationSessionToken,
   resolveInternalInvitationSession,
 } from "@/lib/event-invitations";
+import { getEventGenderBalanceMessage } from "@/lib/event-gender-balance";
+import { getDictionary, profileOptionLabel } from "@/lib/i18n/dictionaries";
+import { languageFlag } from "@/lib/i18n/locales";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
 import type { PublicEventPaymentResult } from "@/lib/types";
 
@@ -22,72 +37,112 @@ export const metadata = { robots: { follow: false, index: false } };
 
 const copy = {
   en: {
-    accessInvalid: "This invitation link is invalid or has expired. Ask the club team for a fresh invitation.",
-    accept: "Accept and join the club",
-    ageRange: (min: number, max: number) => `Mostly ages ${min}–${max}`,
+    accessDeadline: "The event RSVP deadline has passed and reservations are no longer accepted.",
+    accessInvalid: "This invitation link is invalid.",
+    accessResent: "This link has expired, so we sent a new invitation link to your email. Open the new link to respond—there’s no need to contact the club.",
+    accessRetry: "This link has expired, but we could not send a new one right now. Reopen this link to try again.",
+    accessUnavailable: "This invitation is no longer available.",
+    accept: "Join the club and reserve a seat",
     availableCredit: "Your joining credit remains available for another event.",
-    cityPending: "City to be confirmed",
-    credit: (count: number) => `${count} joining credit${count === 1 ? "" : "s"} for this seat`,
     decline: "I can’t make it",
     declineDetails: "Anything else? (optional)",
     declineReason: "Why can’t you join?",
-    deadline: "Respond by",
+    deadline: (value: string) => `Respond by ${value} to reserve your seat`,
     error: "Something went wrong. Please try again.",
+    eventLocation: (format: string, city: string | null) => city
+      ? { prefix: `${format} in`, value: city }
+      : { prefix: "", value: `${format} — city to be confirmed` },
     format: { brunch: "Brunch", dinner: "Dinner", other: "Event" },
-    fullAfter: "Restaurant and host details are shared only after the founders confirm the event.",
-    intention: "Most people in this proposed group are looking for",
+    groupProfile: (capacity: number, min: number | null, max: number | null) =>
+      min && max ? `Max ${capacity} people, ages ${min}–${max}` : `Max ${capacity} people`,
+    imageAlt: {
+      brunch: "A group of singles sharing brunch around a table",
+      dinner: "A group of singles sharing dinner around a table",
+    },
+    fullAfter:
+      "We found a group of people who match your profile. We sent invitations to everyone and final details will be confirmed after everyone reserves their seat",
+    intention: (value: string) => `Most people in the group are looking for “${value}”`,
     invitation: "Private event invitation",
-    language: (value: string) => `Hosted in ${value === "es" ? "Spanish" : "English"}`,
+    language: (value: string) => ({
+      prefix: "Event in",
+      value: value === "es" ? "Spanish" : "English",
+    }),
     login: "Continue to member login",
     paymentCancelled: "Checkout was cancelled. Your invitation remains here.",
     paymentFailed: "We could not verify this payment. Please try again or contact the club team.",
     paymentPending: "Your payment is still processing. This page will reflect the result once Stripe confirms it.",
-    preference: "You can finish your event preferences after activating membership.",
+    preference:
+      "You can complete your application and join the club by paying the one-time 15 EUR membership fee which includes this event.",
+    venueDisclaimer: "Venue and address will be announced on Thursday.",
     reasons: {
-      event_fit: "This event isn’t the right fit",
-      other_commitment: "I have another commitment",
-      prefer_not_to_say: "Prefer not to say",
-      prefers_sunday_brunch: "I would prefer Sunday brunch",
-      weekend_unavailable: "I’m unavailable that weekend",
+      weekend_unavailable: "I cannot make it this weekend",
+      prefers_sunday_brunch: "I would prefer Sunday brunches instead",
+      event_fit: "This event isn't a good fit for me",
+      other_commitment: "Something else",
     },
     saving: "Saving…",
     seatConfirmed: "Your payment is complete and your seat is confirmed.",
-    title: "A table is taking shape",
+    title: (format: string) => `Singles ${format.toLocaleLowerCase("en-GB")} this weekend`,
     waitlisted: "Your payment is complete. You are priority-waitlisted and your credit has not been spent.",
+    balanceWaitlisted:
+      "Your payment is complete. We reserved your joining credit while we wait for one more person to balance the group. Your seat will confirm automatically when they join, or we’ll return the credit.",
+    paymentHoldExpiredWaitlisted:
+      "Your payment is complete. The 10-minute seat hold expired before checkout finished, but your original application priority is retained and your joining credit is still available.",
   },
   es: {
-    accessInvalid: "Este enlace de invitación no es válido o ha caducado. Pide al equipo un enlace nuevo.",
-    accept: "Aceptar y unirme al club",
-    ageRange: (min: number, max: number) => `Principalmente entre ${min} y ${max} años`,
+    accessDeadline: "El plazo de confirmación del evento ha terminado y ya no se aceptan reservas.",
+    accessInvalid: "Este enlace de invitación no es válido.",
+    accessResent: "Este enlace ha caducado, así que te hemos enviado uno nuevo por email. Ábrelo para responder; no necesitas contactar con el equipo.",
+    accessRetry: "Este enlace ha caducado, pero ahora mismo no hemos podido enviarte uno nuevo. Vuelve a abrir este enlace para intentarlo de nuevo.",
+    accessUnavailable: "Esta invitación ya no está disponible.",
+    accept: "Únete al club y reserva una plaza",
     availableCredit: "Tu crédito de bienvenida sigue disponible para otro evento.",
-    cityPending: "Ciudad por confirmar",
-    credit: (count: number) => `${count} crédito${count === 1 ? "" : "s"} de bienvenida para esta plaza`,
     decline: "No puedo asistir",
     declineDetails: "¿Algo más? (opcional)",
     declineReason: "¿Por qué no puedes asistir?",
-    deadline: "Responde antes del",
+    deadline: (value: string) => `Responde antes del ${value} para reservar tu plaza`,
     error: "Algo ha fallado. Inténtalo de nuevo.",
+    eventLocation: (format: string, city: string | null) => city
+      ? { prefix: `${format} en`, value: city }
+      : { prefix: "", value: `${format} — ciudad por confirmar` },
     format: { brunch: "Brunch", dinner: "Cena", other: "Evento" },
-    fullAfter: "El restaurante y el host se comparten cuando los fundadores confirman el evento.",
-    intention: "La mayoría de este grupo propuesto busca",
+    groupProfile: (capacity: number, min: number | null, max: number | null) =>
+      min && max
+        ? `Máximo ${capacity} personas, edades ${min}–${max}`
+        : `Máximo ${capacity} personas`,
+    imageAlt: {
+      brunch: "Un grupo de solteros compartiendo un brunch alrededor de una mesa",
+      dinner: "Un grupo de solteros compartiendo una cena alrededor de una mesa",
+    },
+    fullAfter:
+      "Encontramos un grupo de personas que encajan con tu perfil. Enviamos invitaciones a todos y confirmaremos los detalles finales cuando todos reserven su plaza",
+    intention: (value: string) => `La mayoría de las personas del grupo busca «${value}»`,
     invitation: "Invitación privada a un evento",
-    language: (value: string) => `El evento será en ${value === "es" ? "español" : "inglés"}`,
+    language: (value: string) => ({
+      prefix: "Evento en",
+      value: value === "es" ? "español" : "inglés",
+    }),
     login: "Continuar al acceso de miembros",
     paymentCancelled: "Has cancelado el pago. Tu invitación sigue disponible aquí.",
     paymentFailed: "No hemos podido verificar el pago. Inténtalo de nuevo o contacta con el equipo.",
     paymentPending: "Tu pago sigue procesándose. Esta página mostrará el resultado cuando Stripe lo confirme.",
-    preference: "Podrás completar tus preferencias de eventos después de activar la membresía.",
+    preference:
+      "Puedes completar tu solicitud y unirte al club pagando la cuota única de membresía de 15 EUR, que incluye este evento.",
+    venueDisclaimer: "El lugar y la dirección se anunciarán el jueves.",
     reasons: {
+      weekend_unavailable: "No puedo asistir este fin de semana",
+      prefers_sunday_brunch: "Preferiría los brunches de los domingos",
       event_fit: "Este evento no encaja conmigo",
-      other_commitment: "Tengo otro compromiso",
-      prefer_not_to_say: "Prefiero no decirlo",
-      prefers_sunday_brunch: "Preferiría un brunch el domingo",
-      weekend_unavailable: "No estoy disponible ese fin de semana",
+      other_commitment: "Otro motivo",
     },
     saving: "Guardando…",
     seatConfirmed: "Tu pago está completo y tu plaza está confirmada.",
-    title: "Una mesa está tomando forma",
+    title: (format: string) => `${format} para solteros este fin de semana`,
     waitlisted: "Tu pago está completo. Estás en la lista de espera prioritaria y tu crédito no se ha gastado.",
+    balanceWaitlisted:
+      "Tu pago está completo. Hemos reservado tu crédito de bienvenida mientras esperamos a una persona más para equilibrar el grupo. Tu plaza se confirmará automáticamente cuando se una o te devolveremos el crédito.",
+    paymentHoldExpiredWaitlisted:
+      "Tu pago está completo. La reserva de plaza de 10 minutos caducó antes de terminar el proceso, pero conservas la prioridad original de tu solicitud y tu crédito de bienvenida sigue disponible.",
   },
 } as const;
 
@@ -99,11 +154,12 @@ export default async function EventInvitationPage({
   const params = await searchParams;
   const cookieStore = await cookies();
   const requestLocale = await getRequestLocaleFallback();
-  const sessionToken = cookieStore.get(eventInvitationSessionCookie)?.value || "";
+  const sessionToken = readEventInvitationSessionToken(cookieStore);
   const internalSession = await resolveInternalInvitationSession(sessionToken);
   let invitation = await getPublicInvitationSession(sessionToken);
   const locale = invitation?.locale || requestLocale;
   const text = copy[locale];
+  const supportCopy = getDictionary(locale).actions.support;
   let paymentResult: PublicEventPaymentResult | null = null;
 
   if (internalSession && params.payment === "success" && params.session_id) {
@@ -115,30 +171,71 @@ export default async function EventInvitationPage({
     invitation = await getPublicInvitationSession(sessionToken);
   }
 
-  if (!invitation) {
+  if (!invitation || params.access === "deadline") {
+    const accessMessage = params.access === "deadline"
+      ? text.accessDeadline
+      : params.access === "resent"
+        ? text.accessResent
+        : params.access === "retry"
+          ? text.accessRetry
+          : params.access === "unavailable"
+            ? text.accessUnavailable
+            : text.accessInvalid;
     return (
       <main className="grid min-h-screen place-items-center bg-blush-pink px-4 py-10">
         <Card className="w-full max-w-xl">
-          <CardHeader><BrandLogo className="w-44" priority /><CardTitle>{text.invitation}</CardTitle></CardHeader>
-          <CardContent><p className="text-sm leading-6 text-muted">{text.accessInvalid}</p></CardContent>
+          <CardHeader><PublicInvitationLogo className="w-44" priority /><CardTitle>{text.invitation}</CardTitle></CardHeader>
+          <CardContent><p className="text-sm leading-6 text-muted">{accessMessage}</p></CardContent>
         </Card>
       </main>
     );
   }
 
   const event = invitation.event;
+  const eventImage = event.eventFormat === "brunch"
+    ? { alt: text.imageAlt.brunch, src: "/events/event-brunch.webp" }
+    : event.eventFormat === "dinner"
+      ? { alt: text.imageAlt.dinner, src: "/events/event-dinner.webp" }
+      : null;
+  const eventLanguage = event.languageCode || locale;
+  const eventLocation = text.eventLocation(text.format[event.eventFormat], event.city);
+  const eventCountry = eventCountryDetails(event.timezone, locale);
+  const eventLanguageLabel = text.language(eventLanguage);
+  const genderBalanceMessage = getEventGenderBalanceMessage(
+    event.genderBalanceEnabled,
+    locale,
+  );
+  const hasSecondaryFacts = Boolean(genderBalanceMessage || event.majorityIntention);
   const eventDate = formatEventDate(event.startsAt, event.timezone, locale);
   const deadline = formatEventDate(event.rsvpDeadlineAt, event.timezone, locale);
-  const loginNext = paymentResult?.loginNext || `/events/${event.id}`;
+  const loginNext = paymentResult?.loginNext || "/going-out";
 
   return (
     <main className="min-h-screen bg-blush-pink px-4 py-8 sm:py-12">
       <div className="mx-auto grid max-w-2xl gap-6">
-        <BrandLogo className="w-44" priority />
+        {!eventImage ? <PublicInvitationLogo className="w-44" priority /> : null}
         <Card>
+          {eventImage ? (
+            <div className="relative aspect-[16/9] overflow-hidden rounded-t-lg bg-blush-pink">
+              <Image
+                alt={eventImage.alt}
+                className="object-cover object-center"
+                fill
+                preload
+                sizes="(max-width: 704px) calc(100vw - 2rem), 672px"
+                src={eventImage.src}
+              />
+              <PublicInvitationLogo
+                className="absolute left-4 top-4 z-10 w-28 sm:left-5 sm:top-5 sm:w-36"
+                priority
+              />
+            </div>
+          ) : null}
           <CardHeader>
             <Badge className="w-fit" variant="wine-burgundy">{text.invitation}</Badge>
-            <CardTitle className="font-display text-3xl font-black text-wine-burgundy">{text.title}</CardTitle>
+            <CardTitle className="font-display text-3xl font-black text-wine-burgundy">
+              {text.title(text.format[event.eventFormat])}
+            </CardTitle>
             <CardDescription>{text.fullAfter}</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-5">
@@ -146,25 +243,74 @@ export default async function EventInvitationPage({
             {params.payment === "cancelled" ? (
               <p className="rounded-lg bg-blush-pink p-3 text-sm font-semibold text-muted">{text.paymentCancelled}</p>
             ) : null}
-            <dl className="grid gap-3 sm:grid-cols-2">
-              <Fact icon={<CalendarDays className="h-4 w-4" />} label={eventDate} />
-              <Fact icon={<MapPin className="h-4 w-4" />} label={event.city || text.cityPending} />
-              <Fact icon={<Languages className="h-4 w-4" />} label={text.language(event.languageCode || locale)} />
-              <Fact icon={<UsersRound className="h-4 w-4" />} label={text.format[event.eventFormat]} />
-              {event.ageRange.min && event.ageRange.max ? (
-                <Fact icon={<UsersRound className="h-4 w-4" />} label={text.ageRange(event.ageRange.min, event.ageRange.max)} />
+            <dl className={`grid gap-3 ${hasSecondaryFacts ? "sm:grid-cols-2" : ""}`}>
+              <div className="grid gap-3 sm:h-full sm:grid-rows-4">
+                <Fact
+                  icon={<MapPin className="h-5 w-5 shrink-0" />}
+                  label={(
+                    <FlaggedLabel
+                      flag={event.city ? eventCountry?.flag : undefined}
+                      prefix={eventLocation.prefix}
+                      trailing={event.city ? <InfoTooltip label={text.venueDisclaimer} /> : undefined}
+                      tooltip={event.city ? eventCountry?.label : undefined}
+                      value={eventLocation.value}
+                    />
+                  )}
+                />
+                <Fact
+                  icon={<UsersRound className="h-5 w-5 shrink-0" />}
+                  label={text.groupProfile(event.capacity, event.ageRange.min, event.ageRange.max)}
+                />
+                <Fact
+                  icon={<CalendarDays className="h-5 w-5 shrink-0" />}
+                  label={eventDate}
+                />
+                <Fact
+                  icon={<Languages className="h-5 w-5 shrink-0" />}
+                  label={(
+                    <FlaggedLabel
+                      flag={languageFlag(eventLanguage)}
+                      prefix={eventLanguageLabel.prefix}
+                      tooltip={eventLanguageLabel.value}
+                      value={eventLanguageLabel.value}
+                    />
+                  )}
+                />
+              </div>
+              {hasSecondaryFacts ? (
+                <div className="grid gap-3 sm:h-full sm:grid-rows-2">
+                  {genderBalanceMessage ? (
+                    <Fact
+                      alignTop
+                      className={event.majorityIntention ? "" : "sm:row-span-2"}
+                      icon={<VenusAndMars className="mt-0.5 h-5 w-5 shrink-0" />}
+                      label={genderBalanceMessage}
+                    />
+                  ) : null}
+                  {event.majorityIntention ? (
+                    <Fact
+                      alignTop
+                      className={genderBalanceMessage ? "" : "sm:row-span-2"}
+                      icon={<Heart className="mt-0.5 h-5 w-5 shrink-0" />}
+                      label={text.intention(
+                        profileOptionLabel(event.majorityIntention, locale).toLocaleLowerCase(
+                          locale === "es" ? "es-ES" : "en-GB",
+                        ),
+                      )}
+                    />
+                  ) : null}
+                </div>
               ) : null}
-              <Fact icon={<Clock3 className="h-4 w-4" />} label={`${text.deadline} ${deadline}`} />
             </dl>
-            {event.majorityIntention ? (
-              <p className="rounded-lg border border-ocean-blue/15 bg-ocean-blue/8 p-4 text-sm leading-6 text-ocean-blue">
-                {text.intention} {event.majorityIntention}.
+            <p className="flex items-start gap-2 rounded-lg border border-ocean-blue/15 bg-ocean-blue/8 p-4 text-sm font-semibold leading-6 text-ocean-blue">
+              <Clock3 className="mt-0.5 h-5 w-5 shrink-0" />
+              {text.deadline(deadline)}
+            </p>
+            {event.preferenceNudge ? (
+              <p className="mx-auto w-full max-w-lg text-center text-sm leading-6 text-muted">
+                {text.preference}
               </p>
             ) : null}
-            <div className="grid gap-1 text-sm text-muted">
-              <p>{text.credit(event.creditCost)}</p>
-              {event.preferenceNudge ? <p>{text.preference}</p> : null}
-            </div>
             {invitation.canApply && invitation.invitation.responseStatus !== "declined" ? (
               <PendingEventInvitationActions copy={{
                 accept: text.accept,
@@ -179,6 +325,7 @@ export default async function EventInvitationPage({
             {paymentResult?.ok || invitation.invitation.seatStatus === "confirmed" ? (
               <Button asChild><Link href={`/login?next=${encodeURIComponent(loginNext)}`}>{text.login}</Link></Button>
             ) : null}
+            <SupportQuestionDialog copy={supportCopy} locale={locale} />
           </CardContent>
         </Card>
       </div>
@@ -186,8 +333,82 @@ export default async function EventInvitationPage({
   );
 }
 
-function Fact({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return <div className="flex items-center gap-2 rounded-lg bg-blush-pink p-3 text-sm font-semibold text-wine-burgundy">{icon}{label}</div>;
+function Fact({
+  alignTop = false,
+  className = "",
+  icon,
+  label,
+}: {
+  alignTop?: boolean;
+  className?: string;
+  icon: React.ReactNode;
+  label: React.ReactNode;
+}) {
+  return (
+    <div
+      className={`flex ${alignTop ? "items-start" : "items-center"} gap-2 rounded-lg bg-blush-pink p-3 text-sm font-semibold text-wine-burgundy ${className}`}
+    >
+      {icon}
+      {label}
+    </div>
+  );
+}
+
+function FlaggedLabel({
+  flag,
+  prefix,
+  trailing,
+  tooltip,
+  value,
+}: {
+  flag?: string;
+  prefix: string;
+  trailing?: React.ReactNode;
+  tooltip?: string;
+  value: string;
+}) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1.5">
+      {prefix ? <span>{prefix}</span> : null}
+      {flag && tooltip ? (
+        <span
+          aria-label={tooltip}
+          className="group relative inline-flex rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/40 focus-visible:ring-offset-2"
+          tabIndex={0}
+        >
+          <span aria-hidden="true" className="text-xl leading-none">{flag}</span>
+          <HoverTooltip>{tooltip}</HoverTooltip>
+        </span>
+      ) : null}
+      <span>{value}</span>
+      {trailing}
+    </span>
+  );
+}
+
+function InfoTooltip({ label }: { label: string }) {
+  return (
+    <span
+      aria-label={label}
+      className="group relative inline-flex cursor-help rounded-full outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/40 focus-visible:ring-offset-2"
+      tabIndex={0}
+    >
+      <Info aria-hidden="true" className="h-4 w-4 text-ocean-blue" />
+      <HoverTooltip className="w-56 whitespace-normal text-left leading-4 sm:w-64">
+        {label}
+      </HoverTooltip>
+    </span>
+  );
+}
+
+function eventCountryDetails(timezone: string, locale: "en" | "es") {
+  if (["Europe/Madrid", "Atlantic/Canary"].includes(timezone)) {
+    return { flag: "🇪🇸", label: locale === "es" ? "España" : "Spain" };
+  }
+  if (["Europe/Lisbon", "Atlantic/Azores", "Atlantic/Madeira"].includes(timezone)) {
+    return { flag: "🇵🇹", label: "Portugal" };
+  }
+  return null;
 }
 
 function PaymentNotice({
@@ -200,14 +421,22 @@ function PaymentNotice({
   const message = result.status === "confirmed"
     ? text.seatConfirmed
     : result.status === "waitlisted"
-      ? text.waitlisted
+      ? result.waitlistReason === "balance"
+        ? text.balanceWaitlisted
+        : result.waitlistReason === "payment_hold_expired"
+          ? text.paymentHoldExpiredWaitlisted
+          : text.waitlisted
       : result.status === "payment_pending"
         ? text.paymentPending
         : text.paymentFailed;
   return (
     <div className="rounded-lg border border-ocean-blue/15 bg-ocean-blue/8 p-4 text-sm font-semibold leading-6 text-ocean-blue">
       <p>{message}</p>
-      {result.creditAvailable && result.status === "waitlisted" ? <p>{text.availableCredit}</p> : null}
+      {result.creditAvailable &&
+      result.status === "waitlisted" &&
+      result.waitlistReason !== "payment_hold_expired" ? (
+        <p>{text.availableCredit}</p>
+      ) : null}
     </div>
   );
 }
