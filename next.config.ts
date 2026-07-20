@@ -2,6 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1", "100.86.129.62"],
+  experimental: {
+    // Safari can repeatedly reload when a persisted Turbopack HMR chunk or its
+    // source map no longer matches the current development module graph.
+    turbopackFileSystemCacheForDev: false,
+    turbopackSourceMaps: false,
+  },
   async redirects() {
     return [
       {
