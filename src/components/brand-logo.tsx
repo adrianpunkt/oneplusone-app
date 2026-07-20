@@ -17,7 +17,7 @@ export function BrandLogo({
       <Image
         src={brandLogoImage}
         alt="one plus one app"
-        priority={priority}
+        preload={priority}
         className={cn("h-auto w-full object-contain", imageClassName)}
       />
     </span>

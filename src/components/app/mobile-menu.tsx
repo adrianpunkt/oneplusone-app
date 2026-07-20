@@ -10,6 +10,10 @@ import { MemberNavIcon } from "@/components/app/member-nav-icon";
 import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { isPathInSection, meActivePaths, navSections } from "@/components/app/nav-sections";
 import { LanguageSwitcher } from "@/components/app/language-switcher";
+import {
+  SupportQuestionDialog,
+  type SupportQuestionCopy,
+} from "@/components/forms/support-question-dialog";
 import { SignOutButton } from "@/components/app/sign-out-button";
 import { Button } from "@/components/ui/button";
 import type { Locale } from "@/lib/i18n/locales";
@@ -32,6 +36,7 @@ export function MobileMenu({
   languageLabel,
   labels,
   messageTooltip,
+  supportCopy,
   unreadCount,
 }: {
   currentLocale: Locale;
@@ -40,6 +45,7 @@ export function MobileMenu({
   languageLabel: string;
   labels: NavLabels;
   messageTooltip?: string;
+  supportCopy: SupportQuestionCopy;
   unreadCount: number;
 }) {
   const [open, setOpen] = useState(false);
@@ -169,6 +175,9 @@ export function MobileMenu({
               />
               <span>{labels.myStory}</span>
             </Link>
+            <div className="grid pt-2">
+              <SupportQuestionDialog copy={supportCopy} locale={currentLocale} />
+            </div>
           </nav>
         </div>
       </div>

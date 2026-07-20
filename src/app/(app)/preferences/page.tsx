@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { PreferencesForm } from "@/components/forms/preferences-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { requireMemberContextForRender } from "@/lib/data/member";
@@ -37,6 +39,12 @@ export default async function PreferencesPage({
         <h1 className="font-display text-3xl font-black text-wine-burgundy">
           {dictionary.preferences.title}
         </h1>
+        <Link
+          className="w-fit text-sm font-semibold text-lipstick-red underline decoration-lipstick-red/30 underline-offset-4 transition hover:text-wine-burgundy hover:decoration-wine-burgundy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35 focus-visible:ring-offset-2"
+          href="/going-out"
+        >
+          <span aria-hidden="true">&lt;</span> {dictionary.preferences.goBack}
+        </Link>
       </section>
       <Card>
         <CardContent className="pt-5">

@@ -5,6 +5,7 @@ import { CalendarDays, Clock3, Languages, MapPinned, UsersRound } from "lucide-r
 
 import { AddToCalendarButton } from "@/components/app/add-to-calendar-button";
 import { EventLanguage } from "@/components/app/event-language";
+import { EventHostPlaybook } from "@/components/app/event-host-playbook";
 import { EventLocation } from "@/components/app/event-location";
 import {
   InvitationDecisionForms,
@@ -123,7 +124,7 @@ export default async function EventDetailPage({
     getPreferences(member.id),
     getRequestTimestamp(),
   ]);
-  const { event, eventAttendees, feedback, host, invitation, isHost, materials, summary } = eventDetail;
+  const { event, eventAttendees, feedback, host, invitation, isHost, materials, questions, summary } = eventDetail;
 
   if (!event) notFound();
 
@@ -337,17 +338,8 @@ export default async function EventDetailPage({
         </Card>
       </section>
 
-      {isHost && materials.length ? (
-        <Card>
-          <CardHeader><CardTitle>{copy.hostMaterials}</CardTitle></CardHeader>
-          <CardContent className="flex flex-wrap gap-2">
-            {materials.filter((material) => material.locale === locale).map((material) => (
-              <a className="rounded-lg border border-wine-burgundy/10 bg-white px-4 py-2 text-sm font-semibold text-wine-burgundy" href={material.public_url} key={material.id} rel="noreferrer" target="_blank">
-                {material.kind.replaceAll("_", " ")} · v{material.version}
-              </a>
-            ))}
-          </CardContent>
-        </Card>
+      {isHost ? (
+        <EventHostPlaybook locale={locale} materials={materials} questions={questions} />
       ) : null}
 
       {eventEnded && invitation?.seat_status === "confirmed" ? (

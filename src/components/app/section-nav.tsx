@@ -6,7 +6,12 @@ import { usePathname } from "next/navigation";
 import { MemberNavIcon } from "@/components/app/member-nav-icon";
 import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { isPathInSection, meActivePaths, navSections } from "@/components/app/nav-sections";
+import {
+  SupportQuestionDialog,
+  type SupportQuestionCopy,
+} from "@/components/forms/support-question-dialog";
 import { Button } from "@/components/ui/button";
+import type { Locale } from "@/lib/i18n/locales";
 import { cn } from "@/lib/utils";
 
 type NavLabels = {
@@ -20,13 +25,17 @@ export function SectionNav({
   displayName,
   imageUrl,
   labels,
+  locale,
   messageTooltip,
+  supportCopy,
   unreadCount,
 }: {
   displayName: string;
   imageUrl: string;
   labels: NavLabels;
+  locale: Locale;
   messageTooltip?: string;
+  supportCopy: SupportQuestionCopy;
   unreadCount: number;
 }) {
   const pathname = usePathname();
@@ -97,6 +106,9 @@ export function SectionNav({
           {labels.myStory}
         </Link>
       </Button>
+      <div className="grid pt-2">
+        <SupportQuestionDialog copy={supportCopy} locale={locale} />
+      </div>
     </nav>
   );
 }

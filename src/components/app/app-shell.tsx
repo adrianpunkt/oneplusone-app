@@ -146,7 +146,9 @@ export function AppShell({
             displayName={displayName}
             imageUrl={imageUrl}
             labels={navLabels}
+            locale={locale}
             messageTooltip={notificationTooltip}
+            supportCopy={dictionary.actions.support}
             unreadCount={unreadCount}
           />
 
@@ -202,6 +204,7 @@ export function AppShell({
                 languageLabel={dictionary.common.language}
                 labels={mobileNavLabels}
                 messageTooltip={notificationTooltip}
+                supportCopy={dictionary.actions.support}
                 unreadCount={unreadCount}
               />
             </div>

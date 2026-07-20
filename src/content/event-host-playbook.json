@@ -1,0 +1,127 @@
+{
+  "version": "1.0",
+  "locales": {
+    "en": {
+      "eyebrow": "Host-only guide",
+      "title": "Your event host playbook",
+      "intro": "You are still a participant. Your role is simply to help everyone feel welcome and keep the conversation moving naturally.",
+      "privacy": "This guide and the assigned questions are only visible to the host.",
+      "downloadsTitle": "Printable materials",
+      "downloadsDescription": "Download the event pack before you leave home. Print the question cards and cut them out if the pack is provided in that format.",
+      "emptyDownloads": "The printable event pack has not been added yet. You can still host with the instructions and questions below.",
+      "emptyQuestions": "Questions have not been assigned to this event yet. Ask the founders to finish the question pack before the event.",
+      "questionCount": "questions assigned",
+      "sharingTitle": "Sharing time",
+      "sharingDescription": "Warm, inclusive prompts that help the table get to know one another.",
+      "spicyTitle": "Spicy time",
+      "spicyDescription": "More playful prompts for later in the event. Anyone can pass on a question.",
+      "beforeTitle": "Before everyone arrives",
+      "before": [
+        "Arrive about 10 minutes early and check that the reservation and table are ready.",
+        "Keep the event pack handy, but join the event as another participant rather than acting like staff.",
+        "Welcome people as they arrive and help them find the table."
+      ],
+      "roundsTitle": "How to guide the event",
+      "rounds": [
+        {
+          "time": "At the start",
+          "title": "Introductions",
+          "body": "Once everyone has arrived — or about 30 minutes after the start — introduce yourself with your name, where you are from, and what you do. Choose the next person, then let each person choose who follows."
+        },
+        {
+          "time": "Around drinks or 1 hour in",
+          "title": "Sharing time",
+          "body": "Introduce the sharing questions. Draw or read one question and nominate someone to answer. The person who answers chooses who answers next."
+        },
+        {
+          "time": "Around the food or 90 minutes in",
+          "title": "Spicy time",
+          "body": "Move to the playful questions when the table feels comfortable. Answer the first one yourself, then nominate the next person. For brunches, keep the tone lighter and use the lower-intensity questions first."
+        },
+        {
+          "time": "At the end",
+          "title": "Close naturally",
+          "body": "There is no formal ending. Thank everyone for coming and remind them that feedback in the app unlocks private messaging with the people from their table."
+        }
+      ],
+      "principlesTitle": "Keep the table comfortable",
+      "principles": [
+        "Anyone may skip a question without explaining why.",
+        "Invite quieter people in without putting them on the spot.",
+        "Do not rush a good conversation just to complete every question.",
+        "Keep personal details and stories from the table private.",
+        "If a problem needs follow-up, tell the founders after the event."
+      ],
+      "unexpectedTitle": "If an unexpected person joins",
+      "unexpected": "Politely explain that this is a private event with a named reservation and a confirmed guest list. Ask them not to join the table. Do not argue; ask restaurant staff for help if needed, and tell the founders afterward.",
+      "supportTitle": "If you need help",
+      "support": "If something urgent changes before the event, contact the founders through the usual club support channel. During the event, make the safest, most considerate choice and report anything important afterward.",
+      "materialLabels": {
+        "host_guide": "Host guide",
+        "questions_pdf": "Printable question pack",
+        "event_guide": "Event guide"
+      }
+    },
+    "es": {
+      "eyebrow": "Guía solo para el host",
+      "title": "Tu guía para ser host del evento",
+      "intro": "Sigues siendo participante. Tu papel consiste simplemente en ayudar a que todo el mundo se sienta bienvenido y que la conversación fluya con naturalidad.",
+      "privacy": "Esta guía y las preguntas asignadas solo son visibles para el host.",
+      "downloadsTitle": "Materiales imprimibles",
+      "downloadsDescription": "Descarga el pack del evento antes de salir de casa. Imprime las tarjetas de preguntas y recórtalas si el pack está preparado en ese formato.",
+      "emptyDownloads": "El pack imprimible del evento todavía no se ha añadido. Puedes ser host con las instrucciones y preguntas que aparecen aquí.",
+      "emptyQuestions": "Todavía no se han asignado preguntas a este evento. Pide a los fundadores que terminen el pack de preguntas antes del evento.",
+      "questionCount": "preguntas asignadas",
+      "sharingTitle": "Momento para compartir",
+      "sharingDescription": "Preguntas cercanas e inclusivas para que la mesa se conozca mejor.",
+      "spicyTitle": "Momento spicy",
+      "spicyDescription": "Preguntas más divertidas para una fase posterior del evento. Cualquiera puede pasar una pregunta.",
+      "beforeTitle": "Antes de que llegue todo el mundo",
+      "before": [
+        "Llega unos 10 minutos antes y comprueba que la reserva y la mesa estén preparadas.",
+        "Ten a mano el pack del evento, pero participa como una persona más, no como parte del personal.",
+        "Da la bienvenida a las personas cuando lleguen y ayúdalas a encontrar la mesa."
+      ],
+      "roundsTitle": "Cómo guiar el evento",
+      "rounds": [
+        {
+          "time": "Al principio",
+          "title": "Presentaciones",
+          "body": "Cuando haya llegado todo el mundo —o unos 30 minutos después del inicio— preséntate diciendo tu nombre, de dónde eres y a qué te dedicas. Elige a la siguiente persona y después deja que cada participante elija quién continúa."
+        },
+        {
+          "time": "Con las bebidas o tras 1 hora",
+          "title": "Momento para compartir",
+          "body": "Presenta las preguntas para compartir. Saca o lee una pregunta y elige a alguien para responder. Quien responda elige a la siguiente persona."
+        },
+        {
+          "time": "Con la comida o tras 90 minutos",
+          "title": "Momento spicy",
+          "body": "Pasa a las preguntas más divertidas cuando la mesa esté cómoda. Responde tú primero y elige a la siguiente persona. En los brunches, mantén un tono más ligero y empieza por las preguntas de menor intensidad."
+        },
+        {
+          "time": "Al final",
+          "title": "Cierre natural",
+          "body": "No hace falta un cierre formal. Da las gracias a todo el mundo y recuerda que enviar el feedback en la app desbloquea los mensajes privados con las personas de la mesa."
+        }
+      ],
+      "principlesTitle": "Cuida la comodidad de la mesa",
+      "principles": [
+        "Cualquiera puede saltarse una pregunta sin tener que explicar el motivo.",
+        "Invita a participar a las personas más calladas sin ponerlas en un compromiso.",
+        "No interrumpas una buena conversación solo para terminar todas las preguntas.",
+        "Mantén en privado los datos personales y las historias compartidas en la mesa.",
+        "Si un problema necesita seguimiento, cuéntaselo a los fundadores después del evento."
+      ],
+      "unexpectedTitle": "Si se une una persona inesperada",
+      "unexpected": "Explica con educación que es un evento privado con una reserva a nombre del club y una lista de asistentes confirmada. Pídele que no se una a la mesa. No discutas; solicita ayuda al personal del restaurante si hace falta y avisa a los fundadores después.",
+      "supportTitle": "Si necesitas ayuda",
+      "support": "Si hay un cambio urgente antes del evento, contacta con los fundadores por el canal habitual de soporte del club. Durante el evento, toma la decisión más segura y considerada e informa después de cualquier asunto importante.",
+      "materialLabels": {
+        "host_guide": "Guía del host",
+        "questions_pdf": "Pack de preguntas imprimible",
+        "event_guide": "Guía del evento"
+      }
+    }
+  }
+}

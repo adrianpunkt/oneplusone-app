@@ -50,7 +50,13 @@ function invitationDisplayStatus(
   locale: Locale,
 ) {
   if (invitation.status === "waitlisted" && invitation.responded_at) {
-    return dictionary.goingOut.status.onWaitlist;
+    if (invitation.waitlist_reason === "balance") {
+      return dictionary.goingOut.status.awaitingBalance;
+    }
+    if (invitation.waitlist_reason === "payment_hold_expired") {
+      return dictionary.goingOut.status.paymentPriorityRetained;
+    }
+    return dictionary.goingOut.status.onCapacityWaitlist;
   }
 
   if (!invitation.responded_at && invitation.response_mode === "waitlist") {
