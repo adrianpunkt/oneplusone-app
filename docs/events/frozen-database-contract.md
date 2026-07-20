@@ -247,9 +247,11 @@ email.
   p_session_ttl_minutes integer)` -> `{ok, sessionToken, maxAgeSeconds,
   expiresAt}`. The bearer token is one-use and stored only as SHA-256; claims
   after the RSVP cutoff return `status:'deadline_passed'`. The public email URL
-  first renders a non-mutating GET interstitial; only its explicit Continue
-  POST calls this RPC, preventing automated email-link checks from consuming
-  the token.
+  first performs a non-consuming preflight: a valid token renders the Continue
+  form, while a used or expired token immediately queues its idempotent
+  replacement and shows the resulting status. The valid-token form posts when
+  the visitor continues or after a two-second browser delay, so GET-only
+  automated email-link checks cannot consume an active token.
 - `refresh_expired_event_invitation_link(p_token text)` -> `{ok, status,
   deliveryId?, locale?}`. A used or expired pending-member link queues at most
   one replacement invitation delivery while the event is open. After the
@@ -265,6 +267,12 @@ email.
   `status` is `checkout_required | confirmed | waitlisted | closed`. Pending
   checkout creates/reuses a ten-minute database hold. Lock order is invitation,
   then event.
+- `prepare_active_event_invitation_resume(p_session_token text)` -> `{ok,
+  status, eventId, invitationId, email, holdId?, holdExpiresAt?, priorityAt?}`.
+  If the invited person became an active member through another payment path,
+  it avoids a second checkout, renews or creates the short seat hold when one
+  is available, and restores the invitation to the normal in-app confirmation
+  state. Already confirmed, waitlisted, or closed invitations remain terminal.
 - `attach_event_checkout_session(p_payment_attempt_id uuid,
   p_checkout_session_id text)` -> `{ok, paymentAttemptId, checkoutSessionId,
   status:'checkout_created'}`.
@@ -272,13 +280,13 @@ email.
   p_checkout_session_id text, p_payment_intent_id text,
   p_stripe_event_id text)` -> `{ok, eventId, invitationId, memberId,
   membershipStatus:'active', status, seatStatus, paymentStatus,
-  waitlistReason, creditAvailable}`. `status` is `confirmed | waitlisted |
-  payment_pending | failed`. It activates membership and grants the joining
-  credit once, converts a valid hold or retries allocation, spends the credit
-  for a confirmed seat or an accepted gender-balance waitlist position, and
-  leaves it unspent for capacity or payment-hold-expiry waitlists. A balance
-  waitlist debit is retained on promotion and refunded idempotently when the
-  required balancing participant is not found.
+  waitlistReason, creditAvailable, loginNext}`. `status` is `ready_to_confirm |
+  membership_active | confirmed | waitlisted | payment_pending | failed`. It
+  activates membership and grants the joining credit once, renews the event
+  hold when possible, and returns an actionable invitation to the member app.
+  The normal authenticated confirmation RPC then allocates the seat or
+  waitlist position, records the host preference, and spends or reserves the
+  credit exactly once.
 - `get_event_invitation_payment_result(p_session_token text,
   p_checkout_session_id text)` -> the public payment-result DTO below.
 - `decline_pending_event_invitation(p_session_token text, p_reason text,
@@ -286,6 +294,10 @@ email.
   seatStatus:'none', paymentStatus, waitlistReason:null}`. It is service-only,
   validates the short-lived invitation session, locks invitation then event,
   releases any hold, and creates the durable cancellation acknowledgement.
+  Pending members also have the distinct `event_type_not_interested` reason so
+  operations can separate event-format preference from a one-off event mismatch.
+  That reason disables future event invitations for the member; every other
+  decline reason leaves the invitation preference unchanged.
 
 ## Allowed event transitions
 
@@ -341,7 +353,8 @@ Payment success receives only:
 ```ts
 type PublicEventPaymentResult = {
   ok: boolean
-  status: "confirmed" | "waitlisted" | "payment_pending" | "failed"
+  status: "confirmed" | "waitlisted" | "ready_to_confirm" |
+    "membership_active" | "payment_pending" | "failed"
   eventId: string
   seatStatus: "confirmed" | "waitlisted" | "held" | "none"
   paymentStatus: "pending" | "paid" | "failed" | "expired"
@@ -351,5 +364,6 @@ type PublicEventPaymentResult = {
 }
 ```
 
-`loginNext` is always `/going-out` and is passed through the existing
-validated member-login `next` normalizer.
+`loginNext` is `/going-out?apply=<invitation-id>` while confirmation can resume,
+and `/going-out` for already completed or terminal outcomes. It is passed
+through the existing validated member-login `next` normalizer.

@@ -144,15 +144,15 @@ Pending-member invitation, payment, and ten-minute hold:
 8. Add an app-owned Stripe membership checkout tied to event, invitation, hold, and member IDs.
 9. Extend the app Stripe webhook and success reconciliation so payment:
    - activates membership and grants the joining credit idempotently;
-   - confirms and spends the credit when the hold is valid;
-   - retries seat allocation if the hold expired;
-   - otherwise priority-waitlists; capacity/payment-hold-expiry waitlists leave
-     the credit unspent, while an accepted gender-balance waitlist reserves it
-     and returns it automatically if the balancing participant is not found.
+   - renews the event hold when a seat remains available;
+   - sends the member through normal login to `/going-out` with the original
+     invitation selected;
+   - opens the standard confirmation popup so the member can choose the host
+     preference and spend or reserve the joining credit exactly once.
 10. Duplicate checkout/webhook delivery must never double-credit, double-debit, or create two seats.
-11. Payment success distinguishes confirmed, balance-waitlisted with a reserved
-credit, capacity/expired-hold waitlisted with an available credit, payment
-     pending, and failure, then links to normal login with next=/going-out.
+11. Payment success distinguishes ready-to-confirm, already confirmed or
+waitlisted, payment pending, and failure, then links to normal login with the
+original invitation encoded in the validated `/going-out` destination.
 12. Enforce active membership consistently in protected app context and every auth callback. Pending invitation sessions never grant protected app access.
 
 Active-member and confirmed-event app:

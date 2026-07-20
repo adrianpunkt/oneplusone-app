@@ -30,7 +30,13 @@ Founders explicitly:
 - Assign a host and send host materials.
 - Trigger event reminders, feedback requests, replacement/refund notices, and the credit offer.
 
-Member actions may send their immediate transactional result, such as seat confirmed, waitlisted, or cancellation received. Every send still uses a durable idempotent delivery record.
+Member actions may send their immediate transactional result, such as seat reserved (internal delivery key: `seat_confirmed`), waitlisted, or cancellation received. Every send still uses a durable idempotent delivery record.
+
+Member-facing terminology distinguishes the participant's reservation from the
+founder's final event decision: use **seat reserved** / **plaza reservada** for
+an accepted participant before Thursday, and **event confirmed** only after a
+founder confirms the event and releases the venue. Internal database states and
+delivery keys may continue to use `confirmed` and `seat_confirmed`.
 
 Future automation should call the same validated commands founders use in ops. It must not introduce a second event workflow.
 
@@ -411,7 +417,7 @@ Build and approve in English and Spanish:
 
 1. Member invitation.
 2. Pending-member invitation/payment.
-3. Seat confirmed.
+3. Seat reserved (internal delivery key: `seat_confirmed`).
 4. Gender-balance waitlist.
 5. Capacity waitlist.
 6. Cancellation received.
