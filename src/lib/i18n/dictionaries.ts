@@ -145,7 +145,7 @@ const en = {
     balanceWaitlistModalBody:
       "You are on the waitlist. We need one more person to keep the group balanced.",
     balanceWaitlistModalImportant:
-      "You’re next in line. We’ll reserve your seat automatically as soon as the matching person joins. If we can’t complete the balance, we’ll notify you and return your credit automatically.",
+      "You’re next in line. We’ll reserve your seat automatically as soon as the matching person joins. If we can’t complete the balance, we’ll notify you and return your credit.",
     paymentHoldExpiredWaitlistModalTitle: "Your priority is saved",
     paymentHoldExpiredWaitlistModalBody:
       "The 10-minute payment hold expired before checkout finished, so the seat was released. Your original application time is retained on the waitlist.",
