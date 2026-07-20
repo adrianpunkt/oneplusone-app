@@ -384,7 +384,11 @@ export default async function EventInvitationPage({
             {paymentResult?.ok || invitation.invitation.seatStatus === "confirmed" ? (
               <Button asChild><Link href="/event-invitation/complete">{text.login}</Link></Button>
             ) : null}
-            <SupportQuestionDialog copy={supportCopy} locale={locale} />
+            <SupportQuestionDialog
+              copy={supportCopy}
+              locale={locale}
+              useInvitationEmail
+            />
           </CardContent>
         </Card>
       </div>

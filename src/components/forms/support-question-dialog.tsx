@@ -46,9 +46,11 @@ const supportEmail = "hello@oneplusoneclub.com";
 export function SupportQuestionDialog({
   copy,
   locale,
+  useInvitationEmail = false,
 }: {
   copy: SupportQuestionCopy;
   locale: Locale;
+  useInvitationEmail?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"message" | "email">("message");
@@ -90,17 +92,24 @@ export function SupportQuestionDialog({
     event.preventDefault();
 
     if (step === "message") {
-      continueToEmail();
-      return;
+      if (!message.trim()) {
+        setStatus(copy.requiredMessage);
+        messageRef.current?.focus();
+        return;
+      }
+      if (!useInvitationEmail) {
+        continueToEmail();
+        return;
+      }
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail) {
+    if (!useInvitationEmail && !normalizedEmail) {
       setStatus(copy.requiredEmail);
       emailRef.current?.focus();
       return;
     }
-    if (!isValidEmail(normalizedEmail)) {
+    if (!useInvitationEmail && !isValidEmail(normalizedEmail)) {
       setStatus(copy.invalidEmail);
       emailRef.current?.focus();
       return;
@@ -119,6 +128,7 @@ export function SupportQuestionDialog({
           pageUrl: window.location.href,
           referrer: document.referrer,
           subject: copy.subject,
+          useInvitationEmail,
           website: "",
         }),
         headers: {
@@ -240,8 +250,9 @@ export function SupportQuestionDialog({
                         value={message}
                       />
                       <Button
-                        aria-label={copy.send}
+                        aria-label={useInvitationEmail && pending ? copy.sending : copy.send}
                         className="h-[52px] w-[52px] rounded-lg p-0"
+                        disabled={useInvitationEmail && pending}
                         type="submit"
                       >
                         <Send aria-hidden="true" className="h-5 w-5" />

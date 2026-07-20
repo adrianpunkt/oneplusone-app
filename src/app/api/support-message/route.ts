@@ -1,3 +1,9 @@
+import type { NextRequest } from "next/server";
+
+import {
+  readEventInvitationSessionToken,
+  resolveInternalInvitationSession,
+} from "@/lib/event-invitations";
 import { getRuntimeEnv } from "@/lib/env";
 
 type SupportPayload = {
@@ -10,7 +16,7 @@ type SupportPayload = {
   website: string;
 };
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   let rawPayload: Record<string, unknown>;
 
   try {
@@ -19,14 +25,24 @@ export async function POST(request: Request) {
     return Response.json({ error: "Could not read the support message.", ok: false }, { status: 400 });
   }
 
+  const website = cleanValue(rawPayload.website, 240);
+  const useInvitationEmail = rawPayload.useInvitationEmail === true;
+  let email = cleanValue(rawPayload.email, 320).toLowerCase();
+
+  if (!website && useInvitationEmail) {
+    const sessionToken = readEventInvitationSessionToken(request.cookies, request.nextUrl);
+    const invitationSession = await resolveInternalInvitationSession(sessionToken);
+    email = cleanValue(invitationSession?.email, 320).toLowerCase();
+  }
+
   const payload: SupportPayload = {
-    email: cleanValue(rawPayload.email, 320).toLowerCase(),
+    email,
     locale: rawPayload.locale === "es" ? "es" : "en",
     message: cleanValue(rawPayload.message, 5000),
     pageUrl: cleanValue(rawPayload.pageUrl, 1200),
     referrer: cleanValue(rawPayload.referrer, 1200),
     subject: cleanValue(rawPayload.subject, 240) || "Question about one plus one club",
-    website: cleanValue(rawPayload.website, 240),
+    website,
   };
 
   if (!payload.website) {
