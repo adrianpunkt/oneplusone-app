@@ -56,6 +56,14 @@ export function normalizeMemberLoginNextPath(
   }
 }
 
+export function buildMemberLoginPath(value: string | null | undefined) {
+  const next = normalizeMemberLoginNextPath(value);
+  if (next === DEFAULT_LOGIN_NEXT_PATH) return "/login";
+
+  const params = new URLSearchParams({ next });
+  return `/login?${params.toString()}`;
+}
+
 export function buildAuthConfirmUrl({
   autoSubmit = false,
   email,

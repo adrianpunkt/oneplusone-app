@@ -24,6 +24,7 @@ export type ProfileRegistration = {
 
 export type EventPreferences = {
   member_id: string;
+  receives_event_invitations: boolean;
   prefers_saturday_dinner: boolean;
   prefers_sunday_brunch: boolean;
   dietary_restrictions: string | null;
@@ -195,6 +196,7 @@ export type PublicInvitationSession = {
     creditCost: number;
   };
   invitation: {
+    declineReason: string | null;
     responseStatus: InvitationResponseStatus;
     seatStatus: InvitationSeatStatus;
     paymentStatus: InvitationPaymentStatus;
@@ -207,7 +209,13 @@ export type PublicInvitationSession = {
 
 export type PublicEventPaymentResult = {
   ok: boolean;
-  status: "confirmed" | "waitlisted" | "payment_pending" | "failed";
+  status:
+    | "confirmed"
+    | "waitlisted"
+    | "ready_to_confirm"
+    | "membership_active"
+    | "payment_pending"
+    | "failed";
   eventId: string;
   seatStatus: "confirmed" | "waitlisted" | "held" | "none";
   paymentStatus: "pending" | "paid" | "failed" | "expired";

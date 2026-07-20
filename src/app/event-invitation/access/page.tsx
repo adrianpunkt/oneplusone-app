@@ -2,9 +2,13 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ArrowRight, ShieldCheck } from "lucide-react";
 
+import { AutoSubmitButton } from "@/components/forms/auto-submit-button";
 import { PublicInvitationLogo } from "@/components/public-invitation-logo";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  preflightEventInvitationAccess,
+  resolveActiveMemberEventInvitationAccess,
+} from "@/lib/event-invitation-access";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
 
 export const dynamic = "force-dynamic";
@@ -34,26 +38,46 @@ export default async function EventInvitationAccessPage({
   const token = firstValue(params.token);
   if (!token) redirect("/event-invitation?access=invalid");
 
+  const activeMemberAccess = await resolveActiveMemberEventInvitationAccess(token);
+  if (activeMemberAccess) {
+    redirect(`/event-invitation/complete?token=${encodeURIComponent(token)}`);
+  }
+
+  const accessStatus = await preflightEventInvitationAccess(token);
+  if (accessStatus !== "valid") {
+    redirect(`/event-invitation?access=${accessStatus}`);
+  }
+
   const locale = await getRequestLocaleFallback();
   const text = copy[locale];
 
   return (
     <main className="grid min-h-screen place-items-center bg-blush-pink px-4 py-10">
-      <Card className="w-full max-w-xl">
-        <CardHeader className="gap-5">
-          <PublicInvitationLogo className="w-44" priority />
-          <div className="flex items-center gap-2 text-ocean-blue">
+      <Card className="w-full max-w-md text-center">
+        <CardHeader className="items-center gap-5">
+          <PublicInvitationLogo className="mx-auto w-44" priority />
+          <div className="flex items-center justify-center gap-2 text-ocean-blue">
             <ShieldCheck aria-hidden="true" className="h-5 w-5" />
             <CardTitle>{text.title}</CardTitle>
           </div>
         </CardHeader>
-        <CardContent className="grid gap-5">
-          <form action="/event-invitation/access/claim" method="post">
+        <CardContent className="grid justify-items-center gap-5">
+          <form
+            action="/event-invitation/access/claim"
+            className="flex w-full justify-center"
+            method="post"
+          >
             <input name="token" type="hidden" value={token} />
-            <Button className="w-full sm:w-auto" size="lg" type="submit">
+            <AutoSubmitButton
+              autoSubmit
+              className="w-full sm:w-auto"
+              delayMs={2_000}
+              size="lg"
+              type="submit"
+            >
               {text.button}
               <ArrowRight aria-hidden="true" className="h-4 w-4" />
-            </Button>
+            </AutoSubmitButton>
           </form>
         </CardContent>
       </Card>

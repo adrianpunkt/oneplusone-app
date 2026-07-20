@@ -82,6 +82,7 @@ export const profileFieldSchema = z.object({
 });
 
 export const preferencesSchema = z.object({
+  receivesEventInvitations: z.boolean(),
   prefersSaturdayDinner: z.boolean(),
   prefersSundayBrunch: z.boolean(),
   interestedInOtherEvents: z.boolean(),

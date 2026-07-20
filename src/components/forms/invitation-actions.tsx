@@ -1,7 +1,8 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { useActionState, useRef, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { CalendarDays, Star, X, XCircle } from "lucide-react";
 
@@ -30,8 +31,49 @@ import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
 import type { EventInvitation, EventRecord } from "@/lib/types";
 import { formatDateTime } from "@/lib/utils";
+import successCheckmarkImage from "../../../public/success-checkmark-transparent.webp";
 
 const initialState: EventActionState = {};
+
+function clearInvitationApplicationUrl(invitationId: string) {
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("apply") !== invitationId) return;
+
+  url.searchParams.delete("apply");
+  url.searchParams.delete("payment");
+  window.history.replaceState(
+    window.history.state,
+    "",
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+}
+
+export function InvitationApplicationUrlCleanup({
+  clearPaymentConfirmation = false,
+  invitationId,
+}: {
+  clearPaymentConfirmation?: boolean;
+  invitationId?: string;
+}) {
+  useEffect(() => {
+    if (invitationId) {
+      clearInvitationApplicationUrl(invitationId);
+      return;
+    }
+    if (!clearPaymentConfirmation) return;
+
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("payment") !== "confirmed") return;
+    url.searchParams.delete("payment");
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${url.pathname}${url.search}${url.hash}`,
+    );
+  }, [clearPaymentConfirmation, invitationId]);
+
+  return null;
+}
 
 export type InvitationActionCopy = {
   applyCreditCharge: string;
@@ -53,6 +95,7 @@ export type InvitationActionCopy = {
     somethingElse: string;
   };
   cancelWaitlist: string;
+  cancelRequest: string;
   cancelWaitlistDescription: string;
   cancelWaitlistTitle: string;
   cancelling: string;
@@ -82,8 +125,11 @@ export type InvitationActionCopy = {
   joinWaitlist: string;
   joining: string;
   keepIt: string;
+  keepWaitlist: string;
   notEnoughCredits: string;
   notNow: string;
+  paymentConfirmed: string;
+  paymentWelcome: string;
   minute: string;
   minutes: string;
   needToCancel: string;
@@ -173,8 +219,10 @@ export function ConfirmInvitationForm({
   event,
   eventCopy,
   hostingCopy,
+  initiallyOpen = false,
   locale,
   now,
+  paymentConfirmed = false,
   restore = false,
   stacked = false,
   copy,
@@ -185,8 +233,10 @@ export function ConfirmInvitationForm({
   event: EventRecord | null | undefined;
   eventCopy: InvitationEventCopy;
   hostingCopy: HostingConfirmationCopy;
+  initiallyOpen?: boolean;
   locale: Locale;
   now: number;
+  paymentConfirmed?: boolean;
   restore?: boolean;
   stacked?: boolean;
   copy: InvitationActionCopy;
@@ -197,9 +247,13 @@ export function ConfirmInvitationForm({
     restore ? restoreInvitationAction : confirmInvitationAction,
     initialState,
   );
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initiallyOpen);
   const [isHosting, setIsHosting] = useState(wantsToHost);
+  const [showPaymentConfirmation, setShowPaymentConfirmation] = useState(
+    initiallyOpen && paymentConfirmed,
+  );
   const dismissButtonRef = useRef<HTMLButtonElement>(null);
+
   const successMessage = state.confirmationStatus === "waitlisted"
     ? copy.waitlistJoined
     : copy.seatConfirmed;
@@ -210,13 +264,27 @@ export function ConfirmInvitationForm({
     ? relativeEventTime(event.starts_at, now, copy)
     : "";
 
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen && initiallyOpen) {
+      setShowPaymentConfirmation(false);
+      clearInvitationApplicationUrl(invitationId);
+    }
+  }
+
+  useEffect(() => {
+    if (!initiallyOpen || !state.ok) return;
+
+    clearInvitationApplicationUrl(invitationId);
+  }, [initiallyOpen, invitationId, state.ok]);
+
   return (
     <div
       className={`flex w-full flex-wrap items-center gap-2 ${
         stacked ? "sm:w-full" : "sm:w-auto"
       }`}
     >
-      <Dialog.Root open={open && !state.ok} onOpenChange={setOpen}>
+      <Dialog.Root open={open && !state.ok} onOpenChange={handleOpenChange}>
         <Dialog.Trigger asChild>
           <Button
             className={`h-11 w-full ${
@@ -230,7 +298,7 @@ export function ConfirmInvitationForm({
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/35 backdrop-blur-sm" />
           <Dialog.Content
-            className="fixed left-1/2 top-1/2 z-50 flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-md -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-wine-burgundy/10 bg-white shadow-2xl outline-none sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)]"
+            className="fixed left-1/2 top-2 z-50 flex max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-md -translate-x-1/2 flex-col overflow-hidden rounded-xl border border-wine-burgundy/10 bg-white shadow-2xl outline-none sm:top-1/2 sm:max-h-[calc(100dvh-2rem)] sm:w-[calc(100vw-2rem)] sm:-translate-y-1/2"
             onOpenAutoFocus={(event) => {
               event.preventDefault();
               dismissButtonRef.current?.focus();
@@ -240,6 +308,24 @@ export function ConfirmInvitationForm({
               <Dialog.Title className="pr-10 font-display text-xl font-extrabold leading-tight text-wine-burgundy sm:pr-8">
                 {copy.applyTitle}
               </Dialog.Title>
+              {showPaymentConfirmation ? (
+                <div className="mt-4 flex items-center gap-3" role="status">
+                  <Image
+                    alt=""
+                    aria-hidden="true"
+                    className="h-10 w-10 shrink-0 object-contain"
+                    src={successCheckmarkImage}
+                  />
+                  <span className="grid gap-0.5">
+                    <span className="text-[0.65rem] font-extrabold uppercase tracking-[0.12em] text-wine-burgundy">
+                      {copy.paymentConfirmed}
+                    </span>
+                    <span className="whitespace-pre-line text-base font-extrabold leading-snug text-lipstick-red sm:text-lg">
+                      {copy.paymentWelcome}
+                    </span>
+                  </span>
+                </div>
+              ) : null}
               <Dialog.Close asChild>
                 <button
                   aria-label={copy.notNow}
@@ -560,11 +646,13 @@ export function DeclineInvitationForm({
   invitationId,
   linkTrigger = false,
   stacked = false,
+  waitlisted = false,
 }: {
   copy: InvitationActionCopy;
   invitationId: string;
   linkTrigger?: boolean;
   stacked?: boolean;
+  waitlisted?: boolean;
 }) {
   const [state, action] = useActionState(declineInvitationAction, initialState);
   const [open, setOpen] = useState(false);
@@ -612,7 +700,7 @@ export function DeclineInvitationForm({
               </Dialog.Title>
               <Dialog.Close asChild>
                 <button
-                  aria-label={copy.keepIt}
+                  aria-label={waitlisted ? copy.keepWaitlist : copy.keepIt}
                   className="absolute right-2.5 top-2.5 grid h-11 w-11 place-items-center rounded-full text-muted transition hover:bg-blush-pink hover:text-wine-burgundy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35 sm:right-4 sm:top-4 sm:h-10 sm:w-10"
                   type="button"
                 >
@@ -675,7 +763,7 @@ export function DeclineInvitationForm({
                       type="button"
                       variant="secondary"
                     >
-                      {copy.keepIt}
+                      {waitlisted ? copy.keepWaitlist : copy.keepIt}
                     </Button>
                   </Dialog.Close>
                   <SubmitButton
@@ -683,7 +771,7 @@ export function DeclineInvitationForm({
                     pendingLabel={copy.declining}
                     variant="destructive"
                   >
-                    {copy.declineSubmit}
+                    {waitlisted ? copy.cancelRequest : copy.declineSubmit}
                   </SubmitButton>
                 </div>
               </div>
@@ -707,9 +795,11 @@ export function InvitationDecisionForms({
   eventCopy,
   hostingCopy,
   copy,
+  initiallyOpenInvitationId,
   invitation,
   locale,
   now,
+  paymentConfirmed = false,
   wantsToHost,
 }: {
   cardLayout?: boolean;
@@ -718,9 +808,11 @@ export function InvitationDecisionForms({
   eventCopy: InvitationEventCopy;
   hostingCopy: HostingConfirmationCopy;
   copy: InvitationActionCopy;
+  initiallyOpenInvitationId?: string;
   invitation: InvitationDecisionTarget;
   locale: Locale;
   now: number;
+  paymentConfirmed?: boolean;
   wantsToHost: boolean;
 }) {
   const canConfirm = canConfirmInvitation(invitation);
@@ -792,9 +884,11 @@ export function InvitationDecisionForms({
             event={invitation.events}
             eventCopy={eventCopy}
             hostingCopy={hostingCopy}
+            initiallyOpen={initiallyOpenInvitationId === invitation.id}
             invitationId={invitation.id}
             locale={locale}
             now={now}
+            paymentConfirmed={paymentConfirmed}
             stacked={stackActions}
             wantsToHost={wantsToHost}
           />
@@ -811,6 +905,7 @@ export function InvitationDecisionForms({
             copy={copy}
             invitationId={invitation.id}
             stacked={stackActions}
+            waitlisted={invitation.status === "waitlisted"}
           />
         ) : null}
       </div>

@@ -3,6 +3,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 type MemberAppLoginMethod =
   | "auth_callback"
   | "demo_password"
+  | "event_invitation"
   | "magic_link_confirm"
   | "otp_code";
 

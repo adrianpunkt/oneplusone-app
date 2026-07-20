@@ -27,7 +27,8 @@
     "NEXT_PUBLIC_POSTHOG_KEY": "phc_xjFr8jciwE7Q6mD5DRB9PuqgbbjxgQTwZuPstiwY4cqy",
     "NEXT_PUBLIC_POSTHOG_UI_HOST": "https://eu.posthog.com",
     "NEXTJS_ENV": "cloudflare",
-    "SUPABASE_PROJECT_REF": "qevpnhaycygiyjxeucmj"
+    "SUPABASE_PROJECT_REF": "qevpnhaycygiyjxeucmj",
+    "STRIPE_MEMBERSHIP_PRICE_ID": "price_1Tg9OlRdvHJ1EiRIZNo4bQMa"
   },
   "env": {
     "dev": {

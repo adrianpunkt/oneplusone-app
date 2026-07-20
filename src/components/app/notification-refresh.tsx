@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import {
   createSupabaseBrowserClient,
@@ -17,10 +17,17 @@ export function NotificationRefresh({
   memberId: string;
   supabaseConfig: SupabaseBrowserConfig;
 }) {
+  const pathname = usePathname();
   const router = useRouter();
   const { supabaseAnonKey, supabaseUrl } = supabaseConfig;
+  const refreshDisabled =
+    pathname === "/going-out" || pathname.startsWith("/going-out/");
 
   useEffect(() => {
+    // Going out is an invitation decision flow. Unrelated notification changes
+    // can update the navigation badge after the user's next page transition.
+    if (refreshDisabled) return;
+
     let refreshTimeout: number | null = null;
     let refreshDeferredUntilVisible = false;
 
@@ -84,7 +91,7 @@ export function NotificationRefresh({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       void supabase.removeChannel(channel);
     };
-  }, [memberId, router, supabaseAnonKey, supabaseUrl]);
+  }, [memberId, refreshDisabled, router, supabaseAnonKey, supabaseUrl]);
 
   return null;
 }

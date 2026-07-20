@@ -1,13 +1,28 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
+import { buildMemberLoginPath } from "@/lib/auth-link";
 import { getSupabaseAuthCookieOptions } from "@/lib/supabase/auth-cookie";
 import { getPublicSupabaseConfig } from "@/lib/supabase/config";
 
+const memberAppPaths = [
+  "/credits",
+  "/dashboard",
+  "/events",
+  "/going-out",
+  "/messages",
+  "/my-story",
+  "/preferences",
+] as const;
+
+function isMemberAppPath(pathname: string) {
+  return memberAppPaths.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
+  );
+}
+
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request,
-  });
+  let response = NextResponse.next({ request });
 
   const supabaseConfig = getPublicSupabaseConfig();
 
@@ -31,7 +46,24 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Preserve the destination only for the logged-out redirect. Do not inject it
+  // into request headers: middleware also sees React's internal refresh requests.
+  if (!user && isMemberAppPath(request.nextUrl.pathname)) {
+    const requestedPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    const redirectResponse = NextResponse.redirect(
+      new URL(buildMemberLoginPath(requestedPath), request.url),
+    );
+
+    response.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie);
+    });
+
+    return redirectResponse;
+  }
 
   return response;
 }

@@ -137,6 +137,10 @@ export async function savePreferencesAction(
   const dictionary = getDictionary(locale);
   const returnToDashboard = formData.get("return_to") === "dashboard";
   const parsed = preferencesSchema.safeParse({
+    receivesEventInvitations: checkboxValue(
+      formData,
+      "receives_event_invitations",
+    ),
     prefersSaturdayDinner: checkboxValue(formData, "prefers_saturday_dinner"),
     prefersSundayBrunch: checkboxValue(formData, "prefers_sunday_brunch"),
     interestedInOtherEvents: checkboxValue(
@@ -175,6 +179,7 @@ export async function savePreferencesAction(
       : {};
   const { error } = await supabase.from("member_event_preferences").upsert({
     member_id: member.id,
+    receives_event_invitations: parsed.data.receivesEventInvitations,
     prefers_saturday_dinner: parsed.data.prefersSaturdayDinner,
     prefers_sunday_brunch: parsed.data.prefersSundayBrunch,
     dietary_restrictions: parsed.data.dietaryRestrictions || null,

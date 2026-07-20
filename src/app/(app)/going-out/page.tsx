@@ -29,6 +29,7 @@ import {
   CancelInvitationForm,
   ConfirmInvitationForm,
   DeclineInvitationForm,
+  InvitationApplicationUrlCleanup,
   InvitationDecisionForms,
 } from "@/components/forms/invitation-actions";
 import { Badge } from "@/components/ui/badge";
@@ -75,6 +76,8 @@ type EventListItem = {
 
 type GoingOutPageProps = {
   searchParams: Promise<{
+    apply?: string | string[];
+    payment?: string | string[];
     preferences?: string | string[];
     waitlist?: string | string[];
   }>;
@@ -627,19 +630,23 @@ function CollapsibleEventSection({
 }
 
 function PendingInvitationCard({
+  autoOpenApplication,
   creditBalance,
   dictionary,
   invitation,
   locale,
   now,
+  paymentConfirmed,
   preferences,
   summary,
 }: {
+  autoOpenApplication: boolean;
   creditBalance: number;
   dictionary: Dictionary;
   invitation: EventInvitation;
   locale: Locale;
   now: number;
+  paymentConfirmed: boolean;
   preferences: Awaited<ReturnType<typeof getPreferences>>;
   summary: EventGroupSummary | undefined;
 }) {
@@ -784,9 +791,11 @@ function PendingInvitationCard({
               venuePendingTooltip: dictionary.events.venuePendingTooltip,
             }}
             hostingCopy={dictionary.preferences}
+            initiallyOpenInvitationId={autoOpenApplication ? invitation.id : undefined}
             invitation={invitation}
             locale={locale}
             now={now}
+            paymentConfirmed={autoOpenApplication && paymentConfirmed}
             wantsToHost={preferences?.wants_to_host ?? false}
           />
         ) : null}
@@ -873,6 +882,7 @@ function UpcomingEventCard({
             copy={dictionary.actions}
             invitationId={item.invitation.id}
             linkTrigger
+            waitlisted
           />
         ) : null}
       </div>
@@ -1034,7 +1044,14 @@ export default async function GoingOutPage({
 }: GoingOutPageProps) {
   const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
-  const { preferences: preferencesParam, waitlist } = await searchParams;
+  const {
+    apply,
+    payment,
+    preferences: preferencesParam,
+    waitlist,
+  } = await searchParams;
+  const applyInvitationId = searchParamValue(apply);
+  const paymentConfirmed = searchParamValue(payment) === "confirmed";
   const preferencesSaved = searchParamValue(preferencesParam) === "saved";
   const waitlistConfirmation = parseWaitlistConfirmationStatus(waitlist);
   const [invitations, attendedEvents, preferences, creditBalance] = await Promise.all([
@@ -1057,6 +1074,13 @@ export default async function GoingOutPage({
         !isPastEvent(invitation.events, now),
     ),
   );
+  const autoOpenInvitationId = pendingInvitations.some(
+    (invitation) =>
+      invitation.id === applyInvitationId &&
+      isInvitationConfirmAvailable(invitation),
+  )
+    ? applyInvitationId
+    : undefined;
   const upcomingInvitationEventIds = new Set(
     invitations
       .filter(
@@ -1138,6 +1162,10 @@ export default async function GoingOutPage({
   );
   return (
     <>
+      <InvitationApplicationUrlCleanup
+        clearPaymentConfirmation={paymentConfirmed && !autoOpenInvitationId}
+        invitationId={autoOpenInvitationId ? undefined : applyInvitationId}
+      />
       <section className="grid gap-2 px-1 sm:px-0">
         <h1 className="font-display text-3xl font-black leading-tight text-wine-burgundy">
           {dictionary.goingOut.title}
@@ -1167,12 +1195,14 @@ export default async function GoingOutPage({
             {pendingInvitations.length ? (
               pendingInvitations.map((invitation) => (
                 <PendingInvitationCard
+                  autoOpenApplication={autoOpenInvitationId === invitation.id}
                   creditBalance={creditBalance}
                   dictionary={dictionary}
                   key={invitation.id}
                   invitation={invitation}
                   locale={locale}
                   now={now}
+                  paymentConfirmed={paymentConfirmed}
                   preferences={preferences}
                   summary={eventGroupSummaries[invitation.event_id]}
                 />

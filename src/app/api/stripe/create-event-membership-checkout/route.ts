@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 
 import { getRuntimeEnv } from "@/lib/env";
+import { reconcileEventMembershipCheckout } from "@/lib/event-membership-payments";
 import {
   readEventInvitationSessionToken,
   resolveInternalInvitationSession,
@@ -23,6 +24,41 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = getSupabaseServiceClient();
+  if (invitationSession.membershipStatus === "active") {
+    const { data, error } = await supabase.rpc(
+      "prepare_active_event_invitation_resume",
+      { p_session_token: sessionToken },
+    );
+    const resume = data as {
+      email?: string;
+      invitationId?: string;
+      status?: "member_active" | "confirmed" | "waitlisted" | "closed";
+    } | null;
+
+    if (error || !resume?.status) {
+      console.error("[event-membership-checkout] active-member resume failed", {
+        error: error?.message || "Missing resume status",
+        invitationId: invitationSession.invitationId,
+      });
+      return NextResponse.json(
+        { ok: false, error: "Could not resume this event invitation." },
+        { status: 409 },
+      );
+    }
+    if (resume.status === "closed") {
+      return NextResponse.json(
+        { ok: false, error: "This invitation is no longer available." },
+        { status: 409 },
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      status: resume.status,
+      url: eventInvitationCompletionUrl(),
+    });
+  }
+
   const { data, error } = await supabase.rpc("begin_event_invitation_payment", {
     p_idempotency_key: `event-membership-${invitationSession.invitationId}-${invitationSession.sessionId}`,
     p_session_token: sessionToken,
@@ -38,10 +74,24 @@ export async function POST(request: NextRequest) {
     status?: "checkout_required" | "confirmed" | "waitlisted" | "closed";
   } | null;
   if (error || !payment?.status) {
+    console.error("[event-membership-checkout] payment preparation failed", {
+      error: error?.message || "Missing payment status",
+      invitationId: invitationSession.invitationId,
+    });
     return NextResponse.json({ ok: false, error: "Could not prepare event checkout." }, { status: 409 });
   }
-  if (payment.status !== "checkout_required" || !payment.paymentAttemptId) {
-    return NextResponse.json({ ok: true, status: payment.status });
+  if (payment.status === "closed") {
+    return NextResponse.json(
+      { ok: false, error: "This invitation is no longer available." },
+      { status: 409 },
+    );
+  }
+  if (!payment.paymentAttemptId) {
+    return NextResponse.json({
+      ok: true,
+      status: payment.status,
+      url: eventInvitationCompletionUrl(),
+    });
   }
 
   const { data: existingAttempt } = await supabase
@@ -55,6 +105,28 @@ export async function POST(request: NextRequest) {
       const existingSession = await getStripe().checkout.sessions.retrieve(
         existingAttempt.stripe_checkout_session_id,
       );
+      if (existingSession.payment_status === "paid") {
+        const sync = await reconcileEventMembershipCheckout(
+          existingSession.id,
+          payment.invitationId || invitationSession.invitationId,
+        );
+        if (sync.status !== "completed" || !sync.result?.ok) {
+          console.error("[event-membership-checkout] paid checkout reconciliation failed", {
+            error: sync.error || `Unexpected reconciliation status: ${sync.status}`,
+            invitationId: invitationSession.invitationId,
+            paymentAttemptId: payment.paymentAttemptId,
+          });
+          return NextResponse.json(
+            { ok: false, error: "Could not verify the completed membership payment." },
+            { status: 409 },
+          );
+        }
+        return NextResponse.json({
+          ok: true,
+          status: sync.result.status,
+          url: eventInvitationCompletionUrl(existingSession.id),
+        });
+      }
       if (existingSession.url && existingSession.status === "open") {
         return NextResponse.json({ ok: true, status: "checkout_required", url: existingSession.url });
       }
@@ -95,7 +167,7 @@ export async function POST(request: NextRequest) {
         customer_email: payment.email || invitationSession.email,
         line_items: [lineItem],
         locale: payment.locale || invitationSession.locale,
-        success_url: `${origin}/event-invitation?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `${origin}/event-invitation/complete?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${origin}/event-invitation?payment=cancelled`,
         metadata,
         payment_intent_data: { metadata },
@@ -111,12 +183,29 @@ export async function POST(request: NextRequest) {
       p_payment_attempt_id: payment.paymentAttemptId,
     });
     if (attachError) {
+      console.error("[event-membership-checkout] checkout attachment failed", {
+        error: attachError.message,
+        invitationId: invitationSession.invitationId,
+        paymentAttemptId: payment.paymentAttemptId,
+      });
       return NextResponse.json({ ok: false, error: "Could not attach event checkout." }, { status: 409 });
     }
     return NextResponse.json({ ok: true, status: "checkout_required", url: checkout.url });
-  } catch {
+  } catch (checkoutError) {
+    console.error("[event-membership-checkout] Stripe checkout failed", {
+      error: checkoutError instanceof Error ? checkoutError.message : String(checkoutError),
+      invitationId: invitationSession.invitationId,
+      paymentAttemptId: payment.paymentAttemptId,
+    });
     return NextResponse.json({ ok: false, error: "Could not start event checkout." }, { status: 502 });
   }
+}
+
+function eventInvitationCompletionUrl(checkoutSessionId?: string) {
+  const params = new URLSearchParams();
+  if (checkoutSessionId) params.set("session_id", checkoutSessionId);
+  const query = params.toString();
+  return `/event-invitation/complete${query ? `?${query}` : ""}`;
 }
 
 function checkoutOrigin(request: NextRequest) {

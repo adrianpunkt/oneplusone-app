@@ -194,6 +194,23 @@ export function PreferencesForm({
           {copy.events}
         </h2>
         <p className="text-sm font-semibold text-ink">
+          {copy.invitationsQuestion}
+        </p>
+        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
+          <Checkbox
+            name="receives_event_invitations"
+            defaultChecked={preferences?.receives_event_invitations ?? true}
+          />
+          <span>
+            <span className="block text-sm font-semibold text-wine-burgundy">
+              {copy.receiveInvitations}
+            </span>
+            <span className="block text-sm leading-6 text-muted">
+              {copy.receiveInvitationsDescription}
+            </span>
+          </span>
+        </label>
+        <p className="text-sm font-semibold text-ink">
           {copy.eventsQuestion}
         </p>
         <div className="grid gap-3">

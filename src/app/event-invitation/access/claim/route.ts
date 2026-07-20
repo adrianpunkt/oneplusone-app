@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { deliverMemberEventEmail } from "@/lib/event-email-delivery";
+import {
+  preflightEventInvitationAccess,
+  resolveActiveMemberEventInvitationAccess,
+} from "@/lib/event-invitation-access";
 import { eventInvitationSessionCookieSettings } from "@/lib/event-invitations";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 
@@ -17,6 +20,13 @@ export async function POST(request: NextRequest) {
     return privateRedirect(stableUrl);
   }
 
+  const activeMemberAccess = await resolveActiveMemberEventInvitationAccess(token);
+  if (activeMemberAccess) {
+    const completeUrl = new URL("/event-invitation/complete", request.nextUrl.origin);
+    completeUrl.searchParams.set("token", token);
+    return privateRedirect(completeUrl);
+  }
+
   const { data, error } = await getSupabaseServiceClient().rpc(
     "claim_event_invitation_access_token",
     { p_session_ttl_minutes: 1440, p_token: token },
@@ -31,8 +41,11 @@ export async function POST(request: NextRequest) {
   if (error || !result?.ok || !result.sessionToken) {
     const accessStatus = result?.status === "deadline_passed"
       ? "deadline"
-      : await refreshExpiredInvitationLink(token);
-    stableUrl.searchParams.set("access", accessStatus);
+      : await preflightEventInvitationAccess(token);
+    stableUrl.searchParams.set(
+      "access",
+      accessStatus === "valid" ? "invalid" : accessStatus,
+    );
     return privateRedirect(stableUrl);
   }
 
@@ -46,28 +59,6 @@ export async function POST(request: NextRequest) {
     secure: cookie.secure,
   });
   return response;
-}
-
-async function refreshExpiredInvitationLink(token: string) {
-  const { data, error } = await getSupabaseServiceClient().rpc(
-    "refresh_expired_event_invitation_link",
-    { p_token: token },
-  );
-  const refresh = data as {
-    deliveryId?: string;
-    ok?: boolean;
-    status?: string;
-  } | null;
-
-  if (error || refresh?.status === "invalid" || refresh?.status === "valid") {
-    return "invalid";
-  }
-  if (refresh?.status === "deadline_passed") return "deadline";
-  if (refresh?.ok && refresh.status === "already_sent") return "resent";
-  if (!refresh?.ok || !refresh.deliveryId) return "unavailable";
-
-  const delivery = await deliverMemberEventEmail(refresh.deliveryId);
-  return delivery.ok ? "resent" : "retry";
 }
 
 function privateRedirect(url: URL) {

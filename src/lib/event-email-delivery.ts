@@ -122,6 +122,36 @@ export async function deliverMemberEventEmail(deliveryId: string) {
     return { ok: true, skipped: true } as const;
   }
 
+  if (data.email_type === "invitation_pending") {
+    const { data: memberPreference, error: preferenceError } = await supabase
+      .from("member_event_preferences")
+      .select("receives_event_invitations")
+      .eq("member_id", data.member_id)
+      .maybeSingle<{ receives_event_invitations: boolean }>();
+
+    if (preferenceError) {
+      return { error: safeError(preferenceError.message), ok: false } as const;
+    }
+    if (memberPreference?.receives_event_invitations === false) {
+      const now = new Date().toISOString();
+      const { error: cancelError } = await supabase
+        .from("event_email_deliveries")
+        .update({
+          cancelled_at: now,
+          failed_at: null,
+          last_error: null,
+          status: "cancelled",
+          updated_at: now,
+        })
+        .eq("id", data.id)
+        .in("status", ["draft", "failed"]);
+
+      return cancelError
+        ? { error: safeError(cancelError.message), ok: false } as const
+        : { ok: true, skipped: true } as const;
+    }
+  }
+
   const locale = normalizeLocale(data.locale);
   const template = eventTemplate(data.email_type, locale);
   const resolvedTemplateId = template.transactionalId || `unconfigured:${template.envName}`;
@@ -235,6 +265,9 @@ async function eventEmailVariables(
   const invitationUrl = invitationAccessToken
     ? pendingInvitationUrl(origin, invitationAccessToken)
     : "";
+  const unsubscribeUrl = invitationAccessToken
+    ? pendingInvitationUnsubscribeUrl(origin, invitationAccessToken, locale)
+    : "";
   const eventUrl = delivery.email_type === "invitation_pending"
     ? invitationUrl
     : memberEventUrl;
@@ -284,12 +317,24 @@ async function eventEmailVariables(
       ? formatRsvpDeadline(rsvpDeadlineAt, timezone, locale)
       : objectString(payload, "rsvpDeadline"),
     timezone,
+    unsubscribeUrl,
   };
 }
 
 function pendingInvitationUrl(origin: string, token: string) {
   const url = new URL("/event-invitation/access", origin);
   url.searchParams.set("token", token);
+  return url.toString();
+}
+
+function pendingInvitationUnsubscribeUrl(
+  origin: string,
+  token: string,
+  locale: Locale,
+) {
+  const url = new URL("/event-invitation/unsubscribe", origin);
+  url.searchParams.set("token", token);
+  url.searchParams.set("locale", locale);
   return url.toString();
 }
 
@@ -333,7 +378,7 @@ function isImmediateEventEmailType(value: string): value is ImmediateEventEmailT
 
 function primitiveVariables(payload: Record<string, unknown>) {
   return Object.fromEntries(Object.entries(payload).flatMap(([key, value]) => {
-    if (key === "refreshSourceTokenId") return [];
+    if (key === "refreshSourceAccessId") return [];
     if (typeof value === "string" || typeof value === "number") return [[key, value]];
     if (typeof value === "boolean") return [[key, value ? "true" : "false"]];
     return [];

@@ -389,7 +389,7 @@ export async function getPreferences(memberId: string) {
   const { data } = await supabase
     .from("member_event_preferences")
     .select(
-      "member_id,prefers_saturday_dinner,prefers_sunday_brunch,dietary_restrictions,wants_to_host,host_notes,extra_preferences",
+      "member_id,receives_event_invitations,prefers_saturday_dinner,prefers_sunday_brunch,dietary_restrictions,wants_to_host,host_notes,extra_preferences",
     )
     .eq("member_id", memberId)
     .maybeSingle();

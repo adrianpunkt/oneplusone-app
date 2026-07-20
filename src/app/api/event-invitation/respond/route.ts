@@ -9,6 +9,7 @@ const payloadSchema = z.object({
   decision: z.literal("decline"),
   details: z.string().trim().max(500).optional(),
   reason: z.enum([
+    "event_type_not_interested",
     "weekend_unavailable",
     "prefers_sunday_brunch",
     "event_fit",
@@ -32,6 +33,10 @@ export async function POST(request: NextRequest) {
     },
   );
   if (error) {
+    console.error("[event-invitation/respond] decline failed", {
+      code: error.code,
+      message: error.message,
+    });
     return NextResponse.json({ ok: false, error: "Could not save your response." }, { status: 409 });
   }
   await deliverMemberEventEmailFromResult(data);

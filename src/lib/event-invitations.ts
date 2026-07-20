@@ -78,7 +78,7 @@ export async function getPublicInvitationSession(
   if (!session) return null;
 
   const supabase = getSupabaseServiceClient();
-  const [{ data: event }, { data: summary }] = await Promise.all([
+  const [{ data: event }, { data: summary }, { data: decline }] = await Promise.all([
     supabase
       .from("events")
       .select("id,starts_at,ends_at,timezone,city,event_format,language_code,capacity,gender_balance_enabled,rsvp_deadline_at,credit_cost,status")
@@ -108,13 +108,20 @@ export async function getPublicInvitationSession(
         age_min: number | null;
         majority_intention: string | null;
       }>(),
+    supabase
+      .from("event_invitation_declines")
+      .select("reason")
+      .eq("invitation_id", session.invitationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<{ reason: string }>(),
   ]);
   if (!event) return null;
 
   const canApply =
     ["inviting", "confirmed"].includes(event.status) &&
     new Date(event.rsvp_deadline_at).getTime() > Date.now() &&
-    !["expired"].includes(session.responseStatus) &&
+    !["declined", "expired"].includes(session.responseStatus) &&
     !["confirmed", "cancelled", "replaced"].includes(session.seatStatus);
 
   return {
@@ -137,6 +144,7 @@ export async function getPublicInvitationSession(
       creditCost: event.credit_cost,
     },
     invitation: {
+      declineReason: decline?.reason || null,
       responseStatus: session.responseStatus,
       seatStatus: session.seatStatus,
       paymentStatus: session.paymentStatus,
