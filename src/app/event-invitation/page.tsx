@@ -378,6 +378,7 @@ export default async function EventInvitationPage({
                 error: text.error,
                 joining: text.joining,
                 keepInvitation: text.keepInvitation,
+                paymentCancelled: text.paymentCancelled,
                 reasons: text.reasons,
               }} />
             ) : null}

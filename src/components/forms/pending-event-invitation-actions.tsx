@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, XCircle } from "lucide-react";
 
@@ -20,20 +20,37 @@ type Copy = {
   error: string;
   joining: string;
   keepInvitation: string;
+  paymentCancelled: string;
   reasons: Record<string, string>;
 };
 
 export function PendingEventInvitationActions({ copy }: { copy: Copy }) {
   const router = useRouter();
   const [busy, setBusy] = useState<"accept" | "decline" | null>(null);
+  const [checkoutCancelled, setCheckoutCancelled] = useState(false);
   const [declining, setDeclining] = useState(false);
   const [error, setError] = useState("");
   const [reason, setReason] = useState("event_type_not_interested");
   const [details, setDetails] = useState("");
+  const checkoutStarted = useRef(false);
+
+  useEffect(() => {
+    function handlePageShow() {
+      if (!checkoutStarted.current) return;
+      checkoutStarted.current = false;
+      setBusy(null);
+      setError("");
+      setCheckoutCancelled(true);
+    }
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   async function accept() {
     setBusy("accept");
     setError("");
+    setCheckoutCancelled(false);
     let isNavigating = false;
     try {
       const response = await fetch("/api/stripe/create-event-membership-checkout", {
@@ -44,12 +61,14 @@ export function PendingEventInvitationActions({ copy }: { copy: Copy }) {
       const result = (await response.json()) as { error?: string; status?: string; url?: string };
       if (!response.ok) throw new Error(result.error || copy.error);
       if (result.url) {
+        checkoutStarted.current = true;
         window.location.assign(result.url);
         isNavigating = true;
         return;
       }
       throw new Error(copy.error);
     } catch (actionError) {
+      checkoutStarted.current = false;
       setError(actionError instanceof Error ? actionError.message : copy.error);
     } finally {
       if (!isNavigating) setBusy(null);
@@ -77,6 +96,11 @@ export function PendingEventInvitationActions({ copy }: { copy: Copy }) {
 
   return (
     <div className="mx-auto grid w-full max-w-sm gap-3">
+      {checkoutCancelled ? (
+        <p className="rounded-lg bg-blush-pink p-3 text-sm font-semibold text-muted" role="status">
+          {copy.paymentCancelled}
+        </p>
+      ) : null}
       <Button disabled={busy !== null} onClick={accept} type="button">
         {busy === "accept" ? copy.joining : copy.accept}
       </Button>
