@@ -1,10 +1,10 @@
 # Event transactional email source review
 
-Last updated: 2026-07-19
+Last updated: 2026-07-20
 
 ## Purpose
 
-This report records how the 15 event transactional email types were matched to
+This report records how the 16 event transactional email types were matched to
 the existing `Romantic event invitation` workflow, what was changed to make
 the workflow content usable as transactional email, and what still needs
 founder review.
@@ -14,7 +14,8 @@ same source mapping and have the same operational gaps unless noted otherwise.
 
 ## Migration result
 
-- The existing 30 transactional IDs were retained and republished.
+- The existing 30 transactional IDs were retained and republished, and two
+  published balance-waitlist release transactionals were added.
 - Nine transactional types use text from a directly corresponding Romantic
   workflow email.
 - Two extra Romantic workflow variants were folded into an existing
@@ -23,6 +24,9 @@ same source mapping and have the same operational gaps unless noted otherwise.
   new copy based on the agreed event flow.
 - All emails use the existing Loops theme and the existing intro, signature,
   and locale-specific Instagram components.
+- The shared Loops transactional IDs are registered in app and ops code, so
+  deployments do not require 32 separate template-ID variables. Environment
+  values remain optional overrides.
 - The original workflow is unchanged.
 
 ## Shared template constraint
@@ -53,6 +57,7 @@ The Instagram components currently use onboarding-oriented UTM values
 | `invitation_pending` | No direct source | Event invitation template plus pending-member payment flow |
 | `seat_confirmed` | It's a date! | Source text and layout retained |
 | `waitlist_balance` | Date waitlist | Source text and layout retained |
+| `waitlist_balance_released` | No direct source | New automatic credit-return copy |
 | `waitlist_capacity` | Your event update | Source text retained; event-page button added |
 | `cancellation_received` | Not this time | Source text and layout retained |
 | `rsvp_reminder` | Event invitation reminder | Source text retained; rolling 24-hour wording replaced by the real deadline |
@@ -73,7 +78,7 @@ Source: **Event invitation**
 
 Implemented:
 
-- Dynamic event date, language, city, majority intention, age range, format,
+- Dynamic event date, language, city, most common relationship intention, age range, format,
   time, RSVP deadline, and event-page link.
 - The source's hardcoded orientation line was omitted because no orientation
   variable is provided to the email.
@@ -81,8 +86,9 @@ Implemented:
 Review:
 
 - The opening says "someone special" even though the invitation is for a group.
-- "If you decide to go, 1 credit will be charged" is too broad: members placed
-  on a waitlist should not spend a credit.
+- "If you decide to go, 1 credit will be charged" needs state-specific copy:
+  confirmed seats and accepted balance-waitlist positions spend a credit;
+  capacity and expired-hold waitlists do not.
 - The source promises that the number of guests will be revealed after group
   confirmation, but no guest-count variable currently exists.
 - `eventLanguage` is populated from `languageCode`. Confirm whether the
@@ -130,12 +136,27 @@ Source: **Date waitlist**
 
 Implemented: source text, Thursday update, and event link.
 
-Review:
+Implemented:
 
-- The source explicitly promises a binary 50/50 gender balance. Confirm this is
-  the rule for every event type and city.
-- It does not state that no credit is spent while waitlisted.
-- Thursday depends on manual founder timing.
+- The application is saved before the waitlist status is revealed.
+- One credit is reserved after acceptance/payment.
+- Promotion is automatic when the balancing participant joins and does not
+  charge the member a second time.
+- If balancing is not completed, the credit is returned automatically.
+
+### 4a. Balance waitlist released
+
+Source: no direct source.
+
+Implemented:
+
+- Dedicated English and Spanish transactionals in the **Events: Seats &
+  Waitlists** group.
+- Copy explicitly confirms that the reserved credit is available again.
+- Uses the same greeting, signature, and locale-specific Instagram components
+  as the source workflow.
+- Sent only when a balance-waitlist debit was actually refunded; unpaid pending
+  members are closed without receiving an inaccurate credit-return message.
 
 ### 5. Capacity waitlist
 
@@ -153,7 +174,7 @@ Review:
   themselves.
 - "We create new groups every week" is an operational promise that may not be
   true for every city or cohort.
-- It does not state that no credit is spent while waitlisted.
+- It should state explicitly that a capacity waitlist does not spend a credit.
 
 ### 6. Cancellation received
 
@@ -177,7 +198,8 @@ Source: **Event invitation reminder**
 Implemented:
 
 - The source's "in next 24 hours" text was replaced with
-  `{data.rsvpDeadline}`, which includes the event timezone's actual deadline.
+  `{data.rsvpDeadline}`, which includes the weekday, full date, time, and the
+  event timezone's actual deadline.
 
 Review:
 
@@ -191,8 +213,8 @@ Source: **Date confirmation**
 
 Implemented:
 
-- Venue name, address, date, time, event language, updated age range, majority
-  intention, event instructions, and event link.
+- Venue name, address, date, time, event language, updated age range, most
+  common relationship intention, event instructions, and event link.
 - The source promise that guests can contact the host was removed because that
   contact route is not part of the agreed flow.
 - The late-cancellation sentence now reflects the replacement rule: a credit is

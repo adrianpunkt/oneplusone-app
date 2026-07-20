@@ -1,6 +1,6 @@
 # Events master plan
 
-Last updated: 2026-07-19
+Last updated: 2026-07-20
 
 Owner: product/operations with engineering support
 
@@ -40,7 +40,9 @@ Future automation should call the same validated commands founders use in ops. I
 - Pending members remain eligible for matching and event invitations.
 - The event invitation should make the club concrete for pending members before asking for payment.
 - A pending member who applies for a seat should receive a ten-minute seat hold while paying.
-- If payment finishes after the hold expires, membership still activates. The system tries the seat again and otherwise places the person on the priority waitlist without spending the credit.
+- If payment finishes after the hold expires, membership still activates. The system tries the seat again. A capacity or expired-hold waitlist leaves the joining credit available; a gender-balance waitlist reserves it under the rule below.
+- Joining a gender-balance waitlist spends the event credit immediately. Promotion keeps that debit as the event credit payment. If the needed balancing participant is not found, the system returns the credit automatically and notifies the member.
+- Joining a capacity waitlist does not spend a credit.
 - RSVP closes at 18:00 in the event timezone on Wednesday.
 - Six confirmations are required to organize an event. A confirmed event may still run with five after a late cancellation.
 - Ops may increase capacity when demand is high. The current operating choices are eight or ten confirmed attendees.
@@ -56,7 +58,7 @@ Future automation should call the same validated commands founders use in ops. I
 - Each person may send one initial private message to another attendee; the conversation opens after the recipient replies.
 - The post-event credit offer starts 20 hours after the event, lasts 48 hours, and offers three credits for EUR 30 unless an experiment overrides it.
 - Exact compatibility, political, religious, and other sensitive matching data remains private.
-- Majority intention may be displayed as an aggregate when there is a clear majority. Never expose an individual's intention.
+- Display the cohort's most common relationship-intention option as an aggregate. Never expose which member selected it.
 - Never organize multiple one plus one club tables in the same restaurant at the same time.
 
 ## Open decisions
@@ -192,14 +194,14 @@ Create a summary snapshot for the proposed cohort and another for confirmed atte
 - Age minimum and maximum.
 - Primary event language.
 - Other commonly spoken languages.
-- Majority relationship intention wording.
+- Most common relationship-intention option.
 - Source cohort size and calculation timestamp.
 
 Rules:
 
 - The invitation stage uses the proposed/fixed-group snapshot.
 - Event confirmation uses the confirmed-attendee snapshot.
-- A tie or no majority displays neutral/mixed wording.
+- The most common submitted story option is displayed; ties resolve deterministically by option text.
 - No raw matching answers enter Loops.
 - No restaurant or exact address appears before Thursday confirmation.
 
@@ -264,7 +266,7 @@ Flow:
 4. Stripe webhook activates membership and grants the joining credit idempotently.
 5. If the hold is valid, confirm and spend the credit.
 6. If the hold expired, try current availability.
-7. If unavailable, preserve original priority, leave the credit unspent, and waitlist.
+7. If unavailable, preserve original priority and waitlist. Leave the credit unspent for capacity or expired-hold waitlisting; reserve it for gender-balance waitlisting.
 
 Requirements:
 
@@ -280,6 +282,8 @@ Requirements:
 - Persist `waitlist_reason`.
 - Persist `priority_at` from the first application.
 - Present distinct capacity and gender-balance messages.
+- Spend the event credit when a member accepts a gender-balance waitlist position. Do not spend it for capacity or payment-hold-expiry waitlists.
+- Keep the balance-waitlist debit when the member is promoted. Return it idempotently if the event is finalized without the balancing participant, the club cancels, or the member leaves that waitlist before promotion.
 - Promote eligible waitlisted people atomically when capacity/balance changes.
 - Do not displace a confirmed attendee based on an earlier late payment.
 - Allow ops to expand capacity from 8 to 10 before the RSVP deadline.

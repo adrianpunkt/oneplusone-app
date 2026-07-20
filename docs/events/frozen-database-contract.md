@@ -79,6 +79,12 @@ fields during the compatibility period.
   `eligible|replaced|no_replacement|restored`, `refund_eligible_at`,
   `replaced_at`, `refunded_at`, actor/action IDs, timestamps. An invitation can
   be the source or replacement only once per event.
+- `event_reservation_cancellations`: one row for each accepted seat or waitlist
+  cancellation, with invitation/event/member IDs, previous seat and waitlist
+  state, a required structured reason, optional detail (maximum 500
+  characters), the credit outcome acknowledged at cancellation time, and the
+  creation timestamp. Later replacement resolution remains in
+  `event_replacements`.
 - `event_hosts`: one row per event, with member/invitation, public introduction,
   assigning admin/action and `assigned_at`. Private contact fields are absent.
 - `event_materials`: event, locale, kind, version, public URL, created action and
@@ -87,8 +93,9 @@ fields during the compatibility period.
   restaurant, host and hosting-experience ratings, comments, one-star detail,
   and `submitted_at`. Any supplied rating of one requires one-star detail.
 - `event_summary_snapshots`: one row for each `proposed` and `confirmed` stage,
-  containing only age min/max, primary/additional languages, majority-intention
-  wording, source count, and calculation time.
+  containing only age min/max, primary/additional languages, the most common
+  relationship-intention story option (stored in `majority_intention` for
+  compatibility), source count, and calculation time.
 
 ### Commands and durable email deliveries
 
@@ -106,7 +113,8 @@ Delivery statuses are exactly `draft | sending | sent | failed | cancelled`.
 Delivery types are exactly:
 
 `invitation_member`, `invitation_pending`, `seat_confirmed`,
-`waitlist_capacity`, `waitlist_balance`, `cancellation_received`,
+`waitlist_capacity`, `waitlist_balance`, `waitlist_balance_released`,
+`cancellation_received`, `reservation_cancellation_received`,
 `rsvp_reminder`, `event_confirmed`, `event_cancelled`, `host_package`,
 `event_reminder`, `replacement_refund`, `no_replacement`,
 `late_cancellation_notice`, `feedback_request`, `credit_offer`.
@@ -212,6 +220,14 @@ the immediate durable delivery, and return:
 `{ok, invitationId, eventId, responseStatus, seatStatus, paymentStatus,
 waitlistReason, priorityAt, deliveryId}`.
 
+`cancel_event_confirmation(p_invitation_id uuid, p_reason text,
+p_details text)` requires a valid structured reason, stores the optional detail
+transactionally with the seat change, and additionally returns
+`cancellationId`, `cancellationReason`, and `creditOutcome`. Confirmed-seat
+cancellations acknowledge `replacement_pending`; balance-waitlist departures
+acknowledge and email the automatic refund; other waitlist departures confirm
+that no credit was used.
+
 `submit_event_feedback(p_event_id uuid, p_overall_rating integer,
 p_questions_rating integer, p_restaurant_rating integer, p_host_rating integer,
 p_hosting_experience_rating integer, p_comments text, p_one_star_detail text)`
@@ -226,10 +242,19 @@ email.
 
 - `create_event_invitation_access_token(p_invitation_id uuid,
   p_action_id uuid, p_ttl_minutes integer)` -> `{ok, tokenId, token,
-  expiresAt}`.
+  expiresAt}`. Access-token expiry is capped at the event RSVP deadline.
 - `claim_event_invitation_access_token(p_token text,
   p_session_ttl_minutes integer)` -> `{ok, sessionToken, maxAgeSeconds,
-  expiresAt}`. The bearer token is one-use and stored only as SHA-256.
+  expiresAt}`. The bearer token is one-use and stored only as SHA-256; claims
+  after the RSVP cutoff return `status:'deadline_passed'`. The public email URL
+  first renders a non-mutating GET interstitial; only its explicit Continue
+  POST calls this RPC, preventing automated email-link checks from consuming
+  the token.
+- `refresh_expired_event_invitation_link(p_token text)` -> `{ok, status,
+  deliveryId?, locale?}`. A used or expired pending-member link queues at most
+  one replacement invitation delivery while the event is open. After the
+  stored RSVP cutoff it returns `status:'deadline_passed'` and never queues a
+  replacement.
 - `resolve_event_invitation_session(p_session_token text)` -> internal server
   result `{ok, sessionId, eventId, invitationId, memberId, email, locale,
   membershipStatus, responseStatus, seatStatus, paymentStatus,
@@ -250,7 +275,10 @@ email.
   waitlistReason, creditAvailable}`. `status` is `confirmed | waitlisted |
   payment_pending | failed`. It activates membership and grants the joining
   credit once, converts a valid hold or retries allocation, spends the credit
-  once only for a confirmed seat, and leaves it unspent on waitlist.
+  for a confirmed seat or an accepted gender-balance waitlist position, and
+  leaves it unspent for capacity or payment-hold-expiry waitlists. A balance
+  waitlist debit is retained on promotion and refunded idempotently when the
+  required balancing participant is not found.
 - `get_event_invitation_payment_result(p_session_token text,
   p_checkout_session_id text)` -> the public payment-result DTO below.
 - `decline_pending_event_invitation(p_session_token text, p_reason text,
@@ -284,10 +312,12 @@ type PublicInvitationSession = {
     city: string | null
     eventFormat: "dinner" | "brunch" | "other"
     languageCode: "en" | "es" | null
+    capacity: number
     ageRange: { min: number | null; max: number | null }
     majorityIntention: string | null
     additionalLanguages: string[]
     preferenceNudge: boolean
+    genderBalanceEnabled: boolean
     rsvpDeadlineAt: string
     creditCost: number
   }
@@ -321,5 +351,5 @@ type PublicEventPaymentResult = {
 }
 ```
 
-`loginNext` is always `/events/{eventId}` and is passed through the existing
+`loginNext` is always `/going-out` and is passed through the existing
 validated member-login `next` normalizer.

@@ -20,6 +20,10 @@ declare
   confirm_result jsonb;
   cancel_result jsonb;
   token_result jsonb;
+  refresh_token_result jsonb;
+  refresh_result jsonb;
+  refresh_retry jsonb;
+  refresh_claim jsonb;
   session_result jsonb;
   payment_result jsonb;
   payment_retry jsonb;
@@ -128,6 +132,10 @@ begin
   ) then
     raise exception 'A raw invitation token was stored.';
   end if;
+  if (token_result ->> 'expiresAt')::timestamptz
+    > (select rsvp_deadline_at from public.events where id = prepared_event_id) then
+    raise exception 'Invitation token expiry exceeded the RSVP deadline.';
+  end if;
 
   session_result := public.claim_event_invitation_access_token(raw_token, 60);
   raw_session := session_result ->> 'sessionToken';
@@ -136,6 +144,40 @@ begin
     where session_hash = raw_session
   ) then
     raise exception 'A raw invitation session was stored.';
+  end if;
+
+  refresh_token_result := public.create_event_invitation_access_token(
+    pending_invitation_id,
+    (open_result ->> 'actionId')::uuid,
+    60
+  );
+  update public.event_invitation_access_tokens
+  set expires_at = now() - interval '1 second'
+  where id = (refresh_token_result ->> 'tokenId')::uuid;
+  refresh_result := public.refresh_expired_event_invitation_link(
+    refresh_token_result ->> 'token'
+  );
+  refresh_retry := public.refresh_expired_event_invitation_link(
+    refresh_token_result ->> 'token'
+  );
+  if refresh_result ->> 'status' <> 'queued'
+    or (refresh_result ->> 'deliveryId') <> (refresh_retry ->> 'deliveryId')
+    or (select count(*) from public.event_email_deliveries
+        where payload @> jsonb_build_object(
+          'refreshSourceTokenId', refresh_token_result ->> 'tokenId'
+        )) <> 1 then
+    raise exception 'Expired invitation replacement was not queued exactly once.';
+  end if;
+  refresh_claim := public.claim_event_email_delivery(
+    (refresh_result ->> 'deliveryId')::uuid,
+    null,
+    'test-invitation-pending-template'
+  );
+  if nullif(refresh_claim ->> 'invitationAccessToken', '') is null
+    or (select expires_at from public.event_invitation_access_tokens
+        where id = (refresh_claim ->> 'invitationAccessTokenId')::uuid)
+      > (select rsvp_deadline_at from public.events where id = prepared_event_id) then
+    raise exception 'Replacement invitation did not mint a deadline-capped link.';
   end if;
 
   payment_result := public.begin_event_invitation_payment(raw_session, 'test-valid-hold');
@@ -253,6 +295,10 @@ begin
   update public.events
   set rsvp_deadline_at = now() - interval '1 second'
   where id = late_event_id;
+  refresh_result := public.refresh_expired_event_invitation_link(late_token ->> 'token');
+  if refresh_result ->> 'status' <> 'deadline_passed' then
+    raise exception 'Expired invitation replacement ignored the RSVP deadline.';
+  end if;
   payment_result := public.begin_event_invitation_payment(
     late_session ->> 'sessionToken', 'test-stored-deadline'
   );

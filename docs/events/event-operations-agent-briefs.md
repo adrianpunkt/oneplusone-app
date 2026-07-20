@@ -146,9 +146,13 @@ Pending-member invitation, payment, and ten-minute hold:
    - activates membership and grants the joining credit idempotently;
    - confirms and spends the credit when the hold is valid;
    - retries seat allocation if the hold expired;
-   - otherwise priority-waitlists and leaves the credit unspent.
+   - otherwise priority-waitlists; capacity/payment-hold-expiry waitlists leave
+     the credit unspent, while an accepted gender-balance waitlist reserves it
+     and returns it automatically if the balancing participant is not found.
 10. Duplicate checkout/webhook delivery must never double-credit, double-debit, or create two seats.
-11. Payment success shows confirmed, waitlisted with available credit, payment pending, or failure clearly, then links to normal login with next=/events/{eventId}.
+11. Payment success distinguishes confirmed, balance-waitlisted with a reserved
+credit, capacity/expired-hold waitlisted with an available credit, payment
+     pending, and failure, then links to normal login with next=/going-out.
 12. Enforce active membership consistently in protected app context and every auth callback. Pending invitation sessions never grant protected app access.
 
 Active-member and confirmed-event app:
@@ -232,7 +236,7 @@ Event control centre:
    - RSVP deadline;
    - minimum confirmation/run counts;
    - later venue name/address/image;
-   - majority-intention wording with preview/override.
+   - most common relationship-intention story option.
 3. Call the idempotent prepare command. Repeating it opens the same event and never duplicates invitations.
 4. Event page displays:
    - source group and event state;
@@ -300,6 +304,7 @@ Loops integration:
    - feedback_request.
 12. The promotional credit offer is not transactional. The explicit ops action should send a Loops event into a marketing workflow for eligible contacts, or prepare the appropriate campaign mechanism chosen by the coordinator.
 13. Host PDF attachment is optional only when Loops attachments are enabled and the request remains under 4 MB. Always support the public material-link fallback.
+14. For `invitation_member`, mint a Supabase magic-link token at send time and set the authenticated destination to `/going-out`. Mark only this invitation link for browser auto-confirmation; expired-link replacement must preserve the Going Out destination. Keep `invitation_pending` on its separate one-time invitation-access flow.
 
 Privacy and content:
 - No exact venue/address before the founder confirms and releases details.

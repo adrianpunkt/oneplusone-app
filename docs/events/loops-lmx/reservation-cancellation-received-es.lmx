@@ -1,0 +1,18 @@
+<Style themeId="cmqb4vmha00o10ju4ths91501" />
+<Component componentId="cmqcao6dm1wwz0kys84vjjm7h" paddingTop="20" paddingBottom="30">
+  <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlfw8ho03sf0jxsbxf18x0a.png" alt="Hola {data.firstName}," width="202" dynamicSrc="https://oneplusoneclub.com/email/es/welcome/{data.firstName}.png" paddingTop="20" paddingBottom="30" />
+</Component>
+<Paragraph>Hemos recibido tu cancelación y actualizado tu plaza para este evento.</Paragraph>
+<Paragraph></Paragraph>
+<Section blockColor="#fef9f9" blockBorderRadius="12" paddingTop="16" paddingRight="16" paddingBottom="16" paddingLeft="16">
+  <Paragraph><Strong>Qué ocurre ahora</Strong><Br />{data.cancellationOutcome}</Paragraph>
+  <Paragraph><Strong>Motivo registrado:</Strong> {data.cancellationReason}</Paragraph>
+</Section>
+<Paragraph></Paragraph>
+<Button href="{data.ctaUrl}">Ver tus eventos</Button>
+<Component componentId="cmqcdwxlt1oyx0jxfjrrwxls0" paddingTop="20" paddingBottom="20">
+  <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlg3fsz050i0jxqp5h3c8c0.png" alt="one plus one club" href="https://oneplusoneclub.com" width="222" dynamicSrc="https://oneplusoneclub.com/email/es/with-love-oneplusoneclub.png" paddingTop="20" paddingBottom="20" />
+</Component>
+<Component componentId="cmql94c2n20uz0j0553vw8dpu">
+  <Paragraph fontSize="16" lineHeight="150"><Text textColor="#440a12">P.D. Puedes seguirnos en Instagram </Text><Link href="https://www.instagram.com/oneplusone_club?utm_source=new-member-email"><Underline>@oneplusone_club</Underline></Link></Paragraph>
+</Component>

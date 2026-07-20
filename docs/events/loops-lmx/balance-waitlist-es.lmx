@@ -1,0 +1,17 @@
+<Style themeId="cmqb4vmha00o10ju4ths91501" />
+<Component componentId="cmqcao6dm1wwz0kys84vjjm7h" paddingTop="20" paddingBottom="30">
+  <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlfw8ho03sf0jxsbxf18x0a.png" alt="Hola {data.firstName}," width="202" dynamicSrc="https://oneplusoneclub.com/email/es/welcome/{data.firstName}.png" paddingTop="20" paddingBottom="30" />
+</Component>
+<Paragraph>Gracias por solicitar una plaza en este evento. Para mantener la mesa equilibrada, estamos esperando a que se una una persona más al grupo.</Paragraph>
+<Paragraph></Paragraph>
+<Paragraph>Hemos reservado <Strong>1 crédito</Strong> mientras esperamos. En cuanto se una la persona que falta, tu plaza se confirmará automáticamente y ese crédito seguirá asignado al evento.</Paragraph>
+<Paragraph></Paragraph>
+<Paragraph>Si no conseguimos completar el equilibrio, liberaremos tu plaza y te devolveremos el crédito automáticamente. No tienes que hacer nada.</Paragraph>
+<Paragraph></Paragraph>
+<Button href="{data.ctaUrl}">Ver evento</Button>
+<Component componentId="cmqcdwxlt1oyx0jxfjrrwxls0" paddingTop="20" paddingBottom="20">
+  <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlg3fsz050i0jxqp5h3c8c0.png" alt="one plus one club" href="https://oneplusoneclub.com" width="222" dynamicSrc="https://oneplusoneclub.com/email/es/with-love-oneplusoneclub.png" paddingTop="20" paddingBottom="20" />
+</Component>
+<Component componentId="cmql94c2n20uz0j0553vw8dpu">
+  <Paragraph fontSize="16" lineHeight="150"><Text textColor="#440a12">P.D. Puedes seguirnos en Instagram </Text><Link href="https://www.instagram.com/oneplusone_club?utm_source=new-member-email"><Underline>@oneplusone_club</Underline></Link></Paragraph>
+</Component>

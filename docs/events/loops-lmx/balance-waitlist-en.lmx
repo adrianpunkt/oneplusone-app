@@ -1,0 +1,17 @@
+<Style themeId="cmqb4vmha00o10ju4ths91501" />
+<Component componentId="cmqcao6dm1wwz0kys84vjjm7h" paddingTop="20" paddingBottom="30">
+  <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlfw8ho03sf0jxsbxf18x0a.png" alt="Dear {data.firstName}," width="202" dynamicSrc="https://oneplusoneclub.com/email/en/welcome/{data.firstName}.png" paddingTop="20" paddingBottom="30" />
+</Component>
+<Paragraph>Thanks for applying to join this event. To keep the table balanced, we're waiting for one more person to join the group.</Paragraph>
+<Paragraph></Paragraph>
+<Paragraph>We've reserved <Strong>1 credit</Strong> while we wait. As soon as the matching person joins, your seat will be confirmed automatically and that credit will remain assigned to the event.</Paragraph>
+<Paragraph></Paragraph>
+<Paragraph>If we can't complete the balance, we'll release your place and return the credit automatically. You don't need to do anything.</Paragraph>
+<Paragraph></Paragraph>
+<Button href="{data.ctaUrl}">View event</Button>
+<Component componentId="cmqcdwxlt1oyx0jxfjrrwxls0" paddingTop="20" paddingBottom="20">
+  <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlg3fsz050i0jxqp5h3c8c0.png" alt="one plus one club" href="https://oneplusoneclub.com" width="222" dynamicSrc="https://oneplusoneclub.com/email/en/with-love-oneplusoneclub.png" paddingTop="20" paddingBottom="20" />
+</Component>
+<Component componentId="cmql90bd02j7r0j05fsp2h0dt">
+  <Paragraph fontSize="16" lineHeight="150"><Text textColor="#440a12">P.S. You can follow us on Instagram </Text><Link href="https://www.instagram.com/oneplusone_club?utm_source=friends-email"><Underline>@oneplusone_club</Underline></Link></Paragraph>
+</Component>
