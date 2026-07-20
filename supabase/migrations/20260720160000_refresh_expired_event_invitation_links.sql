@@ -226,7 +226,7 @@ begin
   select * into delivery_record
   from public.event_email_deliveries
   where email_type = 'invitation_pending'
-    and payload @> jsonb_build_object('refreshSourceTokenId', token_record.id::text)
+    and payload @> jsonb_build_object('refreshSourceAccessId', token_record.id::text)
   order by created_at desc
   limit 1
   for update;
@@ -263,7 +263,7 @@ begin
     null,
     'invitation_pending',
     public.event_frozen_payload(event_record.id, invitation_record.id)
-      || jsonb_build_object('refreshSourceTokenId', token_record.id::text),
+      || jsonb_build_object('refreshSourceAccessId', token_record.id::text),
     'pending-invite-refresh-' || token_record.id::text
   );
 

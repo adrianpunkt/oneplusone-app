@@ -27,6 +27,7 @@ declare
   session_result jsonb;
   payment_result jsonb;
   payment_retry jsonb;
+  resume_result jsonb;
   completion_result jsonb;
   completion_retry jsonb;
   transition_retry jsonb;
@@ -164,7 +165,7 @@ begin
     or (refresh_result ->> 'deliveryId') <> (refresh_retry ->> 'deliveryId')
     or (select count(*) from public.event_email_deliveries
         where payload @> jsonb_build_object(
-          'refreshSourceTokenId', refresh_token_result ->> 'tokenId'
+          'refreshSourceAccessId', refresh_token_result ->> 'tokenId'
         )) <> 1 then
     raise exception 'Expired invitation replacement was not queued exactly once.';
   end if;
@@ -199,13 +200,27 @@ begin
     payment_attempt_id, 'cs_test_valid_hold', 'pi_test_valid_hold', 'evt_test_valid_hold'
   );
   if completion_result <> completion_retry
-    or completion_result ->> 'status' <> 'confirmed'
+    or completion_result ->> 'status' <> 'ready_to_confirm'
     or (select priority_at from public.event_invitations where id = pending_invitation_id) <> priority_before
+    or (select response_status from public.event_invitations where id = pending_invitation_id) <> 'invited'
+    or (select seat_status from public.event_invitations where id = pending_invitation_id) <> 'none'
     or (select count(*) from public.credit_ledger_entries
         where member_id = member_ids[6] and reason = 'membership_join_credit') <> 1
     or (select count(*) from public.credit_ledger_entries
-        where member_id = member_ids[6] and reason = 'event_confirmation') <> 1 then
-    raise exception 'Valid-hold payment reconciliation is not exactly once.';
+        where member_id = member_ids[6] and reason = 'event_confirmation') <> 0
+    or not exists (
+      select 1 from public.event_seat_holds
+      where invitation_id = pending_invitation_id
+        and status = 'active'
+        and expires_at > now()
+    ) then
+    raise exception 'Valid-hold payment did not preserve an exactly-once in-app resume.';
+  end if;
+
+  resume_result := public.prepare_active_event_invitation_resume(raw_session);
+  if resume_result ->> 'status' <> 'member_active'
+    or resume_result ->> 'invitationId' <> pending_invitation_id::text then
+    raise exception 'Active-member invitation resume was not prepared.';
   end if;
 
   confirm_result := public.confirm_event_and_release_details(
@@ -237,7 +252,7 @@ begin
   if cancel_result <> transition_retry
     or cancel_result ->> 'status' <> 'cancelled'
     or (select count(*) from public.credit_ledger_entries
-        where member_id = member_ids[6] and reason = 'event_cancelled_refund') <> 1 then
+        where member_id = member_ids[6] and reason = 'event_cancelled_refund') <> 0 then
     raise exception 'Founder cancellation or exactly-once refund failed.';
   end if;
 
@@ -283,13 +298,15 @@ begin
   completion_result := public.complete_event_invitation_payment(
     late_attempt_id, 'cs_test_expired_hold', 'pi_test_expired_hold', 'evt_test_expired_hold'
   );
-  if completion_result ->> 'status' <> 'waitlisted'
-    or completion_result ->> 'waitlistReason' <> 'payment_hold_expired'
+  if completion_result ->> 'status' <> 'ready_to_confirm'
+    or completion_result ->> 'waitlistReason' is not null
     or not (completion_result ->> 'creditAvailable')::boolean
     or (select priority_at from public.event_invitations where id = late_invitation_id) <> late_priority
+    or (select response_status from public.event_invitations where id = late_invitation_id) <> 'invited'
+    or (select seat_status from public.event_invitations where id = late_invitation_id) <> 'none'
     or (select count(*) from public.credit_ledger_entries
         where member_id = late_pending_member_id and reason = 'event_confirmation') <> 0 then
-    raise exception 'Expired-hold late payment did not preserve priority and credit.';
+    raise exception 'Expired-hold late payment did not preserve the resumable priority and credit.';
   end if;
 
   update public.events
