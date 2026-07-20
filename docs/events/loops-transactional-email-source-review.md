@@ -58,7 +58,7 @@ The Instagram components currently use onboarding-oriented UTM values
 | `seat_confirmed` | It's a date! | Source text and layout retained |
 | `waitlist_balance` | Date waitlist | Source text and layout retained |
 | `waitlist_balance_released` | No direct source | New automatic credit-return copy |
-| `waitlist_capacity` | Your event update | Source text retained; event-page button added |
+| `waitlist_capacity` | Your event update | Source text retained; Going Out button added |
 | `cancellation_received` | Not this time | Source text and layout retained |
 | `rsvp_reminder` | Event invitation reminder | Source text retained; rolling 24-hour wording replaced by the real deadline |
 | `event_confirmed` | Date confirmation | Source text retained with available confirmation facts and confirmed policy corrections |
@@ -78,7 +78,7 @@ Source: **Event invitation**
 Implemented:
 
 - Dynamic event date, language, city, most common relationship intention, age range, format,
-  time, RSVP deadline, and event-page link.
+  time, RSVP deadline, and Going Out link.
 - The source's hardcoded orientation line was omitted because no orientation
   variable is provided to the email.
 
@@ -164,12 +164,12 @@ Source: **Your event update**
 Implemented:
 
 - Source text retained.
-- An event-page button was added because the copy tells the recipient they can
+- A Going Out button was added because the copy tells the recipient they can
   leave the waitlist.
 
 Review:
 
-- Confirm the event page reliably allows a capacity-waitlisted member to remove
+- Confirm Going Out reliably allows a capacity-waitlisted member to remove
   themselves.
 - "We create new groups every week" is an operational promise that may not be
   true for every city or cohort.

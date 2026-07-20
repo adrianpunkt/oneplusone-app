@@ -98,8 +98,8 @@ member-app origin.
   tokenized invitation-access URL.
 - Replacement-refund credit CTAs resolve to `/credits`.
 - Host-package CTAs retain their generated public material URL.
-- Feedback-request CTAs retain the member event URL because the feedback form
-  currently lives on that page; they are not event-list CTAs.
+- Feedback-request CTAs also resolve to `/going-out` while member event pages
+  are disabled.
 
 ## Shared content in all 16 transactionals
 

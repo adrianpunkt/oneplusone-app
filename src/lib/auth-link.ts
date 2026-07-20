@@ -2,7 +2,7 @@ import { emailSchema } from "@/lib/validators/story";
 import { safeInternalPath } from "@/lib/utils";
 
 export const DEFAULT_LOGIN_NEXT_PATH = "/dashboard";
-export const MEMBER_LOGIN_LINK_TTL_MINUTES = 60;
+export const MEMBER_LOGIN_LINK_TTL_MINUTES = 24 * 60;
 
 export type MemberLoginOtpType = "email" | "magiclink";
 
