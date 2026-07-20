@@ -5,6 +5,7 @@ import {
   canRestoreCancelledInvitation,
   isPendingInvitation,
   isRejectedInvitation,
+  shouldShowCannotMakeItStatus,
 } from "../src/lib/event-invitation-classification.ts";
 
 function invitation(status, respondedAt = null) {
@@ -34,6 +35,18 @@ test("declined and expired invitations are rejected", () => {
   assert.equal(isRejectedInvitation(invitation("declined")), true);
   assert.equal(isRejectedInvitation(invitation("expired")), true);
   assert.equal(isRejectedInvitation(invitation("confirmed")), false);
+});
+
+test("member cancellations do not look like club event cancellations", () => {
+  assert.equal(
+    shouldShowCannotMakeItStatus("cancelled", "inviting"),
+    true,
+  );
+  assert.equal(
+    shouldShowCannotMakeItStatus("cancelled", "cancelled"),
+    false,
+  );
+  assert.equal(shouldShowCannotMakeItStatus("declined", "inviting"), true);
 });
 
 test("a cancelled reservation can be restored only while its seat is available", () => {

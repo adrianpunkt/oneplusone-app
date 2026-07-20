@@ -53,6 +53,7 @@ import {
   canRestoreCancelledInvitation,
   isPendingInvitation,
   isRejectedInvitation,
+  shouldShowCannotMakeItStatus,
 } from "@/lib/event-invitation-classification";
 import {
   getDictionary,
@@ -914,7 +915,11 @@ function PastEventCard({
         <div className="grid gap-1">
           <EventStatusText
             label={
-              item.status === "declined"
+              item.invitation &&
+              shouldShowCannotMakeItStatus(
+                item.invitation.status,
+                item.event?.status,
+              )
                 ? dictionary.goingOut.status.cannotMakeIt
                 : undefined
             }

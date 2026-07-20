@@ -21,6 +21,14 @@ export function isRejectedInvitation(invitation: ClassifiableInvitation) {
   return ["cancelled", "declined", "expired"].includes(invitation.status);
 }
 
+export function shouldShowCannotMakeItStatus(
+  invitationStatus: EventInvitation["status"],
+  eventStatus: EventRecord["status"] | undefined,
+) {
+  return invitationStatus === "declined" ||
+    (invitationStatus === "cancelled" && eventStatus !== "cancelled");
+}
+
 export function canRestoreCancelledInvitation(
   invitation: RestorableInvitation,
   now: number,
