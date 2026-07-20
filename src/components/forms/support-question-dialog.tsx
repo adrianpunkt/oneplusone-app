@@ -6,6 +6,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { Send, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Locale } from "@/lib/i18n/locales";
@@ -153,13 +154,13 @@ export function SupportQuestionDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[70] bg-ink/35 backdrop-blur-sm" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-[71] flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-wine-burgundy/15 bg-white shadow-2xl outline-none"
+          className="fixed left-1/2 top-1/2 z-[71] flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-wine-burgundy/15 bg-white shadow-2xl outline-none sm:overflow-visible"
           onOpenAutoFocus={(event) => {
             event.preventDefault();
             messageRef.current?.focus();
           }}
         >
-          <div className="relative flex min-h-0 flex-col overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 sm:px-6 sm:pb-6 sm:pt-6">
+          <div className="relative flex min-h-0 flex-col overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 sm:overflow-visible sm:px-6 sm:pb-6 sm:pt-6">
             <Dialog.Close asChild>
               <button
                 aria-label={copy.close}
@@ -173,16 +174,26 @@ export function SupportQuestionDialog({
             {step === "message" && !sent ? (
               <div className="mb-5 grid w-fit justify-items-center gap-1.5 pr-12">
                 <div className="flex -space-x-3">
-                  {supportAvatars.map((avatar) => (
-                    <span
-                      aria-label={`Hi! I'm ${avatar.name}.`}
-                      className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-white bg-cement-gray shadow-md"
-                      key={avatar.name}
-                      role="img"
-                    >
-                      <Image alt="" fill sizes="48px" src={avatar.src} />
-                    </span>
-                  ))}
+                  {supportAvatars.map((avatar) => {
+                    const introduction = locale === "es"
+                      ? `¡Hola! Soy ${avatar.name}.`
+                      : `Hi! I'm ${avatar.name}.`;
+
+                    return (
+                      <span
+                        aria-label={introduction}
+                        className="group relative h-12 w-12 rounded-full focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35 focus-visible:ring-offset-2 hover:z-10"
+                        key={avatar.name}
+                        role="img"
+                        tabIndex={0}
+                      >
+                        <span className="absolute inset-0 overflow-hidden rounded-full border-2 border-white bg-cement-gray shadow-md transition-transform duration-150 group-hover:scale-110 group-focus-visible:scale-110">
+                          <Image alt="" fill sizes="48px" src={avatar.src} />
+                        </span>
+                        <HoverTooltip>{introduction}</HoverTooltip>
+                      </span>
+                    );
+                  })}
                 </div>
                 <p className="text-xs font-extrabold text-lipstick-red">
                   {copy.listeningLabel}

@@ -1,9 +1,8 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ExternalLink, KeyRound, Mail, RotateCcw, UserPlus, X } from "lucide-react";
+import { ExternalLink, KeyRound, Mail, RotateCcw, UserPlus } from "lucide-react";
 
 import {
   requestOtpAction,
@@ -22,13 +21,6 @@ const initialState: AuthActionState = {};
 const joinUrl = "https://oneplusoneclub.com/your-story";
 
 export type LoginFormCopy = {
-  assistanceClose: string;
-  assistanceEmail: string;
-  assistanceEmailAriaLabel: string;
-  assistanceLeadPrefix: string;
-  assistanceLeadSuffix: string;
-  assistanceSubject: string;
-  assistanceTitle: string;
   checking: string;
   codePlaceholder: string;
   codeSentToast: string;
@@ -43,7 +35,6 @@ export type LoginFormCopy = {
   login: string;
   notRegisteredBody: string;
   notRegisteredTitle: string;
-  needAssistance: string;
   password: string;
   passwordPlaceholder: string;
   passwordStepPrefix: string;
@@ -91,57 +82,6 @@ function FormErrorMessage({ message }: { message: string }) {
       </span>
       {after}
     </>
-  );
-}
-
-function AssistanceDialog({ copy }: { copy: LoginFormCopy }) {
-  const emailHref = `mailto:${copy.assistanceEmail}?subject=${encodeURIComponent(
-    copy.assistanceSubject,
-  )}`;
-
-  return (
-    <Dialog.Root>
-      <Dialog.Trigger asChild>
-        <button
-          className="justify-self-center text-sm font-black text-ocean-blue underline decoration-ocean-blue/40 underline-offset-4 transition-colors hover:text-ocean-blue/80 hover:decoration-ocean-blue focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35 focus-visible:ring-offset-2"
-          style={{ fontWeight: 900 }}
-          type="button"
-        >
-          {copy.needAssistance}
-        </button>
-      </Dialog.Trigger>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/45 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[min(calc(100vw-2rem),30rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border border-wine-burgundy/10 bg-white p-5 shadow-2xl">
-          <div className="grid gap-2 pr-10">
-            <Dialog.Title className="font-display text-2xl font-extrabold text-wine-burgundy">
-              {copy.assistanceTitle}
-            </Dialog.Title>
-            <Dialog.Description className="text-base font-medium leading-6 text-muted">
-              {copy.assistanceLeadPrefix}{" "}
-              <a
-                aria-label={copy.assistanceEmailAriaLabel}
-                className="font-extrabold text-ocean-blue underline decoration-ocean-blue/35 underline-offset-4 hover:text-ocean-blue/80 hover:decoration-ocean-blue"
-                href={emailHref}
-              >
-                {copy.assistanceEmail}
-              </a>
-              {copy.assistanceLeadSuffix}
-            </Dialog.Description>
-          </div>
-          <Dialog.Close asChild>
-            <Button
-              aria-label={copy.assistanceClose}
-              className="absolute right-3 top-3 h-9 w-9 rounded-full p-0 text-muted hover:bg-blush-pink hover:text-wine-burgundy"
-              type="button"
-              variant="ghost"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </Button>
-          </Dialog.Close>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
   );
 }
 
@@ -321,7 +261,6 @@ export function LoginForm({
               <ExternalLink className="h-4 w-4" />
             </a>
           </Button>
-          <AssistanceDialog copy={copy} />
         </div>
       </div>
     );

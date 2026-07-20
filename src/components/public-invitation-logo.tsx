@@ -5,9 +5,11 @@ import publicInvitationLogoImage from "../../public/non-member-invitation-logo-t
 
 export function PublicInvitationLogo({
   className,
+  imageClassName,
   priority = false,
 }: {
   className?: string;
+  imageClassName?: string;
   priority?: boolean;
 }) {
   return (
@@ -16,7 +18,7 @@ export function PublicInvitationLogo({
         src={publicInvitationLogoImage}
         alt="one plus one club"
         preload={priority}
-        className="h-auto w-full object-contain"
+        className={cn("h-auto w-full object-contain", imageClassName)}
       />
     </span>
   );

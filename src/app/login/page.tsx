@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { LanguageSwitcher } from "@/components/app/language-switcher";
 import { BrandLogo } from "@/components/brand-logo";
 import { LoginForm } from "@/components/forms/login-form";
+import { SupportQuestionDialog } from "@/components/forms/support-question-dialog";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { getOptionalMemberContextForRender } from "@/lib/data/member";
 import { isDemoMemberEmail } from "@/lib/demo-member";
@@ -80,66 +82,71 @@ export default async function LoginPage({
 
   return (
     <main className="grid min-h-screen place-items-center px-4 py-10">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="flex items-start justify-between gap-4">
-            <BrandLogo className="w-40" priority />
-            <LanguageSwitcher
-              ariaLabel={dictionary.common.language}
-              currentLocale={locale}
+      <div className="grid w-full max-w-md gap-4">
+        <Card className="w-full">
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <Link href="/" className="rounded-lg">
+                <BrandLogo className="w-40" priority />
+              </Link>
+              <LanguageSwitcher
+                ariaLabel={dictionary.common.language}
+                currentLocale={locale}
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {message ? (
+              <p className="mb-4 rounded-lg border border-lipstick-red/20 bg-lipstick-red/8 p-3 text-sm font-semibold leading-6 text-lipstick-red">
+                {message}
+              </p>
+            ) : null}
+            <LoginForm
+              codeStepMessage={codeStepMessage}
+              copy={{
+                checking: dictionary.login.checking,
+                codePlaceholder: dictionary.login.codePlaceholder,
+                codeSentToast: dictionary.login.codeSentToast,
+                email: dictionary.login.email,
+                emailCode: dictionary.login.emailCode,
+                emailPlaceholder: dictionary.login.emailPlaceholder,
+                introBodyAppName: dictionary.login.introBodyAppName,
+                introBodyPrefix: dictionary.login.introBodyPrefix,
+                introBodySuffix: dictionary.login.introBodySuffix,
+                introTitle: dictionary.login.introTitle,
+                joinClub: dictionary.login.joinClub,
+                login: dictionary.login.login,
+                notRegisteredBody: dictionary.login.notRegisteredBody,
+                notRegisteredTitle: dictionary.login.notRegisteredTitle,
+                password: dictionary.login.password,
+                passwordPlaceholder: dictionary.login.passwordPlaceholder,
+                passwordStepPrefix: dictionary.login.passwordStepPrefix,
+                passwordStepSuffix: dictionary.login.passwordStepSuffix,
+                sendLoginCode: dictionary.login.sendLoginCode,
+                sendNewCode: dictionary.login.sendNewCode,
+                sending: dictionary.login.sending,
+                sentCodePrefix: locale === "es" ? "Hemos enviado un código a " : "We sent a login code to ",
+                sentCodeSuffix: ".",
+              }}
+              initialEmail={initialEmail}
+              initialOtpType={initialOtpType}
+              initialPasswordRequired={initialPasswordRequired}
+              initialSent={initialSent}
+              locale={locale}
+              next={next}
             />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {message ? (
-            <p className="mb-4 rounded-lg border border-lipstick-red/20 bg-lipstick-red/8 p-3 text-sm font-semibold leading-6 text-lipstick-red">
-              {message}
-            </p>
-          ) : null}
-          <LoginForm
-            codeStepMessage={codeStepMessage}
-            copy={{
-              assistanceClose: dictionary.login.assistanceClose,
-              assistanceEmail: dictionary.login.assistanceEmail,
-              assistanceEmailAriaLabel: dictionary.login.assistanceEmailAriaLabel,
-              assistanceLeadPrefix: dictionary.login.assistanceLeadPrefix,
-              assistanceLeadSuffix: dictionary.login.assistanceLeadSuffix,
-              assistanceSubject: dictionary.login.assistanceSubject,
-              assistanceTitle: dictionary.login.assistanceTitle,
-              checking: dictionary.login.checking,
-              codePlaceholder: dictionary.login.codePlaceholder,
-              codeSentToast: dictionary.login.codeSentToast,
-              email: dictionary.login.email,
-              emailCode: dictionary.login.emailCode,
-              emailPlaceholder: dictionary.login.emailPlaceholder,
-              introBodyAppName: dictionary.login.introBodyAppName,
-              introBodyPrefix: dictionary.login.introBodyPrefix,
-              introBodySuffix: dictionary.login.introBodySuffix,
-              introTitle: dictionary.login.introTitle,
-              joinClub: dictionary.login.joinClub,
-              login: dictionary.login.login,
-              needAssistance: dictionary.login.needAssistance,
-              notRegisteredBody: dictionary.login.notRegisteredBody,
-              notRegisteredTitle: dictionary.login.notRegisteredTitle,
-              password: dictionary.login.password,
-              passwordPlaceholder: dictionary.login.passwordPlaceholder,
-              passwordStepPrefix: dictionary.login.passwordStepPrefix,
-              passwordStepSuffix: dictionary.login.passwordStepSuffix,
-              sendLoginCode: dictionary.login.sendLoginCode,
-              sendNewCode: dictionary.login.sendNewCode,
-              sending: dictionary.login.sending,
-              sentCodePrefix: locale === "es" ? "Hemos enviado un código a " : "We sent a login code to ",
-              sentCodeSuffix: ".",
-            }}
-            initialEmail={initialEmail}
-            initialOtpType={initialOtpType}
-            initialPasswordRequired={initialPasswordRequired}
-            initialSent={initialSent}
-            locale={locale}
-            next={next}
-          />
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        <SupportQuestionDialog
+          copy={{
+            ...dictionary.actions.support,
+            intro: dictionary.login.supportIntro,
+            subject: dictionary.login.assistanceSubject,
+            trigger: dictionary.login.needAssistance,
+          }}
+          locale={locale}
+        />
+      </div>
     </main>
   );
 }

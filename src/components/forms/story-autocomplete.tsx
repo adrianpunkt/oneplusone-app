@@ -598,7 +598,10 @@ async function loadCityData() {
     cityDataPromise = fetch(CITY_DATA_URL, { cache: "no-cache" })
       .then((response) => {
         if (!response.ok) throw new Error(`City data failed with ${response.status}`);
-        return response.json();
+        return response.json() as Promise<{
+          cities?: CityItem[];
+          removedParentCities?: CityItem[];
+        }>;
       })
       .then((payload) => prepareCityData(payload))
       .catch(() => ({
@@ -617,7 +620,11 @@ async function loadLanguageData() {
     languageDataPromise = fetch(LANGUAGE_DATA_URL, { cache: "no-cache" })
       .then((response) => {
         if (!response.ok) throw new Error(`Language data failed with ${response.status}`);
-        return response.json();
+        return response.json() as Promise<{
+          countryLanguages?: Record<string, string[]>;
+          countryNames?: Record<string, string>;
+          languages?: LanguageItem[];
+        }>;
       })
       .then((payload) => ({
         countryLanguages: payload.countryLanguages || {},
