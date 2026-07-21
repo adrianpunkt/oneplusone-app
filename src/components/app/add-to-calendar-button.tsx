@@ -3,6 +3,7 @@
 import { CalendarPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { HoverTooltip } from "@/components/ui/hover-tooltip";
 
 type CalendarEvent = {
   description?: string | null;
@@ -133,9 +134,11 @@ function preferredCalendar() {
 export function AddToCalendarButton({
   copy,
   event,
+  iconOnly = false,
 }: {
   copy: CalendarCopy;
   event: CalendarEvent;
+  iconOnly?: boolean;
 }) {
   const hasDate = Boolean(event.startsAt);
 
@@ -150,15 +153,20 @@ export function AddToCalendarButton({
 
   return (
     <Button
-      className="h-7 gap-1.5 px-2.5 text-[11px]"
+      aria-label={iconOnly ? copy.add : undefined}
+      className={
+        iconOnly
+          ? "group relative h-7 w-7 gap-0 px-0 text-[11px]"
+          : "h-7 gap-1.5 px-2.5 text-[11px]"
+      }
       disabled={!hasDate}
       onClick={addToCalendar}
       size="sm"
       type="button"
       variant="secondary"
     >
-      <CalendarPlus className="h-3.5 w-3.5" />
-      {copy.add}
+      <CalendarPlus aria-hidden="true" className="h-3.5 w-3.5" />
+      {iconOnly ? <HoverTooltip>{copy.add}</HoverTooltip> : copy.add}
     </Button>
   );
 }

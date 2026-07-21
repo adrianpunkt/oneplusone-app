@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
 import { MemberNavIcon } from "@/components/app/member-nav-icon";
 import { MessageHeartIcon } from "@/components/app/message-heart-icon";
@@ -49,7 +48,8 @@ export function MobileMenu({
   unreadCount: number;
 }) {
   const [open, setOpen] = useState(false);
-  const [menuTop, setMenuTop] = useState(0);
+  const [menuTop, setMenuTop] = useState(61);
+  const menuRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const pathname = usePathname();
 
@@ -58,14 +58,20 @@ export function MobileMenu({
     setMenuTop(headerBottom);
   }, []);
 
-  function openMenu() {
+  function handleTriggerClick() {
     updateMenuTop();
-    setOpen(true);
+
+    if (typeof menuRef.current?.togglePopover !== "function") {
+      setOpen((current) => !current);
+    }
   }
 
-  function closeMenu() {
+  const closeMenu = useCallback(() => {
+    if (open && typeof menuRef.current?.hidePopover === "function") {
+      menuRef.current.hidePopover();
+    }
     setOpen(false);
-  }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -103,14 +109,21 @@ export function MobileMenu({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open]);
+  }, [closeMenu, open]);
 
   const menu = (
     <div
-      className="fixed inset-x-0 z-[45] grid w-dvw grid-rows-[minmax(0,1fr)_auto] overflow-hidden bg-white px-4 shadow-[0_18px_45px_rgba(68,10,18,0.10)] md:hidden"
-      id="mobile-menu"
-      role="dialog"
       aria-modal="true"
+      className="fixed inset-x-0 z-[45] m-0 grid max-h-none max-w-none w-dvw grid-rows-[minmax(0,1fr)_auto] overflow-hidden border-0 bg-white px-4 shadow-[0_18px_45px_rgba(68,10,18,0.10)] md:hidden"
+      data-mobile-menu=""
+      data-open={open}
+      id="mobile-menu"
+      onToggle={(event) => {
+        setOpen(event.currentTarget.matches(":popover-open"));
+      }}
+      popover="auto"
+      ref={menuRef}
+      role="dialog"
       style={{ height: `calc(100dvh - ${menuTop}px)`, top: menuTop }}
     >
       <LanguageSwitcher
@@ -135,7 +148,7 @@ export function MobileMenu({
                   aria-current={isActive ? "page" : undefined}
                   aria-label={itemMessageTooltip ? `${label}. ${itemMessageTooltip}` : undefined}
                   className={cn(
-                    "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
+                    "flex min-h-16 items-center rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
                     isActive
                       ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
                       : "text-wine-burgundy",
@@ -144,23 +157,27 @@ export function MobileMenu({
                   key={item.href}
                   onClick={closeMenu}
                 >
-                  {isMessages ? (
-                    <MessageHeartIcon
-                      className={cn("h-8 w-8", unreadCount > 0 ? "text-lipstick-red" : "text-current")}
-                      count={unreadCount}
-                      iconClassName="h-8 w-8"
-                    />
-                  ) : (
-                    <item.icon className="h-6 w-6 shrink-0" />
-                  )}
-                  <span>{label}</span>
+                  <span className="mx-auto flex w-48 items-center gap-3 text-left">
+                    {isMessages ? (
+                      <MessageHeartIcon
+                        className={cn("h-10 w-10", unreadCount > 0 ? "text-lipstick-red" : "text-current")}
+                        count={unreadCount}
+                        iconClassName="h-8 w-8"
+                      />
+                    ) : (
+                      <span className="grid h-10 w-10 shrink-0 place-items-center">
+                        <item.icon className="h-6 w-6" />
+                      </span>
+                    )}
+                    <span>{label}</span>
+                  </span>
                 </Link>
               );
             })}
             <Link
               aria-current={isPathInSection(pathname, meActivePaths) ? "page" : undefined}
               className={cn(
-                "flex min-h-16 items-center justify-center gap-3 rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
+                "flex min-h-16 items-center rounded-lg px-4 font-display text-2xl font-extrabold transition-colors hover:bg-lipstick-red/8 hover:text-lipstick-red",
                 isPathInSection(pathname, meActivePaths)
                   ? "bg-lipstick-red/10 text-lipstick-red hover:bg-lipstick-red/10"
                   : "text-wine-burgundy",
@@ -168,26 +185,30 @@ export function MobileMenu({
               href="/my-story"
               onClick={closeMenu}
             >
-              <MemberNavIcon
-                className="h-7 w-7 shrink-0 text-xs"
-                displayName={displayName}
-                imageUrl={imageUrl}
-              />
-              <span>{labels.myStory}</span>
+              <span className="mx-auto flex w-48 items-center gap-3 text-left">
+                <span className="grid h-10 w-10 shrink-0 place-items-center">
+                  <MemberNavIcon
+                    className="h-7 w-7 text-xs"
+                    displayName={displayName}
+                    imageUrl={imageUrl}
+                  />
+                </span>
+                <span>{labels.myStory}</span>
+              </span>
             </Link>
-            <div className="grid pt-2">
-              <SupportQuestionDialog copy={supportCopy} locale={currentLocale} />
-            </div>
           </nav>
         </div>
       </div>
-      <div className="border-t border-wine-burgundy/10 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-        <SignOutButton
-          className="h-12 w-full justify-center border-wine-burgundy/10 bg-white text-base font-black text-wine-burgundy shadow-sm hover:translate-y-0 hover:bg-lipstick-red/8 hover:text-lipstick-red hover:shadow-sm"
-          label={labels.signOut}
-          size="lg"
-          variant="secondary"
-        />
+      <div className="grid gap-5 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+        <SupportQuestionDialog copy={supportCopy} locale={currentLocale} />
+        <div className="flex justify-center">
+          <SignOutButton
+            className="h-12 w-48 justify-center border-wine-burgundy/10 bg-white text-base font-black text-lipstick-red shadow-sm hover:translate-y-0 hover:bg-lipstick-red/8 hover:text-lipstick-red hover:shadow-sm"
+            label={labels.signOut}
+            size="lg"
+            variant="secondary"
+          />
+        </div>
       </div>
     </div>
   );
@@ -199,7 +220,9 @@ export function MobileMenu({
         aria-expanded={open}
         aria-label={open ? labels.closeMenu : labels.openMenu}
         className="hover:translate-y-0 hover:shadow-none"
-        onClick={open ? closeMenu : openMenu}
+        onClick={handleTriggerClick}
+        popoverTarget="mobile-menu"
+        popoverTargetAction="toggle"
         ref={triggerRef}
         size="icon"
         type="button"
@@ -208,7 +231,7 @@ export function MobileMenu({
         {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {open ? createPortal(menu, document.body) : null}
+      {menu}
     </>
   );
 }

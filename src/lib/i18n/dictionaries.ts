@@ -862,7 +862,7 @@ const en = {
     seatConfirmed: "Seat reserved.",
     cancelWaitlist: "Cancel waitlist",
     cancelRequest: "Cancel request",
-    cancel: "Cancel",
+    cancel: "Cancel reservation",
     cancelWaitlistTitle: "Cancel waitlist?",
     cancelEventTitle: "Cancel your reservation?",
     cancelWaitlistDescription:
@@ -1811,7 +1811,7 @@ const es: typeof en = {
     seatConfirmed: "Plaza reservada.",
     cancelWaitlist: "Cancelar lista",
     cancelRequest: "Cancelar solicitud",
-    cancel: "Cancelar",
+    cancel: "Cancelar reserva",
     cancelWaitlistTitle: "¿Cancelar lista de espera?",
     cancelEventTitle: "¿Cancelar tu reserva?",
     cancelWaitlistDescription:

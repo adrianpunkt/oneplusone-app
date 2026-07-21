@@ -393,8 +393,8 @@ function EventMeta({
   );
 
   return (
-    <div className="grid gap-2 text-sm font-semibold text-muted sm:flex sm:flex-wrap sm:items-center">
-      <span className="inline-flex items-center gap-2">
+    <div className="flex items-center gap-2 text-sm font-semibold text-muted">
+      <span className="inline-flex items-center gap-2 whitespace-nowrap">
         <CalendarDays className="h-4 w-4 text-lipstick-red" />
         {formatDateTime(event?.starts_at, locale)}
       </span>
@@ -409,29 +409,34 @@ function EventMeta({
             startsAt: event.starts_at,
             title: eventTitle(event, dictionary, locale),
           }}
+          iconOnly
         />
       ) : null}
     </div>
   );
 }
 
-function PendingInvitationImage({
+function EventFormatImage({
+  className,
   dictionary,
   event,
+  sizes,
 }: {
+  className: string;
   dictionary: Dictionary;
   event: EventRecord | null | undefined;
+  sizes: string;
 }) {
   const format = event?.event_format;
   if (format !== "brunch" && format !== "dinner") return null;
 
   return (
-    <div className="relative aspect-[16/9] w-full overflow-hidden bg-blush-pink">
+    <div className={`relative overflow-hidden bg-blush-pink ${className}`}>
       <Image
         alt={dictionary.events.imageAlt[format]}
         className="object-cover object-center"
         fill
-        sizes="(max-width: 704px) calc(100vw - 2rem), 672px"
+        sizes={sizes}
         src={eventFormatImagePaths[format]}
       />
     </div>
@@ -694,9 +699,11 @@ function PendingInvitationCard({
       className="mx-auto grid w-full max-w-2xl overflow-hidden rounded-none border-x-0 border-b-0 border-t border-wine-burgundy/10 bg-white shadow-[0_18px_45px_rgba(68,10,18,0.07)] sm:rounded-lg sm:border"
     >
       {hasEventImage ? (
-        <PendingInvitationImage
+        <EventFormatImage
+          className="aspect-[16/9] w-full"
           dictionary={dictionary}
           event={event}
+          sizes="(max-width: 704px) calc(100vw - 2rem), 672px"
         />
       ) : null}
       <div className="grid gap-1.5 p-5">
@@ -821,71 +828,98 @@ function UpcomingEventCard({
   const isWaitlisted =
     item.status === "waitlisted" && Boolean(item.invitation?.responded_at);
   const isConfirmed = item.status === "confirmed" && Boolean(item.invitation);
+  const hasEventImage =
+    item.event?.event_format === "brunch" ||
+    item.event?.event_format === "dinner";
 
   return (
-    <article className="grid gap-4 rounded-none border-x-0 border-b-0 border-t border-wine-burgundy/10 bg-white p-4 sm:rounded-lg sm:border lg:grid-cols-[minmax(0,1fr)_auto]">
-      <div className="grid min-w-0 gap-2">
-        <div className="grid gap-1">
-          {isConfirmed ? (
-            <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase text-emerald-700">
-              <CircleCheck aria-hidden="true" className="h-4 w-4" />
-              {dictionary.goingOut.status.seatConfirmed}
-            </p>
-          ) : (
-            <EventStatusText
-              label={upcomingEventStatusLabel(item, dictionary, locale)}
-              locale={locale}
-              status={item.status}
-            />
-          )}
-          <h2 className="font-display text-lg font-extrabold text-wine-burgundy">
-            {eventTitle(item.event, dictionary, locale)}
-          </h2>
-        </div>
-        <EventMeta
+    <article
+      className={`grid overflow-hidden rounded-none bg-white sm:rounded-lg ${
+        hasEventImage
+          ? "lg:grid-cols-[16rem_minmax(0,1fr)]"
+              : "border-x-0 border-b-0 border-t-2 border-lipstick-red/25 sm:border-2"
+      }`}
+    >
+      {hasEventImage ? (
+        <EventFormatImage
+          className="aspect-[3/2] w-full lg:aspect-auto lg:h-full lg:min-h-40"
           dictionary={dictionary}
           event={item.event}
-          locale={locale}
-          showCalendar={!isWaitlisted}
+          sizes="(max-width: 1023px) calc(100vw - 2rem), 256px"
         />
-        <EventGroupSummaryLine
-          copy={formatEventGroupSummaryCopy(
-            dictionary.events.groupSummary,
-            summary,
-          )}
-          event={item.event}
-          languageTooltips={dictionary.events.languageTooltips}
-          locale={locale}
-          venuePendingTooltip={dictionary.events.venuePendingTooltip}
-        />
-        {isWaitlisted ? (
-          <p className="text-sm font-semibold text-ocean-blue">
-            {joinedWaitlistNote(item.invitation, dictionary)}
-          </p>
-        ) : null}
-        {isConfirmed && wantsToHost ? (
-          <p className="flex items-start gap-2 text-sm font-semibold text-ocean-blue">
-            <House aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
-            <span>{dictionary.goingOut.hostOptInNote}</span>
-          </p>
-        ) : null}
-      </div>
-      <div className="grid w-full justify-items-center gap-3 pt-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-2 sm:pt-0 lg:flex-col lg:items-end lg:justify-end">
-        {isConfirmed && item.invitation ? (
-          <CancelInvitationForm
-            copy={dictionary.actions}
-            invitationId={item.invitation.id}
-            linkTrigger
+      ) : null}
+      <div
+        className={`grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] ${
+          hasEventImage
+              ? "border-x-0 border-b-0 border-t-2 border-lipstick-red/25 sm:rounded-b-lg sm:border-x-2 sm:border-b-2 sm:border-t-0 lg:rounded-bl-none lg:rounded-r-lg lg:border-l-0 lg:border-r-2 lg:border-y-2"
+            : ""
+        }`}
+      >
+        <div className="grid min-w-0 gap-2">
+          <div className="grid gap-1">
+            {isConfirmed ? (
+              <p className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase text-emerald-700">
+                <CircleCheck aria-hidden="true" className="h-4 w-4" />
+                {dictionary.goingOut.status.seatConfirmed}
+              </p>
+            ) : (
+              <EventStatusText
+                label={upcomingEventStatusLabel(item, dictionary, locale)}
+                locale={locale}
+                status={item.status}
+              />
+            )}
+            <h2 className="mt-1 font-display text-lg font-extrabold text-wine-burgundy">
+              {eventTitle(item.event, dictionary, locale)}
+            </h2>
+          </div>
+          <EventMeta
+            dictionary={dictionary}
+            event={item.event}
+            locale={locale}
+            showCalendar={!isWaitlisted}
           />
-        ) : null}
-        {isWaitlisted && item.invitation ? (
-          <DeclineInvitationForm
-            copy={dictionary.actions}
-            invitationId={item.invitation.id}
-            linkTrigger
-            waitlisted
+          <EventGroupSummaryLine
+            copy={formatEventGroupSummaryCopy(
+              dictionary.events.groupSummary,
+              summary,
+            )}
+            event={item.event}
+            languageTooltips={dictionary.events.languageTooltips}
+            locale={locale}
+            separatePeopleLine
+            showPeopleIcon
+            venuePendingTooltip={dictionary.events.venuePendingTooltip}
           />
-        ) : null}
+          {isWaitlisted ? (
+            <p className="text-sm font-semibold text-ocean-blue">
+              {joinedWaitlistNote(item.invitation, dictionary)}
+            </p>
+          ) : null}
+          {isConfirmed && wantsToHost ? (
+            <p className="mt-2 flex items-start gap-2 text-sm font-semibold text-ocean-blue">
+              <House aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{dictionary.goingOut.hostOptInNote}</span>
+            </p>
+          ) : null}
+        </div>
+        <div className="grid w-full justify-items-center gap-3 pt-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-2 sm:pt-0 lg:flex-col lg:items-end lg:justify-end">
+          {isConfirmed && item.invitation ? (
+            <CancelInvitationForm
+              copy={dictionary.actions}
+              invitationId={item.invitation.id}
+              linkTrigger
+            />
+          ) : null}
+          {isWaitlisted && item.invitation ? (
+            <DeclineInvitationForm
+              copy={dictionary.actions}
+              invitationId={item.invitation.id}
+              linkTrigger
+              waitlisted
+            />
+          ) : null}
+        </div>
       </div>
     </article>
   );

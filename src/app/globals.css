@@ -128,3 +128,20 @@ textarea {
     grid-template-columns: 1fr;
   }
 }
+
+@supports selector(:popover-open) {
+  [data-mobile-menu]:not(:popover-open) {
+    display: none;
+  }
+
+  [data-mobile-menu]:popover-open {
+    display: grid;
+  }
+}
+
+/* JavaScript fallback for browsers without the native Popover API. */
+@supports not selector(:popover-open) {
+  [data-mobile-menu][data-open="false"] {
+    display: none;
+  }
+}

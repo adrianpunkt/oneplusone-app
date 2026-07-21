@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
+import { getDeploymentId } from "@opennextjs/cloudflare";
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1", "100.86.129.62"],
+  deploymentId: getDeploymentId(),
   experimental: {
     // Safari can repeatedly reload when a persisted Turbopack HMR chunk or its
     // source map no longer matches the current development module graph.

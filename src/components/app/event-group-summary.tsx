@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from "react";
+import { UsersRound } from "lucide-react";
 
 import { EventLanguage } from "@/components/app/event-language";
 import { EventLocation } from "@/components/app/event-location";
@@ -52,12 +53,16 @@ export function EventGroupSummaryLine({
   event,
   languageTooltips,
   locale,
+  separatePeopleLine = false,
+  showPeopleIcon = false,
   venuePendingTooltip,
 }: {
   copy: EventGroupSummaryLineCopy;
   event: EventRecord | null | undefined;
   languageTooltips: Dictionary["events"]["languageTooltips"];
   locale: Locale;
+  separatePeopleLine?: boolean;
+  showPeopleIcon?: boolean;
   venuePendingTooltip: string;
 }) {
   if (!event) return null;
@@ -89,20 +94,33 @@ export function EventGroupSummaryLine({
     });
   }
 
+  const people = copy.peopleRangeTooltip ? (
+    <span
+      aria-label={copy.peopleRangeTooltip}
+      className="group relative inline-flex rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/40 focus-visible:ring-offset-2"
+      tabIndex={0}
+    >
+      {copy.people}
+      <HoverTooltip placement="top-left">
+        {copy.peopleRangeTooltip}
+      </HoverTooltip>
+    </span>
+  ) : (
+    copy.people
+  );
+
   segments.push({
     key: "people",
-    value: copy.peopleRangeTooltip ? (
+    value: showPeopleIcon ? (
       <span
-        aria-label={copy.peopleRangeTooltip}
-        className="group relative inline-flex rounded-sm underline decoration-dotted underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/40 focus-visible:ring-offset-2"
-        tabIndex={0}
+        className="inline-flex items-center gap-2"
       >
-        {copy.people}
-        <HoverTooltip placement="top-left">
-          {copy.peopleRangeTooltip}
-        </HoverTooltip>
+        <UsersRound aria-hidden="true" className="h-4 w-4 text-lipstick-red" />
+        {people}
       </span>
-    ) : copy.people,
+    ) : (
+      people
+    ),
   });
 
   if (copy.ageRange) {
@@ -121,12 +139,30 @@ export function EventGroupSummaryLine({
 
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-muted">
-      {segments.map((segment, index) => (
-        <Fragment key={segment.key}>
-          {index ? <span aria-hidden="true">·</span> : null}
-          {typeof segment.value === "string" ? <span>{segment.value}</span> : segment.value}
-        </Fragment>
-      ))}
+      {segments.map((segment, index) => {
+        const startsSecondLine = separatePeopleLine && segment.key === "people";
+
+        return (
+          <Fragment key={segment.key}>
+            {startsSecondLine ? (
+              <span aria-hidden="true" className="h-0 basis-full" />
+            ) : null}
+            {index ? (
+              <span
+                aria-hidden="true"
+                className={startsSecondLine ? "hidden" : undefined}
+              >
+                ·
+              </span>
+            ) : null}
+            {typeof segment.value === "string" ? (
+              <span>{segment.value}</span>
+            ) : (
+              segment.value
+            )}
+          </Fragment>
+        );
+      })}
     </div>
   );
 }

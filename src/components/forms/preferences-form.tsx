@@ -99,7 +99,9 @@ export function PreferencesForm({
   saved?: boolean;
 }) {
   const [state, action] = useActionState(savePreferencesAction, initialState);
-  const [isDirty, setIsDirty] = useState(false);
+  // Keep the submit controls available until hydration completes. If a client
+  // bundle is delayed or unavailable, the native form remains fully usable.
+  const [isDirty, setIsDirty] = useState(true);
   const formRef = useRef<HTMLFormElement>(null);
   const initialSnapshotRef = useRef<string | null>(null);
   const otherEventIdeas =

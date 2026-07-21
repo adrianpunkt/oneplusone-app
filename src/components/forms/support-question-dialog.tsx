@@ -79,13 +79,13 @@ export function SupportQuestionDialog({
   function continueToEmail() {
     if (!message.trim()) {
       setStatus(copy.requiredMessage);
-      messageRef.current?.focus();
+      messageRef.current?.focus({ preventScroll: true });
       return;
     }
 
     setStatus("");
     setStep("email");
-    window.setTimeout(() => emailRef.current?.focus(), 30);
+    window.setTimeout(() => emailRef.current?.focus({ preventScroll: true }), 30);
   }
 
   async function submitQuestion(event: FormEvent<HTMLFormElement>) {
@@ -94,7 +94,7 @@ export function SupportQuestionDialog({
     if (step === "message") {
       if (!message.trim()) {
         setStatus(copy.requiredMessage);
-        messageRef.current?.focus();
+        messageRef.current?.focus({ preventScroll: true });
         return;
       }
       if (!useInvitationEmail) {
@@ -106,12 +106,12 @@ export function SupportQuestionDialog({
     const normalizedEmail = email.trim().toLowerCase();
     if (!useInvitationEmail && !normalizedEmail) {
       setStatus(copy.requiredEmail);
-      emailRef.current?.focus();
+      emailRef.current?.focus({ preventScroll: true });
       return;
     }
     if (!useInvitationEmail && !isValidEmail(normalizedEmail)) {
       setStatus(copy.invalidEmail);
-      emailRef.current?.focus();
+      emailRef.current?.focus({ preventScroll: true });
       return;
     }
 
@@ -164,10 +164,10 @@ export function SupportQuestionDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[70] bg-ink/35 backdrop-blur-sm" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-[71] flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-xl border border-wine-burgundy/15 bg-white shadow-2xl outline-none sm:overflow-visible"
+          className="fixed left-1/2 top-[max(1rem,env(safe-area-inset-top))] z-[71] flex max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 flex-col overflow-hidden rounded-xl border border-wine-burgundy/15 bg-white shadow-2xl outline-none sm:top-1/2 sm:-translate-y-1/2 sm:overflow-visible"
           onOpenAutoFocus={(event) => {
             event.preventDefault();
-            messageRef.current?.focus();
+            messageRef.current?.focus({ preventScroll: true });
           }}
         >
           <div className="relative flex min-h-0 flex-col overflow-y-auto px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 sm:overflow-visible sm:px-6 sm:pb-6 sm:pt-6">
@@ -237,7 +237,6 @@ export function SupportQuestionDialog({
                     <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2.5">
                       <Textarea
                         aria-label={copy.messageLabel}
-                        autoFocus
                         className="min-h-40 resize-y text-base font-semibold"
                         maxLength={5000}
                         onChange={(event) => {

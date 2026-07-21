@@ -7,6 +7,7 @@ import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { MobileMenu } from "@/components/app/mobile-menu";
 import { SectionNav } from "@/components/app/section-nav";
 import { SignOutButton } from "@/components/app/sign-out-button";
+import { SupportQuestionDialog } from "@/components/forms/support-question-dialog";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
 import { profileImageThumbnailUrl } from "@/lib/profile-image";
@@ -146,28 +147,29 @@ export function AppShell({
             displayName={displayName}
             imageUrl={imageUrl}
             labels={navLabels}
-            locale={locale}
             messageTooltip={notificationTooltip}
-            supportCopy={dictionary.actions.support}
             unreadCount={unreadCount}
           />
 
-          <div className="mt-auto flex items-center justify-between gap-4 px-0">
-            <LanguageSwitcher
-              activeClassName="bg-lipstick-red text-white"
-              ariaLabel={dictionary.common.language}
-              buttonClassName="h-8 min-w-9"
-              className="h-9 rounded-lg"
-              currentLocale={locale}
-              inactiveClassName="text-wine-burgundy hover:bg-lipstick-red/8 hover:text-lipstick-red"
-            />
-            <div className="min-w-0">
-              <SignOutButton
-                className="h-9 justify-center border-wine-burgundy/10 bg-white px-3 text-xs font-black text-wine-burgundy shadow-sm hover:translate-y-0 hover:bg-lipstick-red/8 hover:text-lipstick-red hover:shadow-sm"
-                label={dictionary.common.signOut}
-                size="sm"
-                variant="secondary"
+          <div className="mt-auto grid gap-5">
+            <SupportQuestionDialog copy={dictionary.actions.support} locale={locale} />
+            <div className="flex items-center justify-between gap-4 px-0">
+              <LanguageSwitcher
+                activeClassName="bg-lipstick-red text-white"
+                ariaLabel={dictionary.common.language}
+                buttonClassName="h-8 min-w-9"
+                className="h-9 rounded-lg"
+                currentLocale={locale}
+                inactiveClassName="text-wine-burgundy hover:bg-lipstick-red/8 hover:text-lipstick-red"
               />
+              <div className="min-w-0">
+                <SignOutButton
+                  className="h-9 justify-center border-wine-burgundy/10 bg-white px-3 text-xs font-black text-wine-burgundy shadow-sm hover:translate-y-0 hover:bg-lipstick-red/8 hover:text-lipstick-red hover:shadow-sm"
+                  label={dictionary.common.signOut}
+                  size="sm"
+                  variant="secondary"
+                />
+              </div>
             </div>
           </div>
         </div>
