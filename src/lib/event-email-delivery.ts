@@ -4,6 +4,7 @@ import {
   eventCancellationOutcomeLabel,
   eventCancellationReasonLabel,
 } from "@/lib/event-cancellation";
+import { trackEventEmailLinks } from "@/lib/event-email-click";
 import {
   isLocale,
   languageName,
@@ -181,6 +182,7 @@ export async function deliverMemberEventEmail(deliveryId: string) {
     const providerIdempotencyKey = data.email_type === "invitation_pending"
       ? `${durableIdempotencyKey}:attempt:${Math.max(1, Number(claim.attempts || 1))}`
       : durableIdempotencyKey;
+    const clickToken = await createEventEmailClickToken(data.id);
     const sendResult = await sendLoopsTransactionalEmail({
       addToAudience: false,
       dataVariables: await eventEmailVariables(
@@ -188,6 +190,7 @@ export async function deliverMemberEventEmail(deliveryId: string) {
         locale,
         claim.payload || {},
         claim,
+        clickToken,
       ),
       email: recipientEmail,
       idempotencyKey: providerIdempotencyKey,
@@ -220,6 +223,7 @@ async function eventEmailVariables(
   locale: Locale,
   payload: Record<string, unknown>,
   claim: DeliveryClaim,
+  clickToken: string,
 ) {
   const supabase = getSupabaseServiceClient();
   const [{ data: member }, { data: summary }, { data: event }] = await Promise.all([
@@ -279,46 +283,62 @@ async function eventEmailVariables(
     throw new Error("Pending invitation access token is missing.");
   }
 
-  return {
-    ...primitiveVariables(payload),
-    ageRange: summary?.age_min != null && summary.age_max != null
-      ? `${summary.age_min}–${summary.age_max}`
-      : locale === "es" ? "edades variadas" : "a range of ages",
-    cancellationOutcome: eventCancellationOutcomeLabel(
-      objectString(payload, "creditOutcome"),
-      locale,
-    ),
-    cancellationReason: eventCancellationReasonLabel(
-      objectString(payload, "cancellationReason"),
-      locale,
-    ),
-    city: objectString(payload, "city"),
-    ctaUrl: eventUrl,
-    eventDate: formatEventPart(startsAt, timezone, locale, "date"),
-    eventFormat: formatEventFormat(eventFormat, locale),
-    eventIntro: formatEventInvitationIntro(eventFormat, startsAt, timezone, locale),
-    eventLanguage: formatEventLanguage(objectString(payload, "languageCode"), locale),
-    eventTime: formatEventPart(startsAt, timezone, locale, "time"),
-    eventTitle: localizeText(
-      objectString(payload, "title"),
-      event?.localized_content,
-      locale,
-      "title",
-    ),
-    eventUrl,
-    firstName: storyValue(profile?.profile_json, "profile.first_name")
-      || (locale === "es" ? "amistad" : "friend"),
-    holdMinutes: 10,
-    invitationLink: invitationUrl,
-    majorityIntention: majorityIntention
-      ? profileOptionLabel(majorityIntention, locale)
-      : locale === "es" ? "sin especificar" : "not specified",
-    rsvpDeadline: rsvpDeadlineAt
-      ? formatRsvpDeadline(rsvpDeadlineAt, timezone, locale)
-      : objectString(payload, "rsvpDeadline"),
-    timezone,
-    unsubscribeUrl,
-  };
+  return trackEventEmailLinks({
+    origin,
+    token: clickToken,
+    variables: {
+      ...primitiveVariables(payload),
+      ageRange: summary?.age_min != null && summary.age_max != null
+        ? `${summary.age_min}–${summary.age_max}`
+        : locale === "es" ? "edades variadas" : "a range of ages",
+      cancellationOutcome: eventCancellationOutcomeLabel(
+        objectString(payload, "creditOutcome"),
+        locale,
+      ),
+      cancellationReason: eventCancellationReasonLabel(
+        objectString(payload, "cancellationReason"),
+        locale,
+      ),
+      city: objectString(payload, "city"),
+      ctaUrl: eventUrl,
+      eventDate: formatEventPart(startsAt, timezone, locale, "date"),
+      eventFormat: formatEventFormat(eventFormat, locale),
+      eventIntro: formatEventInvitationIntro(eventFormat, startsAt, timezone, locale),
+      eventLanguage: formatEventLanguage(objectString(payload, "languageCode"), locale),
+      eventTime: formatEventPart(startsAt, timezone, locale, "time"),
+      eventTitle: localizeText(
+        objectString(payload, "title"),
+        event?.localized_content,
+        locale,
+        "title",
+      ),
+      eventUrl,
+      firstName: storyValue(profile?.profile_json, "profile.first_name")
+        || (locale === "es" ? "amistad" : "friend"),
+      holdMinutes: 10,
+      invitationLink: invitationUrl,
+      majorityIntention: majorityIntention
+        ? profileOptionLabel(majorityIntention, locale)
+        : locale === "es" ? "sin especificar" : "not specified",
+      rsvpDeadline: rsvpDeadlineAt
+        ? formatRsvpDeadline(rsvpDeadlineAt, timezone, locale)
+        : objectString(payload, "rsvpDeadline"),
+      timezone,
+      unsubscribeUrl,
+    },
+  });
+}
+
+async function createEventEmailClickToken(deliveryId: string) {
+  const { data, error } = await getSupabaseServiceClient().rpc(
+    "create_event_email_click_token",
+    { p_action_id: null, p_delivery_id: deliveryId },
+  );
+  const token = objectString(data, "token");
+  if (error || !token) {
+    throw new Error(error?.message || "Could not create event email click tracking.");
+  }
+  return token;
 }
 
 function pendingInvitationUrl(origin: string, token: string) {

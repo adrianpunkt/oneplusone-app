@@ -307,6 +307,19 @@ function waitlistConfirmationCopy(
   };
 }
 
+function BalanceWaitlistIcon({ compact = false }: { compact?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-ocean-blue font-bold leading-none text-white ${
+        compact ? "mt-0.5 h-5 w-5 text-sm" : "h-11 w-11 text-2xl"
+      }`}
+    >
+      !
+    </span>
+  );
+}
+
 function searchParamValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
@@ -331,18 +344,13 @@ function WaitlistConfirmation({
           role="dialog"
         >
           <div className="grid gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-ocean-blue text-white">
-              {status === "balance" ? (
-                <span
-                  aria-hidden="true"
-                  className="text-2xl font-bold leading-none"
-                >
-                  !
-                </span>
-              ) : (
+            {status === "balance" ? (
+              <BalanceWaitlistIcon />
+            ) : (
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-ocean-blue text-white">
                 <Check className="h-6 w-6" aria-hidden="true" strokeWidth={3} />
-              )}
-            </span>
+              </span>
+            )}
             <div className="grid gap-2">
               <h2
                 className="font-display text-2xl font-extrabold leading-tight text-wine-burgundy"
@@ -892,8 +900,11 @@ function UpcomingEventCard({
             venuePendingTooltip={dictionary.events.venuePendingTooltip}
           />
           {isWaitlisted ? (
-            <p className="text-sm font-semibold text-ocean-blue">
-              {joinedWaitlistNote(item.invitation, dictionary)}
+            <p className="flex items-start gap-2 text-sm font-semibold text-ocean-blue">
+              {item.invitation?.waitlist_reason === "balance" ? (
+                <BalanceWaitlistIcon compact />
+              ) : null}
+              <span>{joinedWaitlistNote(item.invitation, dictionary)}</span>
             </p>
           ) : null}
           {isConfirmed && wantsToHost ? (
