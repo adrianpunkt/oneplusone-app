@@ -952,59 +952,86 @@ function PastEventCard({
     : false;
   const canApplyForSeat =
     canReapplyAfterDeclining || canRestoreAfterCancelling;
+  const hasEventImage =
+    item.event?.event_format === "brunch" ||
+    item.event?.event_format === "dinner";
 
   return (
-    <article className="grid gap-4 rounded-none border-x-0 border-b-0 border-t border-cement-gray bg-cement-gray/20 p-4 sm:rounded-lg sm:border lg:grid-cols-[minmax(0,1fr)_auto]">
-      <div className="grid min-w-0 gap-2">
-        <div className="grid gap-1">
-          <EventStatusText
-            label={
-              item.invitation &&
-              shouldShowCannotMakeItStatus(
-                item.invitation.status,
-                item.event?.status,
-              )
-                ? dictionary.goingOut.status.cannotMakeIt
-                : undefined
-            }
-            locale={locale}
-            status={item.status}
-          />
-          <h2 className="font-display text-lg font-extrabold text-muted">
-            {eventTitle(item.event, dictionary, locale)}
-          </h2>
-        </div>
-        <EventMeta dictionary={dictionary} event={item.event} locale={locale} />
-        <EventGroupSummaryLine
-          copy={formatEventGroupSummaryCopy(
-            dictionary.events.groupSummary,
-            summary,
-          )}
+    <article
+      className={`grid overflow-hidden rounded-none bg-white sm:rounded-lg ${
+        hasEventImage
+          ? "lg:grid-cols-[16rem_minmax(0,1fr)]"
+          : "border-x-0 border-b-0 border-t-2 border-lipstick-red/25 sm:border-2"
+      }`}
+    >
+      {hasEventImage ? (
+        <EventFormatImage
+          className="aspect-[3/2] w-full lg:aspect-auto lg:h-full lg:min-h-40"
+          dictionary={dictionary}
           event={item.event}
-          languageTooltips={dictionary.events.languageTooltips}
-          locale={locale}
-          venuePendingTooltip={dictionary.events.venuePendingTooltip}
+          sizes="(max-width: 1023px) calc(100vw - 2rem), 256px"
         />
-      </div>
-      {canApplyForSeat && item.invitation ? (
-        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-          <ConfirmInvitationForm
-            copy={dictionary.actions}
-            creditBalance={creditBalance}
-            event={item.invitation.events}
-            eventCopy={{
-              languageTooltips: dictionary.events.languageTooltips,
-              venuePendingTooltip: dictionary.events.venuePendingTooltip,
-            }}
-            hostingCopy={dictionary.preferences}
-            invitationId={item.invitation.id}
+      ) : null}
+      <div
+        className={`grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] ${
+          hasEventImage
+            ? "border-x-0 border-b-0 border-t-2 border-lipstick-red/25 sm:rounded-b-lg sm:border-x-2 sm:border-b-2 sm:border-t-0 lg:rounded-bl-none lg:rounded-r-lg lg:border-l-0 lg:border-r-2 lg:border-y-2"
+            : ""
+        }`}
+      >
+        <div className="grid min-w-0 gap-2">
+          <div className="grid gap-1">
+            <EventStatusText
+              label={
+                item.invitation &&
+                shouldShowCannotMakeItStatus(
+                  item.invitation.status,
+                  item.event?.status,
+                )
+                  ? dictionary.goingOut.status.cannotMakeIt
+                  : undefined
+              }
+              locale={locale}
+              status={item.status}
+            />
+            <h2 className="font-display text-lg font-extrabold text-muted">
+              {eventTitle(item.event, dictionary, locale)}
+            </h2>
+          </div>
+          <EventMeta dictionary={dictionary} event={item.event} locale={locale} />
+          <EventGroupSummaryLine
+            copy={formatEventGroupSummaryCopy(
+              dictionary.events.groupSummary,
+              summary,
+            )}
+            event={item.event}
+            languageTooltips={dictionary.events.languageTooltips}
             locale={locale}
-            now={now}
-            restore={canRestoreAfterCancelling}
-            wantsToHost={preferences?.wants_to_host ?? false}
+            separatePeopleLine
+            showPeopleIcon
+            venuePendingTooltip={dictionary.events.venuePendingTooltip}
           />
         </div>
-      ) : null}
+        {canApplyForSeat && item.invitation ? (
+          <div className="grid w-full justify-items-center gap-3 pt-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-2 sm:pt-0 lg:flex-col lg:items-end lg:justify-end">
+            <ConfirmInvitationForm
+              copy={dictionary.actions}
+              creditBalance={creditBalance}
+              event={item.invitation.events}
+              eventCopy={{
+                languageTooltips: dictionary.events.languageTooltips,
+                venuePendingTooltip: dictionary.events.venuePendingTooltip,
+              }}
+              hostingCopy={dictionary.preferences}
+              invitationId={item.invitation.id}
+              locale={locale}
+              now={now}
+              restore={canRestoreAfterCancelling}
+              wantsToHost={preferences?.wants_to_host ?? false}
+            />
+          </div>
+        ) : null}
+      </div>
     </article>
   );
 }
