@@ -24,6 +24,7 @@ const immediateEventEmailTypes = [
   "waitlist_balance",
   "waitlist_balance_released",
   "waitlist_capacity",
+  "invitation_declined",
   "cancellation_received",
   "reservation_cancellation_received",
 ] as const;
@@ -34,6 +35,8 @@ const eventTransactionalIds: Record<
   `${ImmediateEventEmailType}:${Locale}`,
   string
 > = {
+  "invitation_declined:en": "cmrs2pmd501ww0jz12tb2byqh",
+  "invitation_declined:es": "cmrs2pmmb039k0j1ha54q8fu3",
   "cancellation_received:en": "cmrs2pmd501ww0jz12tb2byqh",
   "cancellation_received:es": "cmrs2pmmb039k0j1ha54q8fu3",
   "reservation_cancellation_received:en": "cmrt70cwq02ep0iv7zaew1zck",
@@ -65,6 +68,7 @@ type DeliveryClaim = {
   emailType?: string;
   idempotencyKey?: string;
   invitationAccessToken?: string;
+  invitationDeclineToken?: string;
   locale?: string;
   payload?: Record<string, unknown>;
   recipientEmail?: string;
@@ -266,11 +270,15 @@ async function eventEmailVariables(
   const origin = resolveAppOrigin();
   const goingOutUrl = new URL("/going-out", origin).toString();
   const invitationAccessToken = claim.invitationAccessToken?.trim() || "";
+  const invitationDeclineToken = claim.invitationDeclineToken?.trim() || "";
   const invitationUrl = invitationAccessToken
     ? pendingInvitationUrl(origin, invitationAccessToken)
     : "";
   const unsubscribeUrl = invitationAccessToken
     ? pendingInvitationUnsubscribeUrl(origin, invitationAccessToken, locale)
+    : "";
+  const declineUrl = invitationDeclineToken
+    ? invitationDeclineUrl(origin, invitationDeclineToken, locale)
     : "";
   const eventUrl = delivery.email_type === "invitation_pending"
     ? invitationUrl
@@ -281,6 +289,9 @@ async function eventEmailVariables(
 
   if (delivery.email_type === "invitation_pending" && !invitationUrl) {
     throw new Error("Pending invitation access token is missing.");
+  }
+  if (delivery.email_type === "invitation_pending" && !declineUrl) {
+    throw new Error("Pending invitation decline token is missing.");
   }
 
   return trackEventEmailLinks({
@@ -301,6 +312,7 @@ async function eventEmailVariables(
       ),
       city: objectString(payload, "city"),
       ctaUrl: eventUrl,
+      declineUrl,
       eventDate: formatEventPart(startsAt, timezone, locale, "date"),
       eventFormat: formatEventFormat(eventFormat, locale),
       eventIntro: formatEventInvitationIntro(eventFormat, startsAt, timezone, locale),
@@ -353,6 +365,13 @@ function pendingInvitationUnsubscribeUrl(
   locale: Locale,
 ) {
   const url = new URL("/event-invitation/unsubscribe", origin);
+  url.searchParams.set("token", token);
+  url.searchParams.set("locale", locale);
+  return url.toString();
+}
+
+function invitationDeclineUrl(origin: string, token: string, locale: Locale) {
+  const url = new URL("/event-invitation/decline", origin);
   url.searchParams.set("token", token);
   url.searchParams.set("locale", locale);
   return url.toString();

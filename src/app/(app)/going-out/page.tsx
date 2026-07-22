@@ -28,7 +28,6 @@ import { RouteToast } from "@/components/app/route-toast";
 import {
   CancelInvitationForm,
   ConfirmInvitationForm,
-  DeclineInvitationForm,
   InvitationApplicationUrlCleanup,
   InvitationDecisionForms,
 } from "@/components/forms/invitation-actions";
@@ -923,11 +922,11 @@ function UpcomingEventCard({
             />
           ) : null}
           {isWaitlisted && item.invitation ? (
-            <DeclineInvitationForm
+            <CancelInvitationForm
+              context="waitlist"
               copy={dictionary.actions}
               invitationId={item.invitation.id}
               linkTrigger
-              waitlisted
             />
           ) : null}
         </div>

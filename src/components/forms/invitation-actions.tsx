@@ -27,6 +27,10 @@ import {
   type EventActionState,
 } from "@/lib/actions/events";
 import { eventCancellationReasons } from "@/lib/event-cancellation";
+import {
+  eventInvitationAlternativeDeclineReason,
+  type EventInvitationFormat,
+} from "@/lib/event-invitation-decline-reasons";
 import { canRestoreCancelledInvitation } from "@/lib/event-invitation-classification";
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
@@ -114,6 +118,7 @@ export type InvitationActionCopy = {
   declineReasons: {
     eventFit: string;
     otherCommitment: string;
+    saturdayDinner: string;
     sundayBrunch: string;
     weekendUnavailable: string;
   };
@@ -644,12 +649,14 @@ export function JoinWaitlistForm({
 
 export function DeclineInvitationForm({
   copy,
+  eventFormat,
   invitationId,
   linkTrigger = false,
   stacked = false,
   waitlisted = false,
 }: {
   copy: InvitationActionCopy;
+  eventFormat: EventInvitationFormat;
   invitationId: string;
   linkTrigger?: boolean;
   stacked?: boolean;
@@ -657,12 +664,18 @@ export function DeclineInvitationForm({
 }) {
   const [state, action] = useActionState(declineInvitationAction, initialState);
   const [open, setOpen] = useState(false);
+  const alternativeReason = eventInvitationAlternativeDeclineReason(eventFormat);
+  const alternativeOption = alternativeReason === "prefers_saturday_dinner"
+    ? [alternativeReason, copy.declineReasons.saturdayDinner] as const
+    : alternativeReason === "prefers_sunday_brunch"
+      ? [alternativeReason, copy.declineReasons.sundayBrunch] as const
+      : null;
   const reasonOptions = [
-    ["weekend_unavailable", copy.declineReasons.weekendUnavailable],
-    ["prefers_sunday_brunch", copy.declineReasons.sundayBrunch],
-    ["event_fit", copy.declineReasons.eventFit],
-    ["other_commitment", copy.declineReasons.otherCommitment],
-  ] as const;
+    ["weekend_unavailable", copy.declineReasons.weekendUnavailable] as const,
+    ...(alternativeOption ? [alternativeOption] : []),
+    ["event_fit", copy.declineReasons.eventFit] as const,
+    ["other_commitment", copy.declineReasons.otherCommitment] as const,
+  ];
 
   return (
     <div
@@ -821,6 +834,7 @@ export function InvitationDecisionForms({
   const isOnWaitlist =
     invitation.status === "waitlisted" && Boolean(invitation.responded_at);
   const canDecline =
+    !isOnWaitlist &&
     !invitation.confirmed_at &&
     ["invited", "waitlisted"].includes(invitation.status);
   const canRestoreConfirmation =
@@ -899,12 +913,19 @@ export function InvitationDecisionForms({
             stacked={stackActions}
           />
         ) : null}
+        {isOnWaitlist ? (
+          <CancelInvitationForm
+            context="waitlist"
+            copy={copy}
+            invitationId={invitation.id}
+          />
+        ) : null}
         {canDecline ? (
           <DeclineInvitationForm
             copy={copy}
+            eventFormat={invitation.events?.event_format || "other"}
             invitationId={invitation.id}
             stacked={stackActions}
-            waitlisted={invitation.status === "waitlisted"}
           />
         ) : null}
       </div>

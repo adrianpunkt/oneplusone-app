@@ -814,6 +814,7 @@ const en = {
     declineReasonLabel: "Cannot make it?",
     declineReasons: {
       weekendUnavailable: "I cannot make it this weekend",
+      saturdayDinner: "I would prefer Saturday dinners instead",
       sundayBrunch: "I would prefer Sunday brunches instead",
       eventFit: "This event isn't a good fit for me",
       otherCommitment: "Something else",
@@ -1763,6 +1764,7 @@ const es: typeof en = {
     declineReasonLabel: "¿No puedes asistir?",
     declineReasons: {
       weekendUnavailable: "No puedo asistir este fin de semana",
+      saturdayDinner: "Preferiría las cenas de los sábados",
       sundayBrunch: "Preferiría los brunches de los domingos",
       eventFit: "Este evento no encaja conmigo",
       otherCommitment: "Otro motivo",

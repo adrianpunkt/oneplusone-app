@@ -64,7 +64,7 @@ flowchart TD
 | 1 | `invitation_member` | Active member in the frozen invitation cohort | Founder sends invitations at `invitation_send_at` |
 | 2 | `invitation_pending` | Pending member in the frozen invitation cohort | Alternative to order 1, in the same founder action |
 | 3 | `rsvp_reminder` | Invitee whose response is still `invited` | Due 24 hours after invitation; cannot be sent after the RSVP deadline |
-| 4 | `cancellation_received` | Invitee who declines; also currently reused when leaving a balance waitlist after its credit was returned | Immediate member-action result |
+| 4 | `invitation_declined` | Invitee who declines before applying for a seat | Immediate member-action result |
 | 5 | `seat_confirmed` | Accepted member whose seat is confirmed | Immediate member/payment result; may also follow promotion from a waitlist |
 | 6 | `waitlist_balance` | Accepted member waiting for the balancing participant | Immediate member/payment result; reserves one credit |
 | 7 | `waitlist_capacity` | Accepted member with no seat because capacity is full or a payment hold expired | Immediate member/payment result; does not spend a credit |
@@ -206,7 +206,7 @@ button labels are preserved from the published LMX.
 
 ### 4. Cannot make it
 
-- **Email type:** `cancellation_received`
+- **Email type:** `invitation_declined`
 - **Transactional ID:** `cmrs2pmd501ww0jz12tb2byqh`
 - **Published message ID:** `cmrs3lgtj000w0jzl4pmfr69m`
 - **Unpublished draft exists:** No
@@ -677,9 +677,10 @@ These are inventory observations, not proposed edits:
 2. `invitation_member`, `invitation_pending`, `waitlist_balance`, and
    `waitlist_capacity` have unpublished changes recorded above. Publishing them
    will replace the corresponding production versions in the sent snapshot.
-3. `cancellation_received` now covers more than its copy suggests: it is used
-   for an invitation decline and can also acknowledge a voluntarily released
-   balance-waitlist place after a refund.
+3. Invitation declines and post-application cancellations now have distinct
+   delivery types. The legacy `cancellation_received` input is normalized to
+   `invitation_declined` or `reservation_cancellation_received` from its frozen
+   payload so historical retries remain safe.
 4. The repeated Instagram link still uses the onboarding attribution
    `utm_source=friends-email`, not an event-specific source.
 

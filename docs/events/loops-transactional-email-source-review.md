@@ -59,7 +59,7 @@ The Instagram components currently use onboarding-oriented UTM values
 | `waitlist_balance` | Date waitlist | Source text and layout retained |
 | `waitlist_balance_released` | No direct source | New automatic credit-return copy |
 | `waitlist_capacity` | Your event update | Source text retained; Going Out button added |
-| `cancellation_received` | Not this time | Source text and layout retained |
+| `invitation_declined` | Not this time | Source text and layout retained |
 | `rsvp_reminder` | Event invitation reminder | Source text retained; rolling 24-hour wording replaced by the real deadline |
 | `event_confirmed` | Date confirmation | Source text retained with available confirmation facts and confirmed policy corrections |
 | `event_cancelled` | No direct source | New copy |

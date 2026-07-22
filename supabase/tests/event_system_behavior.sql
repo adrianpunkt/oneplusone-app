@@ -234,6 +234,7 @@ declare
   replacement_result jsonb;
   replacement_retry jsonb;
   credit_offer_result jsonb;
+  test_city_id bigint;
 begin
   insert into ops.ops_admin_users (id, email, role, status)
   values (admin_id, 'event-contract-test@example.com', 'owner', 'active');
@@ -247,11 +248,17 @@ begin
     );
   end loop;
 
+  select id into test_city_id
+  from public.cities
+  where ascii_name = 'Lisbon' and country_code = 'PT'
+  order by population desc nulls last, id
+  limit 1;
+
   insert into ops.matching_groups (
-    id, name, location, language, target_men, target_women,
+    id, name, city_id, location, language, target_men, target_women,
     model, status, weekend_start, created_by, updated_by
   ) values (
-    group_id, 'Event contract test', 'Lisbon', 'en', 4, 4,
+    group_id, 'Event contract test', test_city_id, 'Lisbon', 'en', 4, 4,
     'practical', 'fixed', date '2026-07-25', admin_id, admin_id
   );
   for index_value in 1..6 loop
@@ -263,14 +270,14 @@ begin
     group_id, 'Contract event', 'Test description', '{}'::jsonb,
     'dinner', now() + interval '3 days', now() + interval '3 days 2 hours',
     'Europe/Lisbon', 'Lisbon', 'en', 6, 6,
-    now(), now() + interval '1 day', 6, 5,
+    now(), now() + interval '1 day', 5, 5,
     admin_id, 'event-contract-test@example.com', 'test-prepare-event'
   );
   prepare_retry := public.prepare_event_from_matching_group(
     group_id, 'Contract event', 'Test description', '{}'::jsonb,
     'dinner', now() + interval '3 days', now() + interval '3 days 2 hours',
     'Europe/Lisbon', 'Lisbon', 'en', 6, 6,
-    now(), now() + interval '1 day', 6, 5,
+    now(), now() + interval '1 day', 5, 5,
     admin_id, 'event-contract-test@example.com', 'test-prepare-event'
   );
   prepared_event_id := (prepare_result ->> 'eventId')::uuid;
@@ -297,6 +304,16 @@ begin
   select id into pending_invitation_id
   from public.event_invitations
   where event_id = prepared_event_id and member_id = member_ids[6];
+  update public.events
+  set gender_balance_enabled = false
+  where id = prepared_event_id;
+  for index_value in 1..5 loop
+    perform public.grant_member_credit(
+      member_ids[index_value], 1, 'membership_join_credit', 'test_fixture',
+      member_ids[index_value]::text, null,
+      'Event contract confirmation fixture.', now()
+    );
+  end loop;
   update public.event_invitations
   set response_status = 'accepted', seat_status = 'confirmed', confirmed_at = now()
   where event_id = prepared_event_id and member_id = any(member_ids[1:5]);
@@ -601,6 +618,328 @@ begin
     where not public.event_payload_is_secret_free(payload)
   ) then
     raise exception 'A delivery payload contains bearer material.';
+  end if;
+end;
+$test$;
+
+do $test$
+declare
+  decline_event_id uuid := gen_random_uuid();
+  brunch_event_id uuid := gen_random_uuid();
+  active_member_id uuid := gen_random_uuid();
+  brunch_member_id uuid := gen_random_uuid();
+  pending_member_id uuid := gen_random_uuid();
+  deadline_member_id uuid := gen_random_uuid();
+  active_invitation_id uuid;
+  brunch_invitation_id uuid;
+  pending_invitation_id uuid;
+  deadline_invitation_id uuid;
+  active_delivery_id uuid := gen_random_uuid();
+  brunch_delivery_id uuid := gen_random_uuid();
+  pending_delivery_id uuid := gen_random_uuid();
+  deadline_delivery_id uuid := gen_random_uuid();
+  active_claim jsonb;
+  brunch_claim jsonb;
+  pending_claim jsonb;
+  deadline_claim jsonb;
+  extra_token jsonb;
+  expired_token jsonb;
+  resolution jsonb;
+  decline_result jsonb;
+  decline_retry jsonb;
+  pending_hold_id uuid;
+  active_raw_token text;
+  brunch_raw_token text;
+  pending_raw_token text;
+begin
+  insert into public.members (id, email, membership_status)
+  values
+    (active_member_id, 'scanner-decline-active@example.com', 'active'),
+    (brunch_member_id, 'scanner-decline-brunch@example.com', 'active'),
+    (pending_member_id, 'scanner-decline-pending@example.com', 'pending'),
+    (deadline_member_id, 'scanner-decline-deadline@example.com', 'active');
+
+  insert into public.events (
+    id, title, event_format, status, starts_at, ends_at, timezone, city,
+    capacity, invitation_limit, credit_cost, minimum_confirmed_count,
+    minimum_run_count, rsvp_deadline_at, invitations_opened_at
+  ) values (
+    decline_event_id, 'Scanner-safe decline test', 'dinner', 'inviting',
+    now() + interval '12 days', now() + interval '12 days 2 hours',
+    'Europe/Lisbon', 'Lisbon', 6, 6, 1, 1, 1,
+    now() + interval '10 days', now()
+  );
+  insert into public.events (
+    id, title, event_format, status, starts_at, ends_at, timezone, city,
+    capacity, invitation_limit, credit_cost, minimum_confirmed_count,
+    minimum_run_count, rsvp_deadline_at, invitations_opened_at
+  ) values (
+    brunch_event_id, 'Format-aware brunch decline test', 'brunch', 'inviting',
+    now() + interval '12 days', now() + interval '12 days 2 hours',
+    'Europe/Lisbon', 'Lisbon', 6, 6, 1, 1, 1,
+    now() + interval '10 days', now()
+  );
+
+  insert into public.event_invitations (
+    event_id, member_id, member_status_at_invite, payment_status
+  ) values (
+    decline_event_id, active_member_id, 'pending', 'not_required'
+  ) returning id into active_invitation_id;
+  insert into public.event_invitations (
+    event_id, member_id, member_status_at_invite, payment_status
+  ) values (
+    brunch_event_id, brunch_member_id, 'active', 'not_required'
+  ) returning id into brunch_invitation_id;
+  insert into public.event_invitations (
+    event_id, member_id, member_status_at_invite, payment_status
+  ) values (
+    decline_event_id, pending_member_id, 'pending', 'pending'
+  ) returning id into pending_invitation_id;
+  insert into public.event_invitations (
+    event_id, member_id, member_status_at_invite, payment_status
+  ) values (
+    decline_event_id, deadline_member_id, 'active', 'not_required'
+  ) returning id into deadline_invitation_id;
+
+  insert into public.event_email_deliveries (
+    id, event_id, invitation_id, member_id, triggered_by_member_id,
+    email_type, locale, template_id, template_version, payload,
+    idempotency_key
+  ) values
+    (
+      active_delivery_id, decline_event_id, active_invitation_id,
+      active_member_id, active_member_id, 'invitation_member', 'en',
+      'invitation_member', 'v1', '{}'::jsonb,
+      'scanner-decline-active-delivery'
+    ),
+    (
+      brunch_delivery_id, brunch_event_id, brunch_invitation_id,
+      brunch_member_id, brunch_member_id, 'invitation_member', 'en',
+      'invitation_member', 'v1', '{}'::jsonb,
+      'scanner-decline-brunch-delivery'
+    ),
+    (
+      pending_delivery_id, decline_event_id, pending_invitation_id,
+      pending_member_id, pending_member_id, 'invitation_pending', 'en',
+      'invitation_pending', 'v1', '{}'::jsonb,
+      'scanner-decline-pending-delivery'
+    ),
+    (
+      deadline_delivery_id, decline_event_id, deadline_invitation_id,
+      deadline_member_id, deadline_member_id, 'invitation_member', 'en',
+      'invitation_member', 'v1', '{}'::jsonb,
+      'scanner-decline-deadline-delivery'
+    );
+
+  active_claim := public.claim_event_email_delivery(
+    active_delivery_id, null, 'test-invitation-member-template'
+  );
+  brunch_claim := public.claim_event_email_delivery(
+    brunch_delivery_id, null, 'test-invitation-member-template'
+  );
+  pending_claim := public.claim_event_email_delivery(
+    pending_delivery_id, null, 'test-invitation-pending-template'
+  );
+  deadline_claim := public.claim_event_email_delivery(
+    deadline_delivery_id, null, 'test-invitation-member-template'
+  );
+  active_raw_token := active_claim ->> 'invitationDeclineToken';
+  brunch_raw_token := brunch_claim ->> 'invitationDeclineToken';
+  pending_raw_token := pending_claim ->> 'invitationDeclineToken';
+
+  if nullif(active_raw_token, '') is null
+    or nullif(brunch_raw_token, '') is null
+    or nullif(pending_raw_token, '') is null
+    or active_claim ->> 'invitationDeclineTokenId' is null
+    or pending_claim ->> 'invitationDeclineTokenId' is null
+    or exists (
+      select 1 from public.event_invitation_decline_tokens
+      where token_hash in (active_raw_token, pending_raw_token)
+    )
+    or exists (
+      select 1 from public.event_invitation_decline_tokens
+      where id in (
+        (active_claim ->> 'invitationDeclineTokenId')::uuid,
+        (pending_claim ->> 'invitationDeclineTokenId')::uuid
+      ) and token_hash <> public.hash_payment_resume_secret(
+        case when delivery_id = active_delivery_id
+          then active_raw_token else pending_raw_token end
+      )
+    ) then
+    raise exception 'Decline claims did not return one-time raw tokens backed only by hashes.';
+  end if;
+
+  if exists (
+    select 1 from public.event_invitation_decline_tokens
+    where id in (
+      (active_claim ->> 'invitationDeclineTokenId')::uuid,
+      (pending_claim ->> 'invitationDeclineTokenId')::uuid
+    ) and (
+      expires_at > created_at + interval '7 days'
+      or expires_at > (select rsvp_deadline_at from public.events where id = decline_event_id)
+    )
+  ) then
+    raise exception 'Decline token expiry was not capped at seven days and the RSVP deadline.';
+  end if;
+
+  resolution := public.resolve_event_invitation_decline_token(active_raw_token);
+  if resolution ->> 'status' <> 'valid'
+    or resolution ->> 'eventFormat' <> 'dinner'
+    or resolution ->> 'city' <> 'Lisbon'
+    or resolution ?| array[
+      'email', 'memberId', 'venueName', 'venueAddress',
+      'profileJson', 'recipientEmail'
+    ]
+    or (select response_status from public.event_invitations
+        where id = active_invitation_id) <> 'invited'
+    or exists (
+      select 1 from public.event_invitation_declines
+      where invitation_id = active_invitation_id
+    ) then
+    raise exception 'Read-only decline-token resolution exposed private data or mutated the invitation.';
+  end if;
+
+  begin
+    perform public.create_event_invitation_decline_token(
+      active_delivery_id, gen_random_uuid()
+    );
+    raise exception 'A mismatched delivery action created a decline token.';
+  exception
+    when sqlstate '28000' then null;
+  end;
+
+  extra_token := public.create_event_invitation_decline_token(
+    active_delivery_id, null
+  );
+  update public.event_invitation_decline_tokens
+  set used_at = now()
+  where id = (extra_token ->> 'tokenId')::uuid;
+  if public.resolve_event_invitation_decline_token(extra_token ->> 'token')
+      ->> 'status' <> 'unavailable' then
+    raise exception 'A consumed decline token remained available.';
+  end if;
+
+  expired_token := public.create_event_invitation_decline_token(
+    active_delivery_id, null
+  );
+  update public.event_invitation_decline_tokens
+  set created_at = now() - interval '8 days',
+      expires_at = now() - interval '1 second'
+  where id = (expired_token ->> 'tokenId')::uuid;
+  if public.resolve_event_invitation_decline_token(expired_token ->> 'token')
+      ->> 'status' <> 'expired' then
+    raise exception 'An expired decline token did not resolve as expired.';
+  end if;
+
+  decline_result := public.decline_event_invitation_from_token(
+    active_raw_token, 'prefers_sunday_brunch', 'Scanner-safe active decline.'
+  );
+  decline_retry := public.decline_event_invitation_from_token(
+    active_raw_token, 'prefers_sunday_brunch', 'Scanner-safe active decline.'
+  );
+  if decline_result ->> 'status' <> 'declined'
+    or decline_retry ->> 'status' <> 'already_declined'
+    or (select response_status from public.event_invitations
+        where id = active_invitation_id) <> 'declined'
+    or (select count(*) from public.event_invitation_declines
+        where invitation_id = active_invitation_id) <> 1
+    or (select reason from public.event_invitation_declines
+        where invitation_id = active_invitation_id) <> 'prefers_sunday_brunch'
+    or (select count(*) from public.event_email_deliveries
+        where idempotency_key = 'member-decline-' || active_invitation_id::text
+          and email_type = 'invitation_declined') <> 1
+    or exists (
+      select 1 from public.event_invitation_decline_tokens
+      where invitation_id = active_invitation_id and used_at is null
+    ) then
+    raise exception 'Active token decline was not consumed and replay-safe.';
+  end if;
+
+  begin
+    perform public.decline_event_invitation_from_token(
+      deadline_claim ->> 'invitationDeclineToken',
+      'prefers_saturday_dinner',
+      'Mismatched dinner reason.'
+    );
+    raise exception 'A dinner invitation accepted the Saturday dinner alternative.';
+  exception
+    when sqlstate '22023' then null;
+  end;
+  if (select response_status from public.event_invitations
+      where id = deadline_invitation_id) <> 'invited' then
+    raise exception 'A mismatched format reason changed the invitation.';
+  end if;
+
+  decline_result := public.decline_event_invitation_from_token(
+    brunch_raw_token, 'prefers_saturday_dinner', 'Format-aware brunch decline.'
+  );
+  if decline_result ->> 'status' <> 'declined'
+    or (select reason from public.event_invitation_declines
+        where invitation_id = brunch_invitation_id) <> 'prefers_saturday_dinner' then
+    raise exception 'A brunch decline did not record the Saturday dinner alternative.';
+  end if;
+
+  update public.event_invitations
+  set response_status = 'accepted', seat_status = 'held',
+      payment_status = 'pending', responded_at = now(), held_at = now(),
+      priority_at = now(), updated_at = now()
+  where id = pending_invitation_id;
+  insert into public.event_seat_holds (
+    event_id, invitation_id, member_id, priority_at, expires_at
+  ) values (
+    decline_event_id, pending_invitation_id, pending_member_id,
+    now(), now() + interval '10 minutes'
+  ) returning id into pending_hold_id;
+  insert into public.event_invitation_payment_attempts (
+    event_id, invitation_id, hold_id, member_id, idempotency_key, status
+  ) values (
+    decline_event_id, pending_invitation_id, pending_hold_id,
+    pending_member_id, 'scanner-decline-pending-payment', 'checkout_created'
+  );
+
+  decline_result := public.decline_event_invitation_from_token(
+    pending_raw_token, 'event_type_not_interested', 'Scanner-safe pending decline.'
+  );
+  decline_retry := public.decline_event_invitation_from_token(
+    pending_raw_token, 'event_type_not_interested', 'Scanner-safe pending decline.'
+  );
+  if decline_result ->> 'status' <> 'declined'
+    or decline_retry ->> 'status' <> 'already_declined'
+    or (select response_status from public.event_invitations
+        where id = pending_invitation_id) <> 'declined'
+    or (select seat_status from public.event_invitations
+        where id = pending_invitation_id) <> 'none'
+    or (select payment_status from public.event_invitations
+        where id = pending_invitation_id) <> 'expired'
+    or (select status from public.event_seat_holds
+        where id = pending_hold_id) <> 'released'
+    or (select status from public.event_invitation_payment_attempts
+        where idempotency_key = 'scanner-decline-pending-payment') <> 'cancelled'
+    or not exists (
+      select 1 from public.member_event_preferences
+      where member_id = pending_member_id and not receives_event_invitations
+    )
+    or (select count(*) from public.event_invitation_declines
+        where invitation_id = pending_invitation_id) <> 1
+    or (select count(*) from public.event_email_deliveries
+        where idempotency_key = 'pending-member-decline-' || pending_invitation_id::text
+          and email_type = 'invitation_declined') <> 1
+    or exists (
+      select 1 from public.event_invitation_decline_tokens
+      where invitation_id = pending_invitation_id and used_at is null
+    ) then
+    raise exception 'Pending token decline did not preserve hold, payment, opt-out, and replay rules.';
+  end if;
+
+  update public.events
+  set rsvp_deadline_at = now() - interval '1 second'
+  where id = decline_event_id;
+  if public.resolve_event_invitation_decline_token(
+      deadline_claim ->> 'invitationDeclineToken'
+    ) ->> 'status' <> 'deadline_passed'
+    or public.resolve_event_invitation_decline_token('not-a-real-token')
+      ->> 'status' <> 'invalid' then
+    raise exception 'Deadline-passed and invalid decline link states were not enforced.';
   end if;
 end;
 $test$;

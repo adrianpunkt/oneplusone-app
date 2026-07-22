@@ -7,6 +7,10 @@ import { X, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  isEventInvitationDeclineReasonForFormat,
+  type EventInvitationFormat,
+} from "@/lib/event-invitation-decline-reasons";
 
 type Copy = {
   accept: string;
@@ -24,7 +28,13 @@ type Copy = {
   reasons: Record<string, string>;
 };
 
-export function PendingEventInvitationActions({ copy }: { copy: Copy }) {
+export function PendingEventInvitationActions({
+  copy,
+  eventFormat,
+}: {
+  copy: Copy;
+  eventFormat: EventInvitationFormat;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState<"accept" | "decline" | null>(null);
   const [checkoutCancelled, setCheckoutCancelled] = useState(false);
@@ -33,6 +43,10 @@ export function PendingEventInvitationActions({ copy }: { copy: Copy }) {
   const [reason, setReason] = useState("event_type_not_interested");
   const [details, setDetails] = useState("");
   const checkoutStarted = useRef(false);
+  const reasonOptions = Object.entries(copy.reasons).filter(([value]) =>
+    value === "event_type_not_interested"
+    || isEventInvitationDeclineReasonForFormat(value, eventFormat)
+  );
 
   useEffect(() => {
     function handlePageShow() {
@@ -148,7 +162,7 @@ export function PendingEventInvitationActions({ copy }: { copy: Copy }) {
               </Dialog.Description>
               <fieldset className="grid gap-2">
                 <legend className="sr-only">{copy.declineReason}</legend>
-                {Object.entries(copy.reasons).map(([value, label]) => (
+                {reasonOptions.map(([value, label]) => (
                   <label
                     className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-white p-3 text-sm font-semibold text-wine-burgundy transition has-[:checked]:border-lipstick-red/40 has-[:checked]:bg-blush-pink hover:bg-blush-pink/60"
                     key={value}

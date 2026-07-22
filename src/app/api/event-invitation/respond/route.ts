@@ -3,18 +3,13 @@ import { z } from "zod";
 
 import { readEventInvitationSessionToken } from "@/lib/event-invitations";
 import { deliverMemberEventEmailFromResult } from "@/lib/event-email-delivery";
+import { pendingEventInvitationDeclineReasons } from "@/lib/event-invitation-decline-reasons";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 
 const payloadSchema = z.object({
   decision: z.literal("decline"),
   details: z.string().trim().max(500).optional(),
-  reason: z.enum([
-    "event_type_not_interested",
-    "weekend_unavailable",
-    "prefers_sunday_brunch",
-    "event_fit",
-    "other_commitment",
-  ]),
+  reason: z.enum(pendingEventInvitationDeclineReasons),
 });
 
 export async function POST(request: NextRequest) {

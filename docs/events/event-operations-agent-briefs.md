@@ -293,7 +293,9 @@ Loops integration:
    - seat_confirmed;
    - waitlist_balance;
    - waitlist_capacity;
+   - invitation_declined;
    - cancellation_received;
+   - reservation_cancellation_received;
    - rsvp_reminder;
    - event_confirmed;
    - event_cancelled;

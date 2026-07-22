@@ -73,6 +73,10 @@ fields during the compatibility period.
   stable `idempotency_key`, Stripe checkout/payment IDs, status
   `created|checkout_created|paid|failed|cancelled`, failure and timestamps.
   Checkout session ID and payment intent ID are unique when present.
+- `event_invitation_decline_tokens`: one purpose-scoped response token per
+  invitation delivery attempt, linked to its delivery and invitation. Only the
+  SHA-256 token hash is stored. Tokens are service-role-only, single-use, and
+  expire at the earlier of seven days or the event RSVP deadline.
 - `stripe_event_receipts`: one row per Stripe event ID, used to make webhook
   delivery idempotent.
 - `event_replacements`: cancelled and replacement invitation IDs, state
@@ -114,17 +118,27 @@ Delivery types are exactly:
 
 `invitation_member`, `invitation_pending`, `seat_confirmed`,
 `waitlist_capacity`, `waitlist_balance`, `waitlist_balance_released`,
-`cancellation_received`, `reservation_cancellation_received`,
-`rsvp_reminder`, `event_confirmed`, `event_cancelled`, `host_package`,
+`invitation_declined`, `cancellation_received`,
+`reservation_cancellation_received`,
+`rsvp_reminder`, `rsvp_last_call`, `event_confirmed`, `event_cancelled`, `host_package`,
 `event_reminder`, `replacement_refund`, `no_replacement`, `feedback_request`,
 `credit_offer`.
+
+`invitation_declined` records a “Cannot make it” response before the member
+applies. `reservation_cancellation_received` records a cancellation after the
+member has applied, joined an accepted waitlist, or received a confirmed seat.
+`cancellation_received` is retained only as a legacy input type so historical
+failed deliveries remain retryable; new rows are normalized to one of the two
+unambiguous types.
 
 `credit_offer` is only prepared for marketing-eligible members and is consumed
 by the ops marketing workflow; it is not a transactional delivery.
 
-No raw invitation token, invitation-session secret, payment-resume token or
-secret-bearing URL may appear in a delivery, action row, audit row, frozen
-payload, preview, pathname, log, analytics event, or client DTO.
+No raw invitation token, invitation-decline token, invitation-session secret,
+payment-resume token or secret-bearing URL may appear in a delivery, action
+row, audit row, frozen payload, preview, pathname, log, analytics event, or
+client DTO. Claim RPCs return raw bearer values once to the service-side sender;
+they are never persisted or logged.
 
 ## RPC contract
 
@@ -196,7 +210,8 @@ or reuses an `event_action_runs` row, and returns the same result on retry.
   p_template_id text)` ->
   `{ok, deliveryId, status:'sending', emailType, recipientEmail, locale,
   templateId, templateVersion, idempotencyKey, payload, invitationAccessTokenId,
-  invitationAccessToken?, attempts}`. Only `draft` or `failed` can be claimed.
+  invitationAccessToken?, invitationDeclineTokenId?, invitationDeclineToken?,
+  attempts}`. Only `draft` or `failed` can be claimed.
   The immediate sender supplies the resolved Loops transactional ID or workflow
   event name, which is persisted for provider-level auditing. Founder deliveries
   require their matching action ID; member-triggered deliveries use a null action
@@ -204,6 +219,10 @@ or reuses an `event_action_runs` row, and returns the same result on retry.
   For `invitation_pending`, the optional access token is generated and returned
   once to the service-side immediate sender during the claim; it is never
   stored. The token ID is not a bearer token.
+  For active-member invitations, pending-member invitations, RSVP reminders,
+  and RSVP last-call deliveries, a fresh decline token is likewise returned
+  once for the service-side sender. Its expiry is capped at seven days and at
+  the stored RSVP deadline.
 - `record_event_email_delivery_result(p_delivery_id uuid, p_action_id uuid,
   p_succeeded boolean, p_provider_message_id text, p_error text)` -> `{ok,
   deliveryId, status:'sent'|'failed', attempts, retryable}`.
@@ -298,6 +317,31 @@ email.
   operations can separate event-format preference from a one-off event mismatch.
   That reason disables future event invitations for the member; every other
   decline reason leaves the invitation preference unchanged.
+  Format-alternative feedback is stored explicitly: brunch invitations accept
+  `prefers_saturday_dinner`, dinner invitations accept
+  `prefers_sunday_brunch`, and mismatched format reasons are rejected.
+- `create_event_invitation_decline_token(p_delivery_id uuid,
+  p_action_id uuid)` -> `{ok, deliveryId, invitationId, tokenId, token,
+  expiresAt}`. It is service-only, verifies that the delivery owns the
+  invitation and action, stores only the token hash, and is called by the
+  delivery claim for invitation and RSVP-follow-up email types.
+- `resolve_event_invitation_decline_token(p_token text)` -> `{ok, status,
+  locale?, invitationId?, eventId?, memberStatus?, eventFormat?, startsAt?,
+  timezone?, city?, expiresAt?}`. It is service-only and read-only. `status` is
+  `valid | already_declined | invalid | expired | deadline_passed |
+  unavailable`; the valid response contains only the event context needed by
+  the public confirmation page.
+- `decline_event_invitation_from_token(p_token text, p_reason text,
+  p_details text)` -> the existing decline result plus `locale`. It is
+  service-only and consumes the token only after a valid, explicit decline.
+  Active, pending-session, and tokenized declines share one private database
+  helper, preserving their eligibility, reason, hold-release, opt-out,
+  idempotency, and cancellation-acknowledgement behavior.
+
+The public `/event-invitation/decline` GET only calls the resolver and never
+changes the invitation. Its form posts to a separate confirmation route; a
+successful response redirects to a token-free URL. Correctable validation
+errors do not consume the token.
 
 ## Allowed event transitions
 

@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireMemberContext } from "@/lib/data/member";
 import { isEventCancellationReason } from "@/lib/event-cancellation";
 import { deliverMemberEventEmailFromResult } from "@/lib/event-email-delivery";
+import { isEventInvitationDeclineReason } from "@/lib/event-invitation-decline-reasons";
 import { waitlistConfirmationParam } from "@/lib/event-waitlist";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeDbError } from "@/lib/i18n/errors";
@@ -177,16 +178,10 @@ export async function declineInvitationAction(
   const invitationId = String(formData.get("invitation_id") || "");
   const declineReason = String(formData.get("decline_reason") || "").trim();
   const declineDetails = String(formData.get("decline_details") || "").trim();
-  const validDeclineReasons = new Set([
-    "weekend_unavailable",
-    "prefers_sunday_brunch",
-    "event_fit",
-    "other_commitment",
-  ]);
   const supabase = await createSupabaseServerClient();
 
   if (!invitationId) return { error: dictionary.actionErrors.invitationMissing };
-  if (!validDeclineReasons.has(declineReason)) {
+  if (!isEventInvitationDeclineReason(declineReason)) {
     return { error: dictionary.actionErrors.invitationDeclineReasonRequired };
   }
   if (declineDetails.length > 500) {

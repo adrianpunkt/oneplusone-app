@@ -1,4 +1,9 @@
-const trackableLinkVariables = ["ctaUrl", "eventUrl", "invitationLink"] as const;
+const trackableLinkVariables = [
+  "ctaUrl",
+  "declineUrl",
+  "eventUrl",
+  "invitationLink",
+] as const;
 
 export function trackEventEmailLinks({
   origin,

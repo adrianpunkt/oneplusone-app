@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:event-contract": "node scripts/verify-event-contract.mjs",
+    "test:event-invitation-decline-reasons": "node --experimental-strip-types --test scripts/event-invitation-decline-reasons.test.mjs",
     "test:event-invitation-classification": "node --experimental-strip-types --test scripts/event-invitation-classification.test.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "node scripts/deploy-cloudflare-production.mjs",

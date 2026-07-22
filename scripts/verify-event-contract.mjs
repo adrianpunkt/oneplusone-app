@@ -13,6 +13,9 @@ const pendingDeclineMigrationPath = new URL("../supabase/migrations/202607201720
 const pendingDeclineOptOutMigrationPath = new URL("../supabase/migrations/20260720180000_opt_out_after_pending_event_type_decline.sql", import.meta.url);
 const paidConfirmationMigrationPath = new URL("../supabase/migrations/20260720174000_preserve_paid_status_during_event_confirmation.sql", import.meta.url);
 const genderBalanceMigrationPath = new URL("../supabase/migrations/20260720182000_apply_capacity_aware_gender_balance.sql", import.meta.url);
+const invitationDeclineMigrationPath = new URL("../supabase/migrations/20260722120000_scanner_safe_event_invitation_declines.sql", import.meta.url);
+const formatAwareDeclineMigrationPath = new URL("../supabase/migrations/20260722150000_record_format_aware_invitation_declines.sql", import.meta.url);
+const deliveryClassificationMigrationPath = new URL("../supabase/migrations/20260722160000_distinguish_invitation_declines_from_cancellations.sql", import.meta.url);
 const contractPath = new URL("../docs/events/frozen-database-contract.md", import.meta.url);
 const accessPagePath = new URL("../src/app/event-invitation/access/page.tsx", import.meta.url);
 const accessRoutePath = new URL("../src/app/event-invitation/access/claim/route.ts", import.meta.url);
@@ -22,6 +25,7 @@ const completionRoutePath = new URL("../src/app/event-invitation/complete/route.
 const invitationMemberSessionPath = new URL("../src/lib/event-invitation-member-session.ts", import.meta.url);
 const supabaseServerPath = new URL("../src/lib/supabase/server.ts", import.meta.url);
 const invitationActionsPath = new URL("../src/components/forms/invitation-actions.tsx", import.meta.url);
+const pendingInvitationActionsPath = new URL("../src/components/forms/pending-event-invitation-actions.tsx", import.meta.url);
 const notificationRefreshPath = new URL("../src/components/app/notification-refresh.tsx", import.meta.url);
 const goingOutPagePath = new URL("../src/app/(app)/going-out/page.tsx", import.meta.url);
 const invitationSessionPath = new URL("../src/lib/event-invitations.ts", import.meta.url);
@@ -33,6 +37,13 @@ const loginPagePath = new URL("../src/app/login/page.tsx", import.meta.url);
 const authActionsPath = new URL("../src/lib/actions/auth.ts", import.meta.url);
 const authCallbackPath = new URL("../src/app/auth/callback/route.ts", import.meta.url);
 const authConfirmPath = new URL("../src/app/auth/confirm/page.tsx", import.meta.url);
+const declinePagePath = new URL("../src/app/event-invitation/decline/page.tsx", import.meta.url);
+const declineRoutePath = new URL("../src/app/event-invitation/decline/confirm/route.ts", import.meta.url);
+const declineResolverPath = new URL("../src/lib/event-invitation-decline.ts", import.meta.url);
+const declineReasonsPath = new URL("../src/lib/event-invitation-decline-reasons.ts", import.meta.url);
+const eventEmailDeliveryPath = new URL("../src/lib/event-email-delivery.ts", import.meta.url);
+const eventEmailClickPath = new URL("../src/lib/event-email-click.ts", import.meta.url);
+const nextConfigPath = new URL("../next.config.ts", import.meta.url);
 
 const [
   migration,
@@ -47,6 +58,9 @@ const [
   pendingDeclineOptOutMigration,
   paidConfirmationMigration,
   genderBalanceMigration,
+  invitationDeclineMigration,
+  formatAwareDeclineMigration,
+  deliveryClassificationMigration,
   contract,
   accessPage,
   accessRoute,
@@ -56,6 +70,7 @@ const [
   invitationMemberSession,
   supabaseServer,
   invitationActions,
+  pendingInvitationActions,
   notificationRefresh,
   goingOutPage,
   invitationSession,
@@ -67,6 +82,13 @@ const [
   authActions,
   authCallback,
   authConfirm,
+  declinePage,
+  declineRoute,
+  declineResolver,
+  declineReasons,
+  eventEmailDelivery,
+  eventEmailClick,
+  nextConfig,
 ] = await Promise.all([
   readFile(migrationPath, "utf8"),
   readFile(intentionMigrationPath, "utf8"),
@@ -80,6 +102,9 @@ const [
   readFile(pendingDeclineOptOutMigrationPath, "utf8"),
   readFile(paidConfirmationMigrationPath, "utf8"),
   readFile(genderBalanceMigrationPath, "utf8"),
+  readFile(invitationDeclineMigrationPath, "utf8"),
+  readFile(formatAwareDeclineMigrationPath, "utf8"),
+  readFile(deliveryClassificationMigrationPath, "utf8"),
   readFile(contractPath, "utf8"),
   readFile(accessPagePath, "utf8"),
   readFile(accessRoutePath, "utf8"),
@@ -89,6 +114,7 @@ const [
   readFile(invitationMemberSessionPath, "utf8"),
   readFile(supabaseServerPath, "utf8"),
   readFile(invitationActionsPath, "utf8"),
+  readFile(pendingInvitationActionsPath, "utf8"),
   readFile(notificationRefreshPath, "utf8"),
   readFile(goingOutPagePath, "utf8"),
   readFile(invitationSessionPath, "utf8"),
@@ -100,6 +126,13 @@ const [
   readFile(authActionsPath, "utf8"),
   readFile(authCallbackPath, "utf8"),
   readFile(authConfirmPath, "utf8"),
+  readFile(declinePagePath, "utf8"),
+  readFile(declineRoutePath, "utf8"),
+  readFile(declineResolverPath, "utf8"),
+  readFile(declineReasonsPath, "utf8"),
+  readFile(eventEmailDeliveryPath, "utf8"),
+  readFile(eventEmailClickPath, "utf8"),
+  readFile(nextConfigPath, "utf8"),
 ]);
 
 const requiredFunctions = [
@@ -311,4 +344,86 @@ assert.doesNotMatch(publicPage, /internalSession\?\.paymentStatus === "paid"/);
 assert.doesNotMatch(publicPage, /Ask the club team for a fresh invitation/i);
 assert.doesNotMatch(publicPage, /venue_name|venue_address|restaurant_image|profile_json|memberId|email_norm|member_email/);
 
-console.log(`Event contract verification passed (${requiredFunctions.length} RPCs, lock order, hold, idempotency, and bearer boundaries).`);
+for (const functionName of [
+  "create_event_invitation_decline_token",
+  "resolve_event_invitation_decline_token",
+  "decline_event_invitation_from_token",
+]) {
+  assert.match(
+    invitationDeclineMigration,
+    new RegExp(`create or replace function public\\.${functionName}\\b`, "i"),
+  );
+  assert.match(contract, new RegExp(`\\b${functionName}\\b`, "i"));
+}
+assert.match(invitationDeclineMigration, /create table if not exists public\.event_invitation_decline_tokens/i);
+assert.match(invitationDeclineMigration, /token_hash text not null unique/i);
+assert.match(invitationDeclineMigration, /public\.hash_payment_resume_secret\(raw_token\)/i);
+assert.match(invitationDeclineMigration, /least\(\s*event_record\.rsvp_deadline_at,\s*now\(\) \+ interval '7 days'/i);
+assert.match(invitationDeclineMigration, /language plpgsql\s+stable\s+security definer[\s\S]*resolve_event_invitation_decline_token|create or replace function public\.resolve_event_invitation_decline_token[\s\S]*language plpgsql\s+stable/i);
+assert.match(invitationDeclineMigration, /create or replace function public\.perform_event_invitation_decline/i);
+assert.equal(
+  (invitationDeclineMigration.match(/public\.perform_event_invitation_decline\(/g) || []).length,
+  5,
+  "The active, pending-session, and bearer-token entry points must share one private helper",
+);
+assert.match(invitationDeclineMigration, /set used_at = coalesce\(used_at, now\(\)\)[\s\S]*where invitation_id = invitation_record\.id/i);
+assert.match(invitationDeclineMigration, /'invitationDeclineTokenId', decline_token_id/i);
+assert.match(invitationDeclineMigration, /'invitationDeclineToken', raw_decline_token/i);
+assert.match(invitationDeclineMigration, /grant execute on function public\.resolve_event_invitation_decline_token\(text\)\s+to service_role/i);
+assert.match(invitationDeclineMigration, /grant execute on function public\.decline_event_invitation_from_token\(text, text, text\)\s+to service_role/i);
+
+assert.match(formatAwareDeclineMigration, /'prefers_saturday_dinner'/i);
+assert.match(formatAwareDeclineMigration, /normalized_reason = 'prefers_saturday_dinner'[\s\S]*event_record\.event_format <> 'brunch'/i);
+assert.match(formatAwareDeclineMigration, /normalized_reason = 'prefers_sunday_brunch'[\s\S]*event_record\.event_format <> 'dinner'/i);
+assert.match(formatAwareDeclineMigration, /create or replace function public\.perform_event_invitation_decline/i);
+assert.match(formatAwareDeclineMigration, /'invitation_declined'/i);
+assert.match(deliveryClassificationMigration, /'invitation_declined'/i);
+assert.match(deliveryClassificationMigration, /coalesce\(new\.payload, '\{\}'::jsonb\) \? 'cancellationId'[\s\S]*then 'reservation_cancellation_received'[\s\S]*else 'invitation_declined'/i);
+assert.match(deliveryClassificationMigration, /before insert or update of email_type, payload/i);
+assert.match(deliveryClassificationMigration, /where email_type = 'cancellation_received'/i);
+assert.match(contract, /`prefers_saturday_dinner`/i);
+assert.match(contract, /`prefers_sunday_brunch`/i);
+
+assert.match(declinePage, /export const dynamic = "force-dynamic"/);
+assert.match(declinePage, /referrer: "no-referrer"/);
+assert.match(declinePage, /robots: \{ follow: false, index: false \}/);
+assert.match(declinePage, /action="\/event-invitation\/decline\/confirm"/);
+assert.match(declinePage, /method="post"/);
+assert.match(declinePage, /name="reason"[\s\S]*required/);
+assert.doesNotMatch(declinePage, /autoSubmit|defaultChecked|checked=/);
+assert.doesNotMatch(declinePage, /decline_event_invitation_from_token/);
+assert.match(declinePage, /status=kept/);
+assert.match(declinePage, /context\.eventFormat/);
+assert.match(declinePage, /context\.startsAt/);
+assert.match(declinePage, /context\.city/);
+assert.match(declinePage, /isEventInvitationDeclineReasonForFormat/);
+assert.match(publicPage, /eventFormat=\{event\.eventFormat\}/);
+assert.match(invitationActions, /eventInvitationAlternativeDeclineReason\(eventFormat\)/);
+assert.match(invitationActions, /const canDecline =\s*!isOnWaitlist/);
+assert.match(invitationActions, /<CancelInvitationForm\s+context="waitlist"/);
+assert.match(goingOutPage, /<CancelInvitationForm\s+context="waitlist"/);
+assert.match(pendingInvitationActions, /isEventInvitationDeclineReasonForFormat\(value, eventFormat\)/);
+assert.match(declineReasons, /if \(eventFormat === "brunch"\) return "prefers_saturday_dinner"/);
+assert.match(declineReasons, /if \(eventFormat === "dinner"\) return "prefers_sunday_brunch"/);
+assert.match(declineResolver, /resolve_event_invitation_decline_token/);
+assert.doesNotMatch(declineResolver, /decline_event_invitation_from_token/);
+
+assert.match(declineRoute, /export async function POST/);
+assert.match(declineRoute, /decline_event_invitation_from_token/);
+assert.match(declineRoute, /details\.length > 500/);
+assert.match(declineRoute, /status: "validation",[\s\S]*token/);
+assert.match(declineRoute, /deliverMemberEventEmailFromResult\(result\)/);
+assert.match(declineRoute, /status: 303/);
+assert.match(declineRoute, /Cache-Control", "private, no-store, max-age=0"/);
+assert.doesNotMatch(declineRoute, /console\.(?:log|warn|error)\([^\n]*token/i);
+
+assert.match(eventEmailDelivery, /invitationDeclineToken\?: string/);
+assert.match(eventEmailDelivery, /"invitation_declined:en"/);
+assert.match(eventEmailDelivery, /declineUrl/);
+assert.match(eventEmailDelivery, /\/event-invitation\/decline/);
+assert.match(eventEmailClick, /"declineUrl"/);
+assert.match(nextConfig, /source: "\/event-invitation\/decline\/:path\*"/);
+assert.match(nextConfig, /Referrer-Policy", value: "no-referrer"/);
+assert.match(nextConfig, /X-Robots-Tag", value: "noindex, nofollow, noarchive"/);
+
+console.log(`Event contract verification passed (${requiredFunctions.length + 3} RPCs, lock order, hold, idempotency, scanner-safe decline, and bearer boundaries).`);

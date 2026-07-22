@@ -87,6 +87,7 @@ const copy = {
     reasons: {
       event_type_not_interested: "I’m not interested in this kind of events",
       weekend_unavailable: "I cannot make it this weekend",
+      prefers_saturday_dinner: "I would prefer Saturday dinners instead",
       prefers_sunday_brunch: "I would prefer Sunday brunches instead",
       event_fit: "This event isn't a good fit for me",
       other_commitment: "Something else",
@@ -152,6 +153,7 @@ const copy = {
     reasons: {
       event_type_not_interested: "No me interesan este tipo de eventos",
       weekend_unavailable: "No puedo asistir este fin de semana",
+      prefers_saturday_dinner: "Preferiría las cenas de los sábados",
       prefers_sunday_brunch: "Preferiría los brunches de los domingos",
       event_fit: "Este evento no encaja conmigo",
       other_commitment: "Otro motivo",
@@ -366,7 +368,7 @@ export default async function EventInvitationPage({
               </p>
             ) : null}
             {invitation.canApply ? (
-              <PendingEventInvitationActions copy={{
+              <PendingEventInvitationActions eventFormat={event.eventFormat} copy={{
                 accept: text.accept,
                 decline: text.decline,
                 declineDescription: text.declineDescription,
