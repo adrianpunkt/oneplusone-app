@@ -35,6 +35,8 @@ export type SupportQuestionCopy = {
   trigger: string;
 };
 
+export type SupportQuestionEmailSource = "authenticated" | "invitation" | "prompt";
+
 const supportAvatars = [
   { name: "Adrian", src: "/support/support-avatar-3.webp" },
   { name: "Alexandra", src: "/support/support-avatar-2.webp" },
@@ -45,13 +47,15 @@ const supportEmail = "hello@oneplusoneclub.com";
 
 export function SupportQuestionDialog({
   copy,
+  emailSource = "prompt",
   locale,
-  useInvitationEmail = false,
 }: {
   copy: SupportQuestionCopy;
+  emailSource?: SupportQuestionEmailSource;
   locale: Locale;
-  useInvitationEmail?: boolean;
 }) {
+  const hasKnownEmail = emailSource !== "prompt";
+  const useInvitationEmail = emailSource === "invitation";
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"message" | "email">("message");
   const [message, setMessage] = useState("");
@@ -97,19 +101,19 @@ export function SupportQuestionDialog({
         messageRef.current?.focus({ preventScroll: true });
         return;
       }
-      if (!useInvitationEmail) {
+      if (!hasKnownEmail) {
         continueToEmail();
         return;
       }
     }
 
     const normalizedEmail = email.trim().toLowerCase();
-    if (!useInvitationEmail && !normalizedEmail) {
+    if (!hasKnownEmail && !normalizedEmail) {
       setStatus(copy.requiredEmail);
       emailRef.current?.focus({ preventScroll: true });
       return;
     }
-    if (!useInvitationEmail && !isValidEmail(normalizedEmail)) {
+    if (!hasKnownEmail && !isValidEmail(normalizedEmail)) {
       setStatus(copy.invalidEmail);
       emailRef.current?.focus({ preventScroll: true });
       return;
@@ -249,9 +253,9 @@ export function SupportQuestionDialog({
                         value={message}
                       />
                       <Button
-                        aria-label={useInvitationEmail && pending ? copy.sending : copy.send}
+                        aria-label={hasKnownEmail && pending ? copy.sending : copy.send}
                         className="h-[52px] w-[52px] rounded-lg p-0"
-                        disabled={useInvitationEmail && pending}
+                        disabled={hasKnownEmail && pending}
                         type="submit"
                       >
                         <Send aria-hidden="true" className="h-5 w-5" />

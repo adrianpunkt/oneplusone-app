@@ -153,9 +153,75 @@ export type EventMaterial = {
   kind: "host_guide" | "questions_pdf" | "event_guide";
   version: string;
   public_url: string;
+  storage_path: string | null;
+  content_hash: string | null;
+  byte_size: number | null;
+  question_set_revision: number | null;
+  source_snapshot: EventGuideSnapshot | null;
+  stale_at: string | null;
+};
+
+export type EventGuideQuestionSnapshot = {
+  id: string;
+  level: 1 | 2 | 3;
+  order: number;
+  prompt: string;
+};
+
+export type EventGuideSnapshot = {
+  schemaVersion: 1;
+  guideVersion: string;
+  generatedAt: string;
+  questionSetRevision: number;
+  event: {
+    id: string;
+    title: string;
+    startsAt: string;
+    endsAt: string | null;
+    timezone: string;
+    venueName: string;
+    venueAddress: string;
+    confirmedGuestCount: number;
+    languageCode: "en" | "es";
+  };
+  instructions: {
+    title: string;
+    eyebrow: string;
+    intro: string;
+    steps: string[];
+    sharingTitle: string;
+    sharingBody: string;
+    spicyTitle: string;
+    spicyBody: string;
+    passing: string;
+    closing: string;
+  };
+  questions: {
+    sharing: EventGuideQuestionSnapshot[];
+    spicy: EventGuideQuestionSnapshot[];
+  };
 };
 
 export type EventQuestionType = "sharing_time" | "spicy_time";
+
+export type EventQuestionLevelRatios = {
+  "1": number;
+  "2": number;
+  "3": number;
+};
+
+export type EventQuestionSet = {
+  event_id: string;
+  revision: number;
+  confirmed_guest_count: number;
+  sharing_target: number;
+  spicy_target: number;
+  sharing_level_ratios: EventQuestionLevelRatios;
+  spicy_level_ratios: EventQuestionLevelRatios;
+  selection_fingerprint: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export type EventQuestion = {
   id: string;

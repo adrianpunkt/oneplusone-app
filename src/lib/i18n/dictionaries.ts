@@ -187,6 +187,10 @@ const en = {
       "We'll notify you automatically once another person joins to balance the group.",
     paymentHoldExpiredWaitlistNote:
       "Your original priority is retained and your credit is available. If you’re promoted, we’ll reserve your seat automatically.",
+    hostPackageDownloadNote:
+      "Download your host PDF.",
+    hostPackagePendingNote:
+      "You’re hosting this event. Your PDF will be available here soon.",
     hostOptInNote:
       "You opted to be the host, we'll send the instructions if you are selected.",
     preferencesTitle: "Going-out preferences",
@@ -1137,8 +1141,12 @@ const es: typeof en = {
       "Te avisaremos automáticamente en cuanto se una otra persona para equilibrar el grupo.",
     paymentHoldExpiredWaitlistNote:
       "Conservas tu prioridad original y tu crédito sigue disponible. Si te asignamos una plaza, la reservaremos automáticamente.",
+    hostPackageDownloadNote:
+      "Descarga el PDF para recibir al grupo.",
+    hostPackagePendingNote:
+      "Recibirás al grupo en este evento. Tu PDF estará disponible aquí pronto.",
     hostOptInNote:
-      "Te ofreciste para ser host; te enviaremos las instrucciones si eres seleccionado/a.",
+      "Te ofreciste para recibir al grupo. Te avisaremos si te elegimos.",
     preferencesTitle: "Preferencias de salidas",
     saturdayDinner: "Cena de sábado",
     sundayBrunch: "Brunch de domingo",

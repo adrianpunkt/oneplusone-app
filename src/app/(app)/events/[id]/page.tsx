@@ -124,7 +124,7 @@ export default async function EventDetailPage({
     getPreferences(member.id),
     getRequestTimestamp(),
   ]);
-  const { event, eventAttendees, feedback, host, invitation, isHost, materials, questions, summary } = eventDetail;
+  const { event, eventAttendees, feedback, host, invitation, isHost, materials, summary } = eventDetail;
 
   if (!event) notFound();
 
@@ -156,6 +156,13 @@ export default async function EventDetailPage({
           />
         </div>
       </section>
+
+      {isHost ? (
+        <EventHostPlaybook
+          locale={event.language_code === "es" ? "es" : "en"}
+          material={materials[0] || null}
+        />
+      ) : null}
 
       <section className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
         <Card>
@@ -337,10 +344,6 @@ export default async function EventDetailPage({
           </CardContent>
         </Card>
       </section>
-
-      {isHost ? (
-        <EventHostPlaybook locale={locale} materials={materials} questions={questions} />
-      ) : null}
 
       {eventEnded && invitation?.seat_status === "confirmed" ? (
         <Card>

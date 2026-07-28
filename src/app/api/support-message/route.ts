@@ -5,6 +5,7 @@ import {
   resolveInternalInvitationSession,
 } from "@/lib/event-invitations";
 import { getRuntimeEnv } from "@/lib/env";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 type SupportPayload = {
   email: string;
@@ -12,6 +13,7 @@ type SupportPayload = {
   message: string;
   pageUrl: string;
   referrer: string;
+  requesterUserId: string;
   subject: string;
   website: string;
 };
@@ -27,7 +29,12 @@ export async function POST(request: NextRequest) {
 
   const website = cleanValue(rawPayload.website, 240);
   const useInvitationEmail = rawPayload.useInvitationEmail === true;
+  const authenticatedRequester = await authenticatedSupportRequester();
   let email = cleanValue(rawPayload.email, 320).toLowerCase();
+
+  if (!useInvitationEmail && authenticatedRequester?.email) {
+    email = authenticatedRequester.email;
+  }
 
   if (!website && useInvitationEmail) {
     const sessionToken = readEventInvitationSessionToken(request.cookies, request.nextUrl);
@@ -41,6 +48,7 @@ export async function POST(request: NextRequest) {
     message: cleanValue(rawPayload.message, 5000),
     pageUrl: cleanValue(rawPayload.pageUrl, 1200),
     referrer: cleanValue(rawPayload.referrer, 1200),
+    requesterUserId: useInvitationEmail ? "" : authenticatedRequester?.userId || "",
     subject: cleanValue(rawPayload.subject, 240) || "Question about one plus one club",
     website,
   };
@@ -77,6 +85,24 @@ function supportMessageEndpoint() {
   const configured = getRuntimeEnv("SUPPORT_MESSAGE_ENDPOINT");
   if (configured) return configured;
   return "https://oneplusoneclub.com/api/support-message";
+}
+
+async function authenticatedSupportRequester() {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return null;
+
+    return {
+      email: cleanValue(user.email, 320).toLowerCase(),
+      userId: user.id,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function cleanValue(value: unknown, maxLength: number) {

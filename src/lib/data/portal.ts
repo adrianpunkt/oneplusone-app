@@ -12,13 +12,12 @@ import type {
   EventInvitation,
   EventMaterial,
   EventPreferences,
-  EventQuestion,
-  EventQuestionType,
   Message,
   NotificationRecord,
   EventRecord,
   JsonObject,
 } from "@/lib/types";
+import { currentHostPackageMaterials } from "@/lib/events/host-package-visibility";
 import { storyValue } from "@/lib/utils";
 
 type WithEventRelation<T> = T & { events?: EventRecord | EventRecord[] | null };
@@ -467,6 +466,66 @@ export async function getAttendedEvents(memberId: string) {
   );
 }
 
+export async function getHostedEventPackages(
+  memberId: string,
+  events: Array<{ id: string; languageCode: "en" | "es" }>,
+) {
+  const eventLanguageById = new Map(
+    events
+      .filter((event) => UUID_PATTERN.test(event.id))
+      .map((event) => [event.id, event.languageCode]),
+  );
+  const eventIds = Array.from(eventLanguageById.keys());
+  if (!eventIds.length) return new Map<string, string | null>();
+
+  const serviceSupabase = getSupabaseServiceClient();
+  const { data: hostData, error: hostError } = await serviceSupabase
+    .from("event_hosts")
+    .select("event_id")
+    .eq("member_id", memberId)
+    .in("event_id", eventIds);
+
+  if (hostError) throw new Error(`Unable to load host assignments: ${hostError.message}`);
+  const hostedEventIds = Array.from(new Set((hostData || []).map((host) => host.event_id)));
+  if (!hostedEventIds.length) return new Map<string, string | null>();
+
+  const [questionSetResult, materialResult] = await Promise.all([
+    serviceSupabase
+      .from("event_question_sets")
+      .select("event_id,revision")
+      .in("event_id", hostedEventIds),
+    serviceSupabase
+      .from("event_materials")
+      .select("id,event_id,locale,kind,version,public_url,storage_path,content_hash,byte_size,question_set_revision,source_snapshot,stale_at")
+      .in("event_id", hostedEventIds)
+      .eq("kind", "event_guide")
+      .order("created_at", { ascending: false }),
+  ]);
+  if (questionSetResult.error || materialResult.error) {
+    throw new Error(
+      `Unable to load host packages: ${questionSetResult.error?.message || materialResult.error?.message}`,
+    );
+  }
+
+  const revisionByEventId = new Map(
+    (questionSetResult.data || []).map((questionSet) => [
+      questionSet.event_id,
+      questionSet.revision,
+    ]),
+  );
+  const materials = (materialResult.data || []) as EventMaterial[];
+
+  return new Map(hostedEventIds.map((eventId) => {
+    const currentMaterial = currentHostPackageMaterials({
+      currentRevision: revisionByEventId.get(eventId) || null,
+      eventLanguage: eventLanguageById.get(eventId) || "en",
+      isAssignedHost: true,
+      materials: materials.filter((material) => material.event_id === eventId),
+    })[0];
+    return [eventId, currentMaterial?.public_url || null] as const;
+  }));
+}
+
 export async function getEventGroupSummaries(
   events: Array<EventRecord | null | undefined>,
 ) {
@@ -565,8 +624,9 @@ export async function getEventDetail(eventId: string, memberId: string) {
         .maybeSingle<EventHost>(),
       supabase
         .from("event_materials")
-        .select("id,event_id,locale,kind,version,public_url")
-        .eq("event_id", eventId),
+        .select("id,event_id,locale,kind,version,public_url,storage_path,content_hash,byte_size,question_set_revision,source_snapshot,stale_at")
+        .eq("event_id", eventId)
+        .order("created_at", { ascending: false }),
       supabase
         .from("event_feedback")
         .select("id,event_id,member_id,submitted_at")
@@ -581,7 +641,21 @@ export async function getEventDetail(eventId: string, memberId: string) {
     ? await attachEventHostFirstName(hostResult.data as EventHost)
     : null;
   const isHost = host?.member_id === memberId;
-  const questions = isHost ? await getAssignedEventQuestions(eventId) : [];
+  const questionSetResult = isHost
+    ? await getSupabaseServiceClient()
+      .from("event_question_sets")
+      .select("revision")
+      .eq("event_id", eventId)
+      .maybeSingle<{ revision: number }>()
+    : { data: null, error: null };
+  if (questionSetResult.error) throw new Error(`Unable to load the host package revision: ${questionSetResult.error.message}`);
+  const questionSetRevision = questionSetResult.data?.revision || null;
+  const materials = currentHostPackageMaterials({
+    currentRevision: questionSetRevision,
+    eventLanguage: event?.language_code === "es" ? "es" : "en",
+    isAssignedHost: isHost,
+    materials: (materialResult.data || []) as EventMaterial[],
+  });
 
   return {
     attendee,
@@ -591,64 +665,9 @@ export async function getEventDetail(eventId: string, memberId: string) {
     host,
     isHost,
     invitation,
-    materials: (materialResult.data || []) as EventMaterial[],
-    questions,
+    materials,
     summary: event ? summaries[event.id] || emptyEventGroupSummary(event) : null,
   };
-}
-
-type AssignedQuestionRelation = {
-  assigned_at: string;
-  event_id: string;
-  id: string;
-  question_id: string;
-  questions:
-    | {
-        id: string;
-        localized_content: JsonObject;
-        prompt: string;
-        rating: number | null;
-        type: EventQuestionType;
-      }
-    | Array<{
-        id: string;
-        localized_content: JsonObject;
-        prompt: string;
-        rating: number | null;
-        type: EventQuestionType;
-      }>
-    | null;
-  sort_order: number;
-};
-
-async function getAssignedEventQuestions(eventId: string): Promise<EventQuestion[]> {
-  const { data, error } = await getSupabaseServiceClient()
-    .from("event_questions")
-    .select(
-      "id,event_id,question_id,sort_order,assigned_at,questions(id,type,prompt,localized_content,rating)",
-    )
-    .eq("event_id", eventId)
-    .order("sort_order", { ascending: true })
-    .order("assigned_at", { ascending: true });
-
-  if (error) throw new Error(`Unable to load the host questions: ${error.message}`);
-
-  return ((data || []) as unknown as AssignedQuestionRelation[]).flatMap((row) => {
-    const question = Array.isArray(row.questions) ? row.questions[0] : row.questions;
-    if (!question) return [];
-
-    return [{
-      assigned_at: row.assigned_at,
-      event_id: row.event_id,
-      id: row.id,
-      localized_content: question.localized_content || {},
-      prompt: question.prompt,
-      question_id: row.question_id,
-      rating: question.rating,
-      sort_order: row.sort_order,
-      type: question.type,
-    }];
-  });
 }
 
 async function attachEventHostFirstName(host: EventHost): Promise<EventHost> {

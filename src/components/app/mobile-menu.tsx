@@ -200,7 +200,11 @@ export function MobileMenu({
         </div>
       </div>
       <div className="grid gap-5 bg-white pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-        <SupportQuestionDialog copy={supportCopy} locale={currentLocale} />
+        <SupportQuestionDialog
+          copy={supportCopy}
+          emailSource="authenticated"
+          locale={currentLocale}
+        />
         <div className="flex justify-center">
           <SignOutButton
             className="h-12 w-48 justify-center border-wine-burgundy/10 bg-white text-base font-black text-lipstick-red shadow-sm hover:translate-y-0 hover:bg-lipstick-red/8 hover:text-lipstick-red hover:shadow-sm"

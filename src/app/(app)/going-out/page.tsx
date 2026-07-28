@@ -6,6 +6,7 @@ import {
   Check,
   CircleCheck,
   Clock3,
+  Download,
   Heart,
   History,
   House,
@@ -40,6 +41,7 @@ import {
   getAttendedEvents,
   getCreditBalance,
   getEventGroupSummaries,
+  getHostedEventPackages,
   getInvitations,
   getPreferences,
 } from "@/lib/data/portal";
@@ -821,12 +823,14 @@ function PendingInvitationCard({
 
 function UpcomingEventCard({
   dictionary,
+  hostPackageUrl,
   item,
   locale,
   summary,
   wantsToHost,
 }: {
   dictionary: Dictionary;
+  hostPackageUrl: string | null | undefined;
   item: EventListItem;
   locale: Locale;
   summary: EventGroupSummary | undefined;
@@ -906,7 +910,22 @@ function UpcomingEventCard({
               <span>{joinedWaitlistNote(item.invitation, dictionary)}</span>
             </p>
           ) : null}
-          {isConfirmed && wantsToHost ? (
+          {isConfirmed && hostPackageUrl ? (
+            <a
+              className="mt-2 flex items-start gap-2 text-sm font-semibold text-ocean-blue underline decoration-ocean-blue/35 underline-offset-4"
+              href={hostPackageUrl}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <Download aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{dictionary.goingOut.hostPackageDownloadNote}</span>
+            </a>
+          ) : isConfirmed && hostPackageUrl === null ? (
+            <p className="mt-2 flex items-start gap-2 text-sm font-semibold text-ocean-blue">
+              <House aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{dictionary.goingOut.hostPackagePendingNote}</span>
+            </p>
+          ) : isConfirmed && wantsToHost ? (
             <p className="mt-2 flex items-start gap-2 text-sm font-semibold text-ocean-blue">
               <House aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{dictionary.goingOut.hostOptInNote}</span>
@@ -1205,6 +1224,13 @@ export default async function GoingOutPage({
   ].sort(
     (left, right) => eventTimestamp(left.event) - eventTimestamp(right.event),
   );
+  const hostedEventPackages = await getHostedEventPackages(
+    member.id,
+    upcomingEvents.map((item) => ({
+      id: item.eventId,
+      languageCode: item.event?.language_code === "es" ? "es" : "en",
+    })),
+  );
   const pastInvitations = sortPastEvents(
     invitations.filter(
       (invitation) =>
@@ -1309,6 +1335,7 @@ export default async function GoingOutPage({
             {upcomingEvents.map((item) => (
               <UpcomingEventCard
                 dictionary={dictionary}
+                hostPackageUrl={hostedEventPackages.get(item.eventId)}
                 key={item.key}
                 item={item}
                 locale={locale}

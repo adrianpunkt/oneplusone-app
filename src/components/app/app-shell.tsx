@@ -152,7 +152,11 @@ export function AppShell({
           />
 
           <div className="mt-auto grid gap-5">
-            <SupportQuestionDialog copy={dictionary.actions.support} locale={locale} />
+            <SupportQuestionDialog
+              copy={dictionary.actions.support}
+              emailSource="authenticated"
+              locale={locale}
+            />
             <div className="flex items-center justify-between gap-4 px-0">
               <LanguageSwitcher
                 activeClassName="bg-lipstick-red text-white"

@@ -389,8 +389,8 @@ export default async function EventInvitationPage({
             ) : null}
             <SupportQuestionDialog
               copy={supportCopy}
+              emailSource="invitation"
               locale={locale}
-              useInvitationEmail
             />
           </CardContent>
         </Card>
