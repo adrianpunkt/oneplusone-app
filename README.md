@@ -160,7 +160,14 @@ The app has a dedicated credit-pack checkout endpoint:
 - `POST /api/stripe/create-credit-checkout`
 - `POST /api/stripe/webhook`
 
-The app webhook only completes sessions where `metadata.purchase = credit_pack`, so it does not process the website membership sessions.
+The app webhook completes its `credit_pack` and `event_membership` Checkout Sessions; it
+does not complete the website's standalone membership Checkout Sessions.
+
+The verified Stripe webhook must also subscribe to `refund.created`, `refund.updated`, and
+`refund.failed`. Managed membership refunds are retrieved again from Stripe before their
+local state is synchronized. The public `/refund-feedback/access` flow exchanges a 30-day
+emailed token for a scoped HttpOnly cookie and accepts one localized feedback response per
+refund.
 
 Credit-pack Checkout Sessions enable Stripe automatic tax with automatic billing
 address collection. Credit prices in `credit_products.price_amount_cents` are

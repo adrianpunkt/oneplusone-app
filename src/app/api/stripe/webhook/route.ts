@@ -4,6 +4,10 @@ import type Stripe from "stripe";
 import { completeCreditPackPurchaseFromSession } from "@/lib/credit-purchases";
 import { completeEventMembershipPurchaseFromSession } from "@/lib/event-membership-payments";
 import {
+  isManagedMembershipRefundEvent,
+  syncMembershipRefundFromWebhook,
+} from "@/lib/membership-refunds";
+import {
   getStripe,
   getStripeWebhookCryptoProvider,
   getStripeWebhookSecret,
@@ -37,9 +41,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Invalid Stripe signature." }, { status: 400 });
   }
 
+  if (isManagedMembershipRefundEvent(event)) {
+    try {
+      const result = await syncMembershipRefundFromWebhook(event);
+      return NextResponse.json({ ok: true, result });
+    } catch (error) {
+      console.error("Could not synchronize Stripe membership refund", error);
+      return NextResponse.json(
+        { ok: false, error: "Could not synchronize membership refund." },
+        { status: 500 },
+      );
+    }
+  }
+
   if (
-    event.type !== "checkout.session.completed" &&
-    event.type !== "checkout.session.async_payment_succeeded"
+    event.type !== "checkout.session.completed"
+    && event.type !== "checkout.session.async_payment_succeeded"
   ) {
     return NextResponse.json({ ok: true, ignored: true });
   }
