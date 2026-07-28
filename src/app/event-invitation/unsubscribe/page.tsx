@@ -17,7 +17,7 @@ const copy = {
   en: {
     button: "Stop event invitation emails",
     description:
-      "You will stop receiving new event invitations. You can turn them back on later from your Going-out preferences.",
+      "Click the button below to stop receiving new invitations to the one plus one club events.",
     invalid:
       "This unsubscribe link is no longer valid. You can ignore the invitation email.",
     success: "You have been unsubscribed from future event invitations.",
@@ -27,7 +27,7 @@ const copy = {
   es: {
     button: "Dejar de recibir invitaciones",
     description:
-      "Dejarás de recibir nuevas invitaciones a eventos. Más adelante podrás volver a activarlas desde tus preferencias de salidas.",
+      "Pulsa el botón de abajo para dejar de recibir nuevas invitaciones a los eventos de one plus one club.",
     invalid:
       "Este enlace para darse de baja ya no es válido. Puedes ignorar el correo de invitación.",
     success: "Te has dado de baja de futuras invitaciones a eventos.",
@@ -59,7 +59,7 @@ export default async function EventInvitationUnsubscribePage({
   return (
     <main className="grid min-h-screen place-items-center bg-blush-pink px-4 py-10">
       <Card className="w-full max-w-md text-center">
-        <CardHeader className="items-center gap-5">
+        <CardHeader className="justify-items-center gap-5">
           <PublicInvitationLogo className="w-44" priority />
           <div className="flex items-center justify-center gap-2 text-ocean-blue">
             {succeeded ? (
