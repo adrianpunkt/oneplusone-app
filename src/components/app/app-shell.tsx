@@ -135,7 +135,7 @@ export function AppShell({
             <BrandLogo className="w-32" priority />
           </Link>
 
-          <div className="px-4">
+          <div className="mx-auto w-36">
             <CreditBalanceLink
               ariaLabel={creditAriaLabel}
               creditBalance={creditBalance}
