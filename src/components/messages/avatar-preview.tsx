@@ -11,12 +11,15 @@ export function AvatarPreview({
   className,
   imageUrl,
   name,
+  thumbnailUrl,
 }: {
   className?: string;
   imageUrl: string;
   name: string;
+  thumbnailUrl?: string;
 }) {
   const previewLabel = `Preview ${name}'s avatar`;
+  const previewImageUrl = imageUrl || thumbnailUrl || "";
 
   return (
     <Dialog.Root>
@@ -32,7 +35,7 @@ export function AvatarPreview({
         >
           <CorrespondentAvatar
             className="h-full w-full transition-transform duration-150 group-hover:scale-[1.02]"
-            imageUrl={imageUrl}
+            imageUrl={thumbnailUrl || previewImageUrl}
             name={name}
           />
         </button>
@@ -47,7 +50,7 @@ export function AvatarPreview({
             className="h-full w-full rounded-none border-0 shadow-none"
             imageSize={512}
             imageSizes="min(calc(100vw - 2rem), 32rem)"
-            imageUrl={imageUrl}
+            imageUrl={previewImageUrl}
             initialsClassName="text-7xl sm:text-8xl"
             name={name}
           />

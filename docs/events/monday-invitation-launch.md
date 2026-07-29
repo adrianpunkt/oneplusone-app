@@ -80,7 +80,9 @@ Run this as a founder would operate the system:
 9. Add venue details, explicitly confirm the event, and verify confirmation emails plus the confirmed-event page.
 10. Assign a host, send the host package, and verify host-only in-app materials.
 11. Exercise club cancellation and participant cancellation both with and without replacement; verify participant visibility and credit handling.
-12. Mark the event complete, explicitly send feedback requests, submit one-star and normal feedback, and verify the messaging gate.
+12. Mark the event complete, explicitly send feedback requests, submit both
+    attendance branches, and verify that only an attended response unlocks the
+    messaging gate.
 13. Explicitly trigger the eligible credit offer and verify its 48-hour validity without enrolling an ineligible contact.
 14. Verify all due actions are visible in ops but none run by themselves.
 

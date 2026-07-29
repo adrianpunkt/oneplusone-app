@@ -1,18 +1,16 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
-import { CalendarDays, Clock3, Languages, MapPinned, UsersRound } from "lucide-react";
+import { Clock3, Languages, MapPinned } from "lucide-react";
 
 import { AddToCalendarButton } from "@/components/app/add-to-calendar-button";
-import { EventLanguage } from "@/components/app/event-language";
 import { EventHostPlaybook } from "@/components/app/event-host-playbook";
-import { EventLocation } from "@/components/app/event-location";
+import { EventLanguage } from "@/components/app/event-language";
+import { EventPageHeader } from "@/components/app/event-page-header";
 import {
   InvitationDecisionForms,
 } from "@/components/forms/invitation-actions";
-import { EventFeedbackForm } from "@/components/forms/event-feedback-form";
-import { StartConversationForm } from "@/components/forms/start-conversation-form";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireMemberContextForRender } from "@/lib/data/member";
 import { getCreditBalance, getEventDetail, getPreferences } from "@/lib/data/portal";
@@ -40,10 +38,9 @@ const detailCopy = {
     age: "Age range",
     attendees: "Confirmed attendees",
     calendarDescription: "Your one plus one club event",
+    connect: "Connect with your group",
     creditCost: "Credit cost",
     deadline: "RSVP deadline",
-    feedback: "Event feedback",
-    feedbackDescription: "Submitting feedback unlocks messaging with your table.",
     format: "Format",
     fullAfter: "Full restaurant and host details are shared after founder confirmation.",
     host: "Your host",
@@ -54,28 +51,16 @@ const detailCopy = {
     preferencesNudge: "Check that your food, timing, and hosting preferences are up to date.",
     preferencesLink: "Review preferences",
     restaurantImage: "Restaurant",
-    feedbackForm: {
-      comments: "Anything else you want us to know?",
-      detail: "Required detail for any one-star rating",
-      host: "Host",
-      hosting: "Hosting experience",
-      overall: "Overall",
-      questions: "Conversation questions",
-      restaurant: "Restaurant",
-      saved: "Feedback saved. Messaging is now available.",
-      saving: "Saving…",
-      submit: "Submit feedback",
-    },
+    shareFeedback: "Share feedback",
   },
   es: {
     addCalendar: "Añadir al calendario",
     age: "Rango de edad",
     attendees: "Asistentes confirmados",
     calendarDescription: "Tu evento de one plus one club",
+    connect: "Conectar con tu grupo",
     creditCost: "Coste en créditos",
     deadline: "Fecha límite de RSVP",
-    feedback: "Valoración del evento",
-    feedbackDescription: "Enviar tu valoración desbloquea los mensajes con tu mesa.",
     format: "Formato",
     fullAfter: "El restaurante y el host se comparten después de la confirmación de los fundadores.",
     host: "Tu host",
@@ -86,18 +71,7 @@ const detailCopy = {
     preferencesNudge: "Comprueba que tus preferencias de comida, horario y host estén al día.",
     preferencesLink: "Revisar preferencias",
     restaurantImage: "Restaurante",
-    feedbackForm: {
-      comments: "¿Algo más que quieras contarnos?",
-      detail: "Detalle obligatorio para cualquier valoración de una estrella",
-      host: "Host",
-      hosting: "Experiencia como host",
-      overall: "General",
-      questions: "Preguntas de conversación",
-      restaurant: "Restaurante",
-      saved: "Valoración guardada. Ya puedes enviar mensajes.",
-      saving: "Guardando…",
-      submit: "Enviar valoración",
-    },
+    shareFeedback: "Enviar valoración",
   },
 } as const;
 
@@ -112,10 +86,17 @@ async function getRequestTimestamp() {
 
 export default async function EventDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string | string[] }>;
 }) {
-  const { id } = await params;
+  const [{ id }, { from }] = await Promise.all([params, searchParams]);
+  const feedbackSource = Array.isArray(from) ? from[0] : from;
+  if (feedbackSource === "feedback") {
+    redirect(`/events/${encodeURIComponent(id)}/feedback`);
+  }
+
   const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const [eventDetail, creditBalance, preferences, now] = await Promise.all([
@@ -124,7 +105,7 @@ export default async function EventDetailPage({
     getPreferences(member.id),
     getRequestTimestamp(),
   ]);
-  const { event, eventAttendees, feedback, host, invitation, isHost, materials, summary } = eventDetail;
+  const { event, feedback, host, invitation, isHost, materials, summary } = eventDetail;
 
   if (!event) notFound();
 
@@ -134,28 +115,18 @@ export default async function EventDetailPage({
   );
   const eventEnded = event.status === "completed" ||
     new Date(event.ends_at || event.starts_at).getTime() <= now;
-  const canMessage = Boolean(feedback && invitation?.seat_status === "confirmed" && eventEnded);
   const title = localizeText(event.title, event.localized_content, locale, "title");
   const description = localizeText(event.description, event.localized_content, locale, "description");
   const memberNotes = localizeText(event.member_notes, event.localized_content, locale, "member_notes");
 
   return (
     <>
-      <section className="grid gap-2">
-        <h1 className="font-display text-3xl font-black text-wine-burgundy">
-          {title}
-        </h1>
-        <div className="flex flex-wrap gap-3 text-sm font-semibold text-muted">
-          <span className="inline-flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-lipstick-red" />
-            {formatDateTime(event.starts_at, locale)}
-          </span>
-          <EventLocation
-            event={event}
-            pendingTooltip={dictionary.events.venuePendingTooltip}
-          />
-        </div>
-      </section>
+      <EventPageHeader
+        event={event}
+        locale={locale}
+        pendingTooltip={dictionary.events.venuePendingTooltip}
+        title={title}
+      />
 
       {isHost ? (
         <EventHostPlaybook
@@ -164,7 +135,23 @@ export default async function EventDetailPage({
         />
       ) : null}
 
-      <section className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
+      {eventEnded && invitation?.seat_status === "confirmed" ? (
+        <div className="flex flex-wrap gap-2">
+          <Button asChild>
+            <Link
+              href={
+                feedback
+                  ? `/events/${encodeURIComponent(event.id)}/connect`
+                  : `/events/${encodeURIComponent(event.id)}/feedback`
+              }
+            >
+              {feedback ? copy.connect : copy.shareFeedback}
+            </Link>
+          </Button>
+        </div>
+      ) : null}
+
+      <section>
         <Card>
           <CardHeader>
             <CardTitle>{dictionary.events.eventDetails}</CardTitle>
@@ -305,61 +292,7 @@ export default async function EventDetailPage({
             ) : null}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UsersRound className="h-5 w-5 text-lipstick-red" />
-              {dictionary.events.peopleFromTable}
-            </CardTitle>
-            <CardDescription>
-              {dictionary.events.peopleDescription}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {canMessage && eventAttendees.length ? (
-              eventAttendees.map((person) => (
-                <article key={person.member_id} className="grid gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-display text-lg font-extrabold text-wine-burgundy">{person.first_name}</p>
-                    <Badge variant="muted">{dictionary.events.pastEvent}</Badge>
-                  </div>
-                  <StartConversationForm
-                    copy={{
-                      firstMessagePlaceholder: dictionary.messages.firstMessagePlaceholder,
-                      firstMessageSent: dictionary.messages.firstMessageSent,
-                      sendFirst: dictionary.messages.sendFirst,
-                      sending: dictionary.messages.sending,
-                    }}
-                    eventId={event.id}
-                    recipientMemberId={person.member_id}
-                  />
-                </article>
-              ))
-            ) : (
-              <p className="rounded-lg bg-blush-pink p-4 text-sm font-semibold text-muted">
-                {dictionary.events.messagingAfterEvent}
-              </p>
-            )}
-          </CardContent>
-        </Card>
       </section>
-
-      {eventEnded && invitation?.seat_status === "confirmed" ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{copy.feedback}</CardTitle>
-            <CardDescription>{copy.feedbackDescription}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {feedback ? (
-              <p className="rounded-lg bg-ocean-blue/8 p-4 text-sm font-semibold text-ocean-blue">{copy.feedbackForm.saved}</p>
-            ) : (
-              <EventFeedbackForm copy={copy.feedbackForm} eventId={event.id} hasHost={Boolean(host)} isHost={isHost} />
-            )}
-          </CardContent>
-        </Card>
-      ) : null}
     </>
   );
 }

@@ -325,9 +325,8 @@ Review:
   not scheduled by Loops.
 - The app does not record physical attendance. Eligibility is based on a
   confirmed seat and the event having ended.
-- The one-star detail field is currently always visible in the app; validation
-  requires it only when a rating is one star. The desired conditional reveal is
-  not implemented.
+- The survey branches on attendance. A non-attendance reason ends the survey;
+  attendees complete the ratings and connection preferences.
 - There is no source-approved tone or wording.
 
 ## Recommended review order

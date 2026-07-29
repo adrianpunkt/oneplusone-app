@@ -37,6 +37,16 @@ type ParticipantLookupRow = {
   conversation_id: string;
   last_read_at: string | null;
 };
+type PastEventAttendee = {
+  first_name: string;
+  imageUrl: string;
+  member_id: string;
+  thumbnailUrl: string;
+};
+type PastEventAttendeeRow = Pick<
+  PastEventAttendee,
+  "first_name" | "member_id"
+>;
 type InvitationResponseModeRow = {
   invitation_id: string;
   response_mode: "apply_waitlist" | "closed" | "confirm" | "waitlist";
@@ -215,6 +225,67 @@ async function attachCorrespondents(memberId: string, conversations: Conversatio
         name: "Member",
         thumbnailUrl: "",
       },
+    };
+  });
+}
+
+async function attachPastEventAttendeeImages(
+  attendees: PastEventAttendeeRow[],
+): Promise<PastEventAttendee[]> {
+  if (!attendees.length) return [];
+
+  const serviceSupabase = getSupabaseServiceClient();
+  const { data: memberData } = await serviceSupabase
+    .from("members")
+    .select("id,email,email_norm")
+    .in(
+      "id",
+      attendees.map((attendee) => attendee.member_id),
+    );
+  const members = (memberData || []) as MemberLookupRow[];
+  const emailNorms = members
+    .map((member) => member.email_norm)
+    .filter((emailNorm): emailNorm is string => Boolean(emailNorm));
+
+  const profilesByEmailNorm = new Map<string, JsonObject>();
+  if (emailNorms.length) {
+    const { data: profileData } = await serviceSupabase
+      .from("profile_registrations")
+      .select("contact_email_norm,profile_json,updated_at")
+      .eq("status", "submitted")
+      .in("contact_email_norm", emailNorms)
+      .order("updated_at", { ascending: false });
+    const profiles = (profileData || []) as ProfileLookupRow[];
+
+    for (const profile of profiles) {
+      if (
+        profile.contact_email_norm &&
+        !profilesByEmailNorm.has(profile.contact_email_norm)
+      ) {
+        profilesByEmailNorm.set(
+          profile.contact_email_norm,
+          profile.profile_json || {},
+        );
+      }
+    }
+  }
+
+  const profilesByMemberId = new Map(
+    members.map((member) => [
+      member.id,
+      member.email_norm
+        ? profilesByEmailNorm.get(member.email_norm) || null
+        : null,
+    ]),
+  );
+
+  return attendees.map((attendee) => {
+    const profileJson = profilesByMemberId.get(attendee.member_id) || null;
+
+    return {
+      ...attendee,
+      imageUrl: profileImageUrl(profileJson),
+      thumbnailUrl: profileImageThumbnailUrl(profileJson),
     };
   });
 }
@@ -640,7 +711,9 @@ export async function getEventDetail(eventId: string, memberId: string) {
         .order("created_at", { ascending: false }),
       supabase
         .from("event_feedback")
-        .select("id,event_id,member_id,submitted_at")
+        .select(
+          "id,event_id,member_id,attended,wants_to_connect,connection_member_ids,submitted_at",
+        )
         .eq("event_id", eventId)
         .eq("member_id", memberId)
         .maybeSingle<EventFeedback>(),
@@ -667,11 +740,14 @@ export async function getEventDetail(eventId: string, memberId: string) {
     isAssignedHost: isHost,
     materials: (materialResult.data || []) as EventMaterial[],
   });
+  const eventAttendees = await attachPastEventAttendeeImages(
+    (attendeeResult.data || []) as PastEventAttendeeRow[],
+  );
 
   return {
     attendee,
     event,
-    eventAttendees: (attendeeResult.data || []) as Array<{ member_id: string; first_name: string }>,
+    eventAttendees,
     feedback: (feedbackResult.data || null) as EventFeedback | null,
     host,
     isHost,
@@ -730,6 +806,65 @@ export async function getConversations(
   }
 
   return enrichedConversations;
+}
+
+export async function getCompletedEventFeedbackState(memberId: string) {
+  const supabase = await createSupabaseServerClient();
+  const [invitationResult, feedbackResult] = await Promise.all([
+    supabase
+      .from("event_invitations")
+      .select(`event_id,events(${EVENT_FIELDS})`)
+      .eq("member_id", memberId)
+      .eq("seat_status", "confirmed")
+      .is("cancelled_at", null),
+    supabase
+      .from("event_feedback")
+      .select("event_id")
+      .eq("member_id", memberId),
+  ]);
+
+  if (invitationResult.error || feedbackResult.error) {
+    return {
+      eventsAwaitingFeedback: [] as EventRecord[],
+      submittedEventIds: [] as string[],
+    };
+  }
+
+  const submittedEventIds = new Set(
+    ((feedbackResult.data || []) as Array<Pick<EventFeedback, "event_id">>).map(
+      (feedback) => feedback.event_id,
+    ),
+  );
+  const invitations = (invitationResult.data || []) as unknown as Array<
+    WithEventRelation<{ event_id: string }>
+  >;
+
+  const eventsAwaitingFeedback = invitations
+    .map((invitation) => normalizeEventRelation(invitation).events)
+    .filter(
+      (event): event is EventRecord =>
+        Boolean(
+          event &&
+            event.status === "completed" &&
+            !submittedEventIds.has(event.id),
+        ),
+    )
+    .sort(
+      (left, right) =>
+        new Date(right.starts_at).getTime() -
+        new Date(left.starts_at).getTime(),
+    );
+
+  return {
+    eventsAwaitingFeedback,
+    submittedEventIds: [...submittedEventIds],
+  };
+}
+
+export async function getCompletedEventsAwaitingFeedback(memberId: string) {
+  const { eventsAwaitingFeedback } =
+    await getCompletedEventFeedbackState(memberId);
+  return eventsAwaitingFeedback;
 }
 
 export async function getConversation(conversationId: string, memberId: string) {

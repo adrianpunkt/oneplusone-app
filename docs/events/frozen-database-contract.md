@@ -93,9 +93,11 @@ fields during the compatibility period.
   assigning admin/action and `assigned_at`. Private contact fields are absent.
 - `event_materials`: event, locale, kind, version, public URL, created action and
   timestamps. URLs contain no member data.
-- `event_feedback`: one row per event/member with overall, questions,
-  restaurant, host and hosting-experience ratings, comments, one-star detail,
-  and `submitted_at`. Any supplied rating of one requires one-star detail.
+- `event_feedback`: one row per event/member with attendance, structured
+  non-attendance reason/detail, overall, group-compatibility, questions,
+  restaurant and applicable host ratings, connection preferences, optional
+  comments, and `submitted_at`. A non-attendance answer ends the survey and
+  does not enable messaging.
 - `event_summary_snapshots`: one row for each `proposed` and `confirmed` stage,
   containing only age min/max, primary/additional languages, the most common
   relationship-intention story option (stored in `majority_intention` for
@@ -251,7 +253,16 @@ that no credit was used.
 p_questions_rating integer, p_restaurant_rating integer, p_host_rating integer,
 p_hosting_experience_rating integer, p_comments text, p_one_star_detail text)`
 requires an active member with a confirmed non-cancelled seat after event end or
-completion and returns `{ok, eventId, feedbackId, submittedAt}`.
+completion and remains available as the legacy submission contract.
+
+`submit_event_feedback_v2(p_event_id uuid, p_attended boolean,
+p_nonattendance_reason text, p_nonattendance_other text,
+p_overall_rating integer, p_group_compatibility_rating integer,
+p_questions_rating integer, p_restaurant_rating integer, p_host_rating integer,
+p_wants_to_connect boolean, p_connection_member_ids uuid[], p_comments text)`
+implements the branching attendance survey and returns
+`{ok, eventId, feedbackId, attended, submittedAt}`. Selected connection IDs
+must belong to other confirmed, non-cancelled members of the same event.
 
 ### Invitation-session and payment RPCs
 

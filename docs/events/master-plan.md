@@ -59,7 +59,8 @@ Future automation should call the same validated commands founders use in ops. I
 - A participant's event credit is returned only after a replacement confirms.
 - If no replacement is found, notify the participant six hours before the event and let them reclaim the place if it is still available.
 - There is no separate attendance-taking operation. A confirmed, non-cancelled seat is the attendance proxy.
-- Post-event messaging requires the member to submit feedback first.
+- Post-event messaging requires the member to confirm attendance and submit
+  feedback first.
 - Host selection is manual in ops. The host remains a normal participant for messaging.
 - Each person may send one initial private message to another attendee; the conversation opens after the recipient replies.
 - The post-event credit offer starts 20 hours after the event, lasts 48 hours, and offers three credits for EUR 30 unless an experiment overrides it.
@@ -74,7 +75,9 @@ These do not block the initial founder-operated rollout unless marked otherwise.
 1. **Invitation pool ceiling:** first-wave invitations are 12 per group. Decide whether later waves may bring the lifetime invitation count to 14 or 16. This must not be confused with table capacity.
 2. **Club-cancelled event credit:** recommended default is to return every spent event credit automatically when the club cancels the event. Monetary membership refunds remain a separate manual 14-day process.
 3. **Below-five late cancellation:** recommended default is an ops alert and manual decision, not automatic event cancellation.
-4. **Hosting feedback:** store participant rating of the host separately from the host's rating of their own hosting experience.
+4. **Hosting feedback:** collect the participant rating of the host when
+   applicable. Keep historical hosting-experience data, but do not ask hosts to
+   rate themselves in the current survey.
 5. **Marketing consent:** operational event email may follow from the requested matching service; promotional credit offers require explicit marketing eligibility.
 6. **Clear majority:** recommended default is more than 50 percent of the relevant cohort, with at least four source profiles and no percentage shown to members.
 
@@ -438,18 +441,24 @@ The existing Loops workflow copy may be reused, but hard-coded event facts and f
 
 Create one feedback record per event/member with:
 
+- Whether the member attended.
+- When they did not attend: schedule change, illness, the event did not appeal,
+  or other with a short explanation. This ends the survey.
 - Overall rating, 1–5.
+- Group-compatibility rating, 1–5.
 - Questions rating, 1–5.
 - Restaurant rating, 1–5.
 - Host rating, 1–5, when applicable.
-- Hosting-experience rating, 1–5, for the host when applicable.
-- Additional comments.
-- One-star detail.
+- Whether the respondent would like to connect with another member.
+- Optional additional comments.
 - Submitted timestamp.
 
-If any supplied rating is one star, require explanatory text before submission.
-
-Send the feedback request three hours after event end. Also surface it in the app so email suppression or delivery failure does not permanently block the member.
+Send the feedback request three hours after event end, with its CTA linked to
+`/events/{eventId}/feedback`. Also surface it in the app so email suppression
+or delivery failure does not permanently block the member. After submission,
+send the member to `/events/{eventId}/connect`, where eligible attendees are
+listed with an individual message action that opens a dedicated first-message
+page under `/messages`.
 
 ### POST-02 — messaging gate
 
@@ -457,10 +466,10 @@ Replace the current `attended/host` requirement with:
 
 - Event ended or completed.
 - Sender had a confirmed seat and did not cancel.
-- Sender submitted event feedback.
+- Sender submitted event feedback and confirmed they attended.
 - Recipient had a confirmed seat and did not cancel.
 
-The recipient does not need to submit feedback for the sender to create one initial message, but the recipient must submit their own feedback before opening their participant directory and messaging UI.
+The recipient does not need to submit feedback for the sender to create one initial message, but the recipient must submit their own attended feedback before opening their participant directory and messaging UI. A non-attendance response completes the survey without enabling messaging.
 
 Keep:
 

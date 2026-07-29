@@ -239,7 +239,10 @@ export type EventFeedback = {
   id: string;
   event_id: string;
   member_id: string;
+  attended: boolean;
+  connection_member_ids: string[];
   submitted_at: string;
+  wants_to_connect: boolean;
 };
 
 export type PublicInvitationSession = {

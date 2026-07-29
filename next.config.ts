@@ -25,11 +25,6 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/events/:id([^/.]+)",
-        destination: "/going-out",
-        permanent: false,
-      },
-      {
         source: "/profile",
         destination: "/my-story",
         permanent: true,

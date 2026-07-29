@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { requireMemberContext } from "@/lib/data/member";
 import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
@@ -23,6 +24,9 @@ type LatestMessageRow = {
   sender_member_id: string;
   created_at: string;
 };
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 async function markConversationMessagesRead(
   conversationId: string,
@@ -104,7 +108,7 @@ export async function startConversationAction(
   const eventId = String(formData.get("event_id") || "");
   const recipientMemberId = String(formData.get("recipient_member_id") || "");
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("start_conversation", {
+  const { data, error } = await supabase.rpc("start_conversation", {
     p_event_id: eventId,
     p_recipient_member_id: recipientMemberId,
     p_body: parsed.data.body,
@@ -112,9 +116,21 @@ export async function startConversationAction(
 
   if (error) return { error: localizeDbError(error.message, dictionary) };
 
+  const result = data as { conversationId?: unknown } | null;
+  const conversationId =
+    typeof result?.conversationId === "string" &&
+    UUID_PATTERN.test(result.conversationId)
+      ? result.conversationId
+      : "";
+  if (!conversationId) {
+    return { error: dictionary.actionErrors.conversationMissing };
+  }
+
   revalidatePath("/messages");
+  revalidatePath(`/messages/${conversationId}`);
   revalidatePath(`/events/${eventId}`);
-  return { ok: true };
+  revalidatePath(`/events/${eventId}/connect`);
+  redirect(`/messages/${conversationId}`);
 }
 
 export async function sendMessageAction(

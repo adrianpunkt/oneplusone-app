@@ -51,7 +51,7 @@ export function EventLocation({
       <MapPin className="h-4 w-4 text-lipstick-red" aria-hidden="true" />
       {countryFlag ? <span aria-hidden="true">{countryFlag}</span> : null}
       <span>{label}</span>
-      <HoverTooltip placement="top-left">{tooltip}</HoverTooltip>
+      <HoverTooltip placement="top-right">{tooltip}</HoverTooltip>
     </span>
   );
 }

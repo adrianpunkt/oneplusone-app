@@ -19,7 +19,11 @@ export type EventActionState = {
   ok?: boolean;
 };
 
-export type EventFeedbackActionState = { error?: string; ok?: boolean };
+export type EventFeedbackActionState = {
+  attended?: boolean;
+  error?: string;
+  ok?: boolean;
+};
 
 type InvitationCancellationLookup = Pick<
   EventInvitation,
@@ -30,11 +34,25 @@ type InvitationResponseLookup = Pick<
   "confirmed_at" | "event_id" | "id" | "status"
 >;
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const NONATTENDANCE_REASONS = new Set([
+  "schedule_change",
+  "illness",
+  "event_not_appealing",
+  "other",
+]);
+
 function revalidateEventMutationPaths(eventId?: string) {
   revalidatePath("/events");
   revalidatePath("/going-out");
   revalidatePath("/dashboard");
-  if (eventId) revalidatePath(`/events/${eventId}`);
+  revalidatePath("/messages");
+  if (eventId) {
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath(`/events/${eventId}/connect`);
+    revalidatePath(`/events/${eventId}/feedback`);
+  }
 }
 
 export async function confirmInvitationAction(
@@ -266,32 +284,116 @@ export async function submitEventFeedbackAction(
     return Number.isInteger(value) && value >= 1 && value <= 5 ? value : null;
   };
   const ratings = {
+    compatibility: rating("group_compatibility_rating"),
     host: rating("host_rating"),
-    hosting: rating("hosting_experience_rating"),
     overall: rating("overall_rating"),
     questions: rating("questions_rating"),
     restaurant: rating("restaurant_rating"),
   };
-  const oneStarDetail = String(formData.get("one_star_detail") || "").trim();
-  if (!eventId || !Object.values(ratings).some((value) => value !== null)) {
-    return { error: locale === "es" ? "Añade al menos una valoración." : "Add at least one rating." };
+  const attendanceValue = String(formData.get("attended") || "");
+  if (!eventId || !["yes", "no"].includes(attendanceValue)) {
+    return {
+      error:
+        locale === "es"
+          ? "Indica si asististe al evento."
+          : "Choose whether you attended the event.",
+    };
   }
-  if (Object.values(ratings).includes(1) && !oneStarDetail) {
-    return { error: locale === "es" ? "Cuéntanos qué ocurrió con la valoración de una estrella." : "Tell us what happened for any one-star rating." };
+  const attended = attendanceValue === "yes";
+  const nonattendanceReason = String(
+    formData.get("nonattendance_reason") || "",
+  ).trim();
+  const nonattendanceOther = String(
+    formData.get("nonattendance_other") || "",
+  ).trim();
+  const comments = String(formData.get("comments") || "").trim();
+  const connectionMemberIds = Array.from(
+    new Set(
+      formData
+        .getAll("connection_member_ids")
+        .map((value) => String(value))
+        .filter((value) => UUID_PATTERN.test(value)),
+    ),
+  );
+  const wantsToConnect =
+    connectionMemberIds.length > 0 ||
+    String(formData.get("wants_to_connect") || "") === "yes";
+
+  if (attended) {
+    const requiredRatings = [
+      ratings.overall,
+      ratings.compatibility,
+      ratings.questions,
+      ratings.restaurant,
+    ];
+    if (requiredRatings.some((value) => value === null)) {
+      return {
+        error:
+          locale === "es"
+            ? "Completa todas las valoraciones del evento."
+            : "Complete every event rating.",
+      };
+    }
+    if (
+      formData.get("requires_host_rating") === "true" &&
+      ratings.host === null
+    ) {
+      return {
+        error:
+          locale === "es"
+            ? "Añade una valoración del host."
+            : "Add a host rating.",
+      };
+    }
+    if (comments.length > 2000 || connectionMemberIds.length > 32) {
+      return {
+        error:
+          locale === "es"
+            ? "Revisa las respuestas antes de enviarlas."
+            : "Review your answers before submitting.",
+      };
+    }
+  } else {
+    if (!NONATTENDANCE_REASONS.has(nonattendanceReason)) {
+      return {
+        error:
+          locale === "es"
+            ? "Elige qué te impidió asistir."
+            : "Choose what stopped you from attending.",
+      };
+    }
+    if (
+      nonattendanceReason === "other" &&
+      (!nonattendanceOther || nonattendanceOther.length > 300)
+    ) {
+      return {
+        error:
+          locale === "es"
+            ? "Cuéntanos brevemente qué te impidió asistir."
+            : "Briefly tell us what stopped you from attending.",
+      };
+    }
   }
 
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("submit_event_feedback", {
-    p_comments: String(formData.get("comments") || "").trim() || null,
+  const { error } = await supabase.rpc("submit_event_feedback_v2", {
+    p_attended: attended,
+    p_comments: attended ? comments || null : null,
+    p_connection_member_ids: attended ? connectionMemberIds : [],
     p_event_id: eventId,
-    p_host_rating: ratings.host,
-    p_hosting_experience_rating: ratings.hosting,
-    p_one_star_detail: oneStarDetail || null,
-    p_overall_rating: ratings.overall,
-    p_questions_rating: ratings.questions,
-    p_restaurant_rating: ratings.restaurant,
+    p_group_compatibility_rating: attended ? ratings.compatibility : null,
+    p_host_rating: attended ? ratings.host : null,
+    p_nonattendance_other:
+      !attended && nonattendanceReason === "other"
+        ? nonattendanceOther
+        : null,
+    p_nonattendance_reason: attended ? null : nonattendanceReason,
+    p_overall_rating: attended ? ratings.overall : null,
+    p_questions_rating: attended ? ratings.questions : null,
+    p_restaurant_rating: attended ? ratings.restaurant : null,
+    p_wants_to_connect: attended ? wantsToConnect : false,
   });
   if (error) return { error: localizeDbError(error.message, dictionary) };
   revalidateEventMutationPaths(eventId);
-  return { ok: true };
+  redirect(`/events/${encodeURIComponent(eventId)}/connect`);
 }

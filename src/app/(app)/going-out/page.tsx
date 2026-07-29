@@ -39,6 +39,7 @@ import { HoverTooltip } from "@/components/ui/hover-tooltip";
 import { requireMemberContextForRender } from "@/lib/data/member";
 import {
   getAttendedEvents,
+  getCompletedEventFeedbackState,
   getCreditBalance,
   getEventGroupSummaries,
   getHostedEventPackages,
@@ -104,6 +105,7 @@ const pastInvitationStatuses: readonly EventInvitation["status"][] = [
   "confirmed",
   "waitlisted",
 ];
+const recentPastEventWindowMs = 7 * 24 * 60 * 60 * 1000;
 
 const eventFormatImagePaths = {
   brunch: "/events/event-brunch.webp",
@@ -158,6 +160,30 @@ function isPastEvent(event: EventRecord | null | undefined, now: number) {
 
   const timestamp = new Date(eventEndsAt).getTime();
   return !Number.isNaN(timestamp) && timestamp < now;
+}
+
+function canOpenPostEvent(item: EventListItem, now: number) {
+  return (
+    isPastEvent(item.event, now) &&
+    (item.invitation
+      ? item.invitation.seat_status === "confirmed" &&
+        !item.invitation.cancelled_at
+      : ["attended", "confirmed", "host"].includes(item.status))
+  );
+}
+
+function isRecentAttendedEvent(item: EventListItem, now: number) {
+  if (!canOpenPostEvent(item, now)) return false;
+
+  const eventEndedAt = item.event?.ends_at || item.event?.starts_at;
+  if (!eventEndedAt) return false;
+
+  const timestamp = new Date(eventEndedAt).getTime();
+  return (
+    !Number.isNaN(timestamp) &&
+    timestamp <= now &&
+    timestamp >= now - recentPastEventWindowMs
+  );
 }
 
 async function getRequestTimestamp() {
@@ -606,31 +632,50 @@ function EventSection({
 }
 
 function CollapsibleEventSection({
+  alwaysExpanded = false,
   children,
   countLabel,
+  defaultExpanded = false,
   expandLabel,
   hideLabel,
   icon: Icon,
   title,
 }: {
+  alwaysExpanded?: boolean;
   children: ReactNode;
   countLabel: string;
+  defaultExpanded?: boolean;
   expandLabel: string;
   hideLabel: string;
   icon: LucideIcon;
   title: string;
 }) {
+  const heading = (
+    <span className="grid min-w-0 gap-1">
+      <span className="inline-flex items-center gap-2 font-display text-lg font-extrabold leading-tight text-wine-burgundy">
+        <Icon className="h-5 w-5 text-lipstick-red" />
+        {title}
+      </span>
+      <span className="text-sm font-semibold text-muted">{countLabel}</span>
+    </span>
+  );
+
+  if (alwaysExpanded) {
+    return (
+      <Card className="overflow-hidden">
+        <div className="p-4 sm:p-5">{heading}</div>
+        <CardContent className="grid gap-0 p-0 sm:gap-3 sm:p-5 sm:pt-0">
+          {children}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="overflow-hidden">
-      <details className="group/past-events">
+      <details className="group/past-events" open={defaultExpanded}>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-4 sm:p-5 [&::-webkit-details-marker]:hidden">
-          <span className="grid min-w-0 gap-1">
-            <span className="inline-flex items-center gap-2 font-display text-lg font-extrabold leading-tight text-wine-burgundy">
-              <Icon className="h-5 w-5 text-lipstick-red" />
-              {title}
-            </span>
-            <span className="text-sm font-semibold text-muted">{countLabel}</span>
-          </span>
+          {heading}
           <span className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg border border-wine-burgundy/10 bg-white px-3 text-xs font-semibold text-wine-burgundy shadow-sm">
             <span className="group-open/past-events:hidden">{expandLabel}</span>
             <span className="hidden group-open/past-events:inline">{hideLabel}</span>
@@ -957,6 +1002,7 @@ function UpcomingEventCard({
 function PastEventCard({
   creditBalance,
   dictionary,
+  feedbackSubmitted,
   item,
   locale,
   now,
@@ -965,6 +1011,7 @@ function PastEventCard({
 }: {
   creditBalance: number;
   dictionary: Dictionary;
+  feedbackSubmitted: boolean;
   item: EventListItem;
   locale: Locale;
   now: number;
@@ -981,6 +1028,14 @@ function PastEventCard({
     : false;
   const canApplyForSeat =
     canReapplyAfterDeclining || canRestoreAfterCancelling;
+  const canOpenPostEventDetails = canOpenPostEvent(item, now);
+  const eventHref = item.event
+    ? canOpenPostEventDetails
+      ? feedbackSubmitted
+        ? `/events/${item.eventId}/connect`
+        : `/events/${item.eventId}/feedback`
+      : `/events/${item.eventId}`
+    : null;
   const hasEventImage =
     item.event?.event_format === "brunch" ||
     item.event?.event_format === "dinner";
@@ -1012,7 +1067,9 @@ function PastEventCard({
           <div className="grid gap-1">
             <EventStatusText
               label={
-                item.invitation &&
+                canOpenPostEventDetails
+                  ? dictionary.goingOut.pastEventStatus
+                  : item.invitation &&
                 shouldShowCannotMakeItStatus(
                   item.invitation.status,
                   item.event?.status,
@@ -1041,23 +1098,39 @@ function PastEventCard({
             venuePendingTooltip={dictionary.events.venuePendingTooltip}
           />
         </div>
-        {canApplyForSeat && item.invitation ? (
+        {eventHref || (canApplyForSeat && item.invitation) ? (
           <div className="grid w-full justify-items-center gap-3 pt-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-2 sm:pt-0 lg:flex-col lg:items-end lg:justify-end">
-            <ConfirmInvitationForm
-              copy={dictionary.actions}
-              creditBalance={creditBalance}
-              event={item.invitation.events}
-              eventCopy={{
-                languageTooltips: dictionary.events.languageTooltips,
-                venuePendingTooltip: dictionary.events.venuePendingTooltip,
-              }}
-              hostingCopy={dictionary.preferences}
-              invitationId={item.invitation.id}
-              locale={locale}
-              now={now}
-              restore={canRestoreAfterCancelling}
-              wantsToHost={preferences?.wants_to_host ?? false}
-            />
+            {eventHref ? (
+              <Button
+                asChild
+                variant={canOpenPostEventDetails ? "default" : "secondary"}
+              >
+                <Link href={eventHref}>
+                  {canOpenPostEventDetails
+                    ? feedbackSubmitted
+                      ? dictionary.goingOut.messageParticipants
+                      : dictionary.goingOut.postEventCta
+                    : dictionary.common.details}
+                </Link>
+              </Button>
+            ) : null}
+            {canApplyForSeat && item.invitation ? (
+              <ConfirmInvitationForm
+                copy={dictionary.actions}
+                creditBalance={creditBalance}
+                event={item.invitation.events}
+                eventCopy={{
+                  languageTooltips: dictionary.events.languageTooltips,
+                  venuePendingTooltip: dictionary.events.venuePendingTooltip,
+                }}
+                hostingCopy={dictionary.preferences}
+                invitationId={item.invitation.id}
+                locale={locale}
+                now={now}
+                restore={canRestoreAfterCancelling}
+                wantsToHost={preferences?.wants_to_host ?? false}
+              />
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -1155,11 +1228,18 @@ export default async function GoingOutPage({
   const paymentConfirmed = searchParamValue(payment) === "confirmed";
   const preferencesSaved = searchParamValue(preferencesParam) === "saved";
   const waitlistConfirmation = parseWaitlistConfirmationStatus(waitlist);
-  const [invitations, attendedEvents, preferences, creditBalance] = await Promise.all([
+  const [
+    invitations,
+    attendedEvents,
+    preferences,
+    creditBalance,
+    eventFeedbackState,
+  ] = await Promise.all([
     getInvitations(member.id),
     getAttendedEvents(member.id),
     getPreferences(member.id),
     getCreditBalance(member.id),
+    getCompletedEventFeedbackState(member.id),
   ]);
   const eventGroupSummaries = await getEventGroupSummaries([
     ...invitations.map((invitation) => invitation.events),
@@ -1268,6 +1348,18 @@ export default async function GoingOutPage({
   ].sort(
     (left, right) => eventTimestamp(right.event) - eventTimestamp(left.event),
   );
+  const eventsAwaitingFeedbackIds = new Set(
+    eventFeedbackState.eventsAwaitingFeedback.map((event) => event.id),
+  );
+  const submittedFeedbackEventIds = new Set(
+    eventFeedbackState.submittedEventIds,
+  );
+  const alwaysExpandPastEvents = pastEvents.some((item) =>
+    isRecentAttendedEvent(item, now),
+  );
+  const shouldExpandPastEvents =
+    alwaysExpandPastEvents ||
+    pastEvents.some((item) => eventsAwaitingFeedbackIds.has(item.eventId));
   return (
     <>
       <InvitationApplicationUrlCleanup
@@ -1348,7 +1440,9 @@ export default async function GoingOutPage({
 
         {pastEvents.length ? (
           <CollapsibleEventSection
+            alwaysExpanded={alwaysExpandPastEvents}
             countLabel={dictionary.goingOut.eventCount(pastEvents.length)}
+            defaultExpanded={shouldExpandPastEvents}
             expandLabel={dictionary.common.expand}
             hideLabel={dictionary.common.hide}
             icon={History}
@@ -1358,6 +1452,7 @@ export default async function GoingOutPage({
               <PastEventCard
                 creditBalance={creditBalance}
                 dictionary={dictionary}
+                feedbackSubmitted={submittedFeedbackEventIds.has(item.eventId)}
                 key={item.key}
                 item={item}
                 locale={locale}

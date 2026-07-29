@@ -1,11 +1,23 @@
 import Link from "next/link";
+import { ArrowRight, CalendarDays, ClipboardCheck, MapPin } from "lucide-react";
 
 import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { CorrespondentAvatar } from "@/components/messages/correspondent-avatar";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { requireMemberContextForRender } from "@/lib/data/member";
-import { getConversations } from "@/lib/data/portal";
+import {
+  getCompletedEventsAwaitingFeedback,
+  getConversations,
+} from "@/lib/data/portal";
+import { localizeText } from "@/lib/i18n/dynamic";
 import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
 import { formatDate } from "@/lib/i18n/format";
@@ -62,10 +74,13 @@ function NotificationHeart() {
 export default async function MessagesPage() {
   const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
-  const conversations = await getConversations(member.id, {
-    includeCorrespondents: true,
-    includeLastMessage: true,
-  });
+  const [conversations, eventsAwaitingFeedback] = await Promise.all([
+    getConversations(member.id, {
+      includeCorrespondents: true,
+      includeLastMessage: true,
+    }),
+    getCompletedEventsAwaitingFeedback(member.id),
+  ]);
   const unreadConversationCount = conversations.filter((conversation) =>
     Boolean(conversation.lastMessage?.isUnread),
   ).length;
@@ -77,6 +92,66 @@ export default async function MessagesPage() {
           {dictionary.messages.title}
         </h1>
       </section>
+
+      {eventsAwaitingFeedback.length ? (
+        <Card className="border-lipstick-red/25">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardCheck
+                aria-hidden="true"
+                className="h-6 w-6 text-lipstick-red"
+              />
+              {dictionary.messages.feedbackRequired}
+            </CardTitle>
+            <CardDescription>
+              {dictionary.messages.feedbackRequiredDescription}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            {eventsAwaitingFeedback.map((event) => (
+              <article
+                className="grid gap-4 rounded-lg border border-lipstick-red/20 bg-blush-pink p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                key={event.id}
+              >
+                <div className="grid min-w-0 gap-2">
+                  <h2 className="font-display text-lg font-extrabold text-wine-burgundy">
+                    {localizeText(
+                      event.title,
+                      event.localized_content,
+                      locale,
+                      "title",
+                    ) || dictionary.common.event}
+                  </h2>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold text-muted">
+                    <span className="inline-flex items-center gap-1.5">
+                      <CalendarDays
+                        aria-hidden="true"
+                        className="h-4 w-4 text-lipstick-red"
+                      />
+                      {formatDate(event.starts_at, locale)}
+                    </span>
+                    {event.city ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin
+                          aria-hidden="true"
+                          className="h-4 w-4 text-lipstick-red"
+                        />
+                        {event.city}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <Button asChild className="w-full sm:w-auto">
+                  <Link href={`/events/${event.id}/feedback`}>
+                    {dictionary.messages.feedbackAction}
+                    <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </article>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -146,7 +221,9 @@ export default async function MessagesPage() {
             })
           ) : (
             <p className="rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 text-sm font-semibold leading-6 text-muted">
-              {dictionary.messages.noConversations}
+              {eventsAwaitingFeedback.length
+                ? dictionary.messages.noConversationsUntilFeedback
+                : dictionary.messages.noConversations}
             </p>
           )}
         </CardContent>

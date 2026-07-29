@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const migrationPath = new URL("../supabase/migrations/20260719000000_founder_operated_event_system.sql", import.meta.url);
+const feedbackSurveyMigrationPath = new URL("../supabase/migrations/20260729120000_rework_event_feedback_survey.sql", import.meta.url);
 const intentionMigrationPath = new URL("../supabase/migrations/20260720013000_use_top_event_relationship_intention.sql", import.meta.url);
 const cancellationMigrationPath = new URL("../supabase/migrations/20260720150000_event_reservation_cancellation_feedback.sql", import.meta.url);
 const restorationFixMigrationPath = new URL("../supabase/migrations/20260720150500_fix_restored_cancellation_reason_ambiguity.sql", import.meta.url);
@@ -47,6 +48,7 @@ const nextConfigPath = new URL("../next.config.ts", import.meta.url);
 
 const [
   migration,
+  feedbackSurveyMigration,
   intentionMigration,
   cancellationMigration,
   restorationFixMigration,
@@ -91,6 +93,7 @@ const [
   nextConfig,
 ] = await Promise.all([
   readFile(migrationPath, "utf8"),
+  readFile(feedbackSurveyMigrationPath, "utf8"),
   readFile(intentionMigrationPath, "utf8"),
   readFile(cancellationMigrationPath, "utf8"),
   readFile(restorationFixMigrationPath, "utf8"),
@@ -175,6 +178,12 @@ assert.match(migration, /event_payload_is_secret_free/i);
 assert.match(migration, /p_template_id text/i);
 assert.match(migration, /template_id = resolved_template_id/i);
 assert.match(migration, /event_record\.status = 'completed'[\s\S]*members\.marketing_eligible[\s\S]*invitations\.seat_status = 'confirmed'[\s\S]*feedback\.id is not null/i);
+assert.match(feedbackSurveyMigration, /add column if not exists attended boolean not null default true/i);
+assert.match(feedbackSurveyMigration, /add column if not exists group_compatibility_rating integer/i);
+assert.match(feedbackSurveyMigration, /add column if not exists connection_member_ids uuid\[\]/i);
+assert.match(feedbackSurveyMigration, /create or replace function public\.submit_event_feedback_v2\b/i);
+assert.match(feedbackSurveyMigration, /and attended/i);
+assert.match(contract, /\bsubmit_event_feedback_v2\b/i);
 assert.match(migration, /top_intention_count := coalesce\(top_intention_count, 0\)/i);
 assert.match(intentionMigration, /majority_value := top_intention/i);
 assert.match(intentionMigration, /Marriage \/ life partner/i);

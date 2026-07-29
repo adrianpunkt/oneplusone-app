@@ -24,14 +24,21 @@ export type SendMessageCopy = {
   writePlaceholder: string;
 };
 
-export function SendMessageForm({
-  conversationId,
+type MessageComposerAction = (
+  previousState: MessageActionState,
+  formData: FormData,
+) => Promise<MessageActionState>;
+
+export function MessageComposerForm({
+  action,
   copy,
+  hiddenFields,
 }: {
-  conversationId: string;
+  action: MessageComposerAction;
   copy: SendMessageCopy;
+  hiddenFields: Record<string, string>;
 }) {
-  const [state, action] = useActionState(sendMessageAction, initialState);
+  const [state, formAction] = useActionState(action, initialState);
   const formRef = useRef<HTMLFormElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const resizeComposer = useCallback(() => {
@@ -74,8 +81,10 @@ export function SendMessageForm({
   }, []);
 
   return (
-    <form action={action} className="grid shrink-0 gap-0" ref={formRef}>
-      <input type="hidden" name="conversation_id" value={conversationId} />
+    <form action={formAction} className="grid shrink-0 gap-0" ref={formRef}>
+      {Object.entries(hiddenFields).map(([name, value]) => (
+        <input key={name} type="hidden" name={name} value={value} />
+      ))}
       <div className="relative">
         <Textarea
           className="min-h-14 resize-none overflow-hidden !rounded-none !border-0 !bg-transparent pb-3 pl-4 pr-16 pt-3 text-base leading-6 !shadow-none focus-visible:!border-transparent focus-visible:!ring-0"
@@ -105,5 +114,21 @@ export function SendMessageForm({
         toastKey={state}
       />
     </form>
+  );
+}
+
+export function SendMessageForm({
+  conversationId,
+  copy,
+}: {
+  conversationId: string;
+  copy: SendMessageCopy;
+}) {
+  return (
+    <MessageComposerForm
+      action={sendMessageAction}
+      copy={copy}
+      hiddenFields={{ conversation_id: conversationId }}
+    />
   );
 }

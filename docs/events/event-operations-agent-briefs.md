@@ -166,11 +166,17 @@ Active-member and confirmed-event app:
 Host, feedback, and messaging support:
 1. Enforce one host per event, record who assigned the host and when, and expose host-only materials in app.
 2. Store versioned event-material/PDF links without member data.
-3. Add event feedback with overall, questions, restaurant, host, and hosting-experience ratings as applicable; require detail when any supplied rating is one star.
+3. Add branching event feedback: attendance first; a structured
+   non-attendance reason ends the survey, while attendees answer overall,
+   group-compatibility, question-round, restaurant and applicable host ratings,
+   indicate whether they would like to connect with another member, and may add
+   comments. Keep the survey at `/events/{eventId}/feedback`; after submission,
+   route to `/events/{eventId}/connect` for the attendee list; each member’s
+   message action opens a dedicated first-message page under `/messages`.
 4. Replace attended/host messaging eligibility with:
    - event ended/completed;
    - confirmed, non-cancelled seat;
-   - sender submitted feedback.
+   - sender submitted feedback and confirmed attendance.
 5. Keep one initial message until the recipient replies; host follows the same rule as everyone.
 
 Verification:

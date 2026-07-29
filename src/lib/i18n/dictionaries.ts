@@ -177,6 +177,9 @@ const en = {
     },
     upcomingEvents: "Upcoming events",
     pastEvents: "Past or rejected events",
+    pastEventStatus: "past event",
+    postEventCta: "Share feedback and connect",
+    messageParticipants: "Message participants",
     noInvitationsTitle: "We're finding your people...",
     noInvitationsBody:
       "As soon as enough members share your intentions, you'll be invited to an event together.",
@@ -390,6 +393,12 @@ const en = {
   messages: {
     title: "Messages",
     conversations: "Your conversations",
+    feedbackRequired: "Complete your event feedback",
+    feedbackRequiredDescription:
+      "Share your feedback for each completed event to see and message the other guests.",
+    feedbackAction: "Share feedback and unlock messages",
+    noConversationsUntilFeedback:
+      "Complete the feedback above to unlock conversations from that event.",
     new: "New",
     noMessagesYet: "No messages yet",
     noMessagesYetPeriod: "No messages yet.",
@@ -412,6 +421,12 @@ const en = {
     firstMessagePlaceholder: "Write one thoughtful first message...",
     sendFirst: "Send first message",
     firstMessageSent: "First message sent.",
+    firstMessageInfoTitle: "Starting a new conversation",
+    firstMessageInfoBody: (name: string) => [
+      `You can send one private message to ${name} for now. If ${name} replies, the conversation opens and you can keep chatting in the Messages section.`,
+      `You will receive an email notification when ${name} responds.`,
+    ],
+    firstMessageInfoAction: "Got it",
     sending: "Sending...",
     notificationTooltip: (count: number) =>
       `You have ${count} new ${count === 1 ? "message" : "messages"}`,
@@ -1131,6 +1146,9 @@ const es: typeof en = {
     },
     upcomingEvents: "Próximos eventos",
     pastEvents: "Eventos anteriores o rechazados",
+    pastEventStatus: "evento anterior",
+    postEventCta: "Enviar valoración y conectar",
+    messageParticipants: "Enviar mensajes a participantes",
     noInvitationsTitle: "Estamos encontrando a tu gente...",
     noInvitationsBody:
       "En cuanto haya suficientes miembros que compartan tus intenciones, recibirás una invitación a un evento juntos.",
@@ -1344,6 +1362,12 @@ const es: typeof en = {
   messages: {
     title: "Mensajes",
     conversations: "Tus conversaciones",
+    feedbackRequired: "Completa la valoración del evento",
+    feedbackRequiredDescription:
+      "Valora cada evento completado para ver y escribir a las otras personas invitadas.",
+    feedbackAction: "Valorar y desbloquear mensajes",
+    noConversationsUntilFeedback:
+      "Completa la valoración de arriba para desbloquear las conversaciones de ese evento.",
     new: "Nuevo",
     noMessagesYet: "Aún no hay mensajes",
     noMessagesYetPeriod: "Aún no hay mensajes.",
@@ -1366,6 +1390,12 @@ const es: typeof en = {
     firstMessagePlaceholder: "Escribe un primer mensaje con intención...",
     sendFirst: "Enviar primer mensaje",
     firstMessageSent: "Primer mensaje enviado.",
+    firstMessageInfoTitle: "Iniciar una nueva conversación",
+    firstMessageInfoBody: (name: string) => [
+      `Por ahora, puedes enviar un mensaje privado a ${name}. Si ${name} responde, se abrirá la conversación y podréis seguir hablando en la sección Mensajes.`,
+      `Recibirás una notificación por email cuando ${name} responda.`,
+    ],
+    firstMessageInfoAction: "Entendido",
     sending: "Enviando...",
     notificationTooltip: (count: number) =>
       `Tienes ${count} mensaje${count === 1 ? "" : "s"} nuevo${count === 1 ? "" : "s"}`,

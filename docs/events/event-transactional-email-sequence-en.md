@@ -98,8 +98,8 @@ member-app origin.
   tokenized invitation-access URL.
 - Replacement-refund credit CTAs resolve to `/credits`.
 - Host-package CTAs retain their generated public material URL.
-- Feedback-request CTAs also resolve to `/going-out` while member event pages
-  are disabled.
+- Feedback-request CTAs resolve to the feedback section on the specific member
+  event page. Logged-out members are returned to that event after login.
 
 ## Shared content in all 16 transactionals
 
@@ -526,8 +526,9 @@ This email has no CTA button.
 > messaging is unlocked.
 >
 > You'll be asked to rate the event overall, the questions, the hosting
-> experience, and the restaurant. If any rating is one star, we'll ask for a
-> little more detail.
+> experience, group compatibility, the question rounds, the restaurant, and
+> the host when applicable. If you could not attend, you can simply tell us
+> what stopped you.
 >
 > After you submit feedback, you can send one private first message to each
 > confirmed participant. If they reply, the conversation can continue.

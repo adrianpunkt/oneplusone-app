@@ -53,6 +53,7 @@ export default async function ConversationPage({
             className="h-9 w-9"
             imageUrl={correspondent.imageUrl}
             name={correspondent.name}
+            thumbnailUrl={correspondent.thumbnailUrl}
           />
           <h1 className="truncate font-display text-xl font-extrabold text-wine-burgundy">
             {correspondent.name}
