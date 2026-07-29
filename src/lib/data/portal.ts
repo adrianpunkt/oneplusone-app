@@ -18,6 +18,7 @@ import type {
   JsonObject,
 } from "@/lib/types";
 import { currentHostPackageMaterials } from "@/lib/events/host-package-visibility";
+import { eventRelationshipIntention } from "@/lib/events/relationship-intention";
 import { storyValue } from "@/lib/utils";
 
 type WithEventRelation<T> = T & { events?: EventRecord | EventRecord[] | null };
@@ -563,13 +564,23 @@ export async function getEventGroupSummaries(
     const snapshot = snapshots.find(
       (candidate) => candidate.event_id === event.id && candidate.stage === preferredStage,
     );
-    if (!snapshot) continue;
+    const majorityIntention = eventRelationshipIntention(
+      event.localized_content,
+      snapshot?.majority_intention,
+    );
+    if (!snapshot) {
+      summaries[event.id] = {
+        ...summaries[event.id],
+        majorityIntention,
+      };
+      continue;
+    }
     summaries[event.id] = {
       ...summaries[event.id],
       additionalLanguages: snapshot.additional_languages || [],
       ageMax: snapshot.age_max,
       ageMin: snapshot.age_min,
-      majorityIntention: snapshot.majority_intention,
+      majorityIntention,
       participantCount: snapshot.source_count,
     };
   }

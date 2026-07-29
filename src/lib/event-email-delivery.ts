@@ -13,6 +13,7 @@ import {
 } from "@/lib/i18n/locales";
 import { profileOptionLabel } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
+import { eventRelationshipIntention } from "@/lib/events/relationship-intention";
 import { sendLoopsTransactionalEmail } from "@/lib/loops";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import type { JsonObject } from "@/lib/types";
@@ -284,8 +285,10 @@ async function eventEmailVariables(
     ? invitationUrl
     : goingOutUrl;
   const eventFormat = objectString(payload, "eventFormat");
-  const majorityIntention = summary?.majority_intention
-    || objectString(payload, "majorityIntention");
+  const majorityIntention = eventRelationshipIntention(
+    event?.localized_content,
+    summary?.majority_intention || objectString(payload, "majorityIntention"),
+  );
 
   if (delivery.email_type === "invitation_pending" && !invitationUrl) {
     throw new Error("Pending invitation access token is missing.");

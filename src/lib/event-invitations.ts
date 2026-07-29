@@ -1,8 +1,10 @@
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
+import { eventRelationshipIntention } from "@/lib/events/relationship-intention";
 import type {
   InvitationPaymentStatus,
   InvitationResponseStatus,
   InvitationSeatStatus,
+  JsonObject,
   InvitationWaitlistReason,
   PublicEventPaymentResult,
   PublicInvitationSession,
@@ -81,7 +83,7 @@ export async function getPublicInvitationSession(
   const [{ data: event }, { data: summary }, { data: decline }] = await Promise.all([
     supabase
       .from("events")
-      .select("id,starts_at,ends_at,timezone,city,event_format,language_code,capacity,gender_balance_enabled,rsvp_deadline_at,credit_cost,status")
+      .select("id,starts_at,ends_at,timezone,city,event_format,language_code,capacity,gender_balance_enabled,rsvp_deadline_at,credit_cost,status,localized_content")
       .eq("id", session.eventId)
       .maybeSingle<{
         capacity: number;
@@ -92,6 +94,7 @@ export async function getPublicInvitationSession(
         gender_balance_enabled: boolean;
         id: string;
         language_code: "en" | "es" | null;
+        localized_content: JsonObject | null;
         rsvp_deadline_at: string;
         starts_at: string;
         status: string;
@@ -136,7 +139,10 @@ export async function getPublicInvitationSession(
       languageCode: event.language_code,
       capacity: event.capacity,
       ageRange: { min: summary?.age_min ?? null, max: summary?.age_max ?? null },
-      majorityIntention: summary?.majority_intention || null,
+      majorityIntention: eventRelationshipIntention(
+        event.localized_content,
+        summary?.majority_intention,
+      ),
       additionalLanguages: summary?.additional_languages || [],
       preferenceNudge: true,
       genderBalanceEnabled: event.gender_balance_enabled,
