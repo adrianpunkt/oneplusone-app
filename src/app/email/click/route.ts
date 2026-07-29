@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { eventEmailClickDestination } from "@/lib/event-email-click";
+import { resolveActiveMemberEventInvitationAccess } from "@/lib/event-invitation-access";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
     request.nextUrl.origin,
   );
 
+  let useDurableInvitationAccess = false;
   if (token) {
     const { error } = await getSupabaseServiceClient().rpc(
       "record_event_email_click",
@@ -24,9 +26,21 @@ export async function GET(request: NextRequest) {
         message: error.message,
       });
     }
+
+    if (destination.pathname === "/auth/confirm") {
+      useDurableInvitationAccess = Boolean(
+        await resolveActiveMemberEventInvitationAccess(token),
+      );
+    }
   }
 
-  const response = NextResponse.redirect(destination, { status: 307 });
+  const resolvedDestination = useDurableInvitationAccess
+    ? new URL(
+        `/event-invitation/complete?token=${encodeURIComponent(token)}`,
+        request.nextUrl.origin,
+      )
+    : destination;
+  const response = NextResponse.redirect(resolvedDestination, { status: 307 });
   response.headers.set("Cache-Control", "private, no-store");
   response.headers.set("Referrer-Policy", "no-referrer");
   response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
