@@ -3,15 +3,22 @@ const trackableLinkVariables = [
   "declineUrl",
   "eventUrl",
   "invitationLink",
+  "sharingRoundUrl",
+  "spicyRoundUrl",
 ] as const;
 
 export const FEEDBACK_EMAIL_LOGIN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+export const EVENT_ROUND_ACCESS_DURATION_MS = 24 * 60 * 60 * 1000;
 
 type FeedbackEmailAccessDelivery = {
   email_type: string;
   event_id: string;
   sent_at: string | null;
   status: string;
+};
+
+type EventRoundEmailAccessDelivery = FeedbackEmailAccessDelivery & {
+  frozen_payload?: Record<string, unknown> | null;
 };
 
 export function trackEventEmailLinks({
@@ -108,4 +115,49 @@ export function feedbackEmailLoginNextPath({
   if (!isFormLink && !isDidNotAttendLink && !isRatingLink) return null;
 
   return `${destination.pathname}${destination.search}`;
+}
+
+export function eventRoundEmailLoginNextPath({
+  delivery,
+  destination,
+  now = Date.now(),
+}: {
+  delivery: EventRoundEmailAccessDelivery;
+  destination: URL;
+  now?: number;
+}) {
+  if (delivery.email_type !== "event_reminder" || delivery.status !== "sent") {
+    return null;
+  }
+  if (delivery.frozen_payload?.hostStatus !== "none") return null;
+
+  const sentAt = new Date(delivery.sent_at || "").getTime();
+  const startsAt = new Date(
+    typeof delivery.frozen_payload.startsAt === "string"
+      ? delivery.frozen_payload.startsAt
+      : "",
+  ).getTime();
+  if (
+    !Number.isFinite(sentAt)
+    || sentAt > now
+    || !Number.isFinite(startsAt)
+    || now >= startsAt + EVENT_ROUND_ACCESS_DURATION_MS
+  ) {
+    return null;
+  }
+
+  const eventPath = `/events/${encodeURIComponent(delivery.event_id)}`;
+  const allowedPaths = new Set([
+    `${eventPath}/sharing-round`,
+    `${eventPath}/spicy-round`,
+  ]);
+  if (
+    !allowedPaths.has(destination.pathname)
+    || destination.search
+    || destination.hash
+  ) {
+    return null;
+  }
+
+  return destination.pathname;
 }

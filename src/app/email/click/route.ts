@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { eventEmailClickDestination } from "@/lib/event-email-click";
 import { resolveActiveMemberEventInvitationAccess } from "@/lib/event-invitation-access";
-import { createFeedbackEmailLoginRedirect } from "@/lib/feedback-email-login";
+import { createEventEmailLoginRedirect } from "@/lib/feedback-email-login";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -39,17 +39,17 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  let feedbackLoginUrl: string | null = null;
+  let eventLoginUrl: string | null = null;
   if (clickDeliveryId) {
     try {
-      feedbackLoginUrl = await createFeedbackEmailLoginRedirect({
+      eventLoginUrl = await createEventEmailLoginRedirect({
         deliveryId: clickDeliveryId,
         destination,
         origin: request.nextUrl.origin,
       });
     } catch (error) {
-      console.error("[event-email-click] could not create feedback login", {
-        message: error instanceof Error ? error.message : "Unknown feedback login error.",
+      console.error("[event-email-click] could not create member login", {
+        message: error instanceof Error ? error.message : "Unknown event login error.",
       });
     }
   }
@@ -59,8 +59,8 @@ export async function GET(request: NextRequest) {
         `/event-invitation/complete?token=${encodeURIComponent(token)}`,
         request.nextUrl.origin,
       )
-    : feedbackLoginUrl
-      ? new URL(feedbackLoginUrl)
+    : eventLoginUrl
+      ? new URL(eventLoginUrl)
       : destination;
   const response = NextResponse.redirect(resolvedDestination, { status: 307 });
   response.headers.set("Cache-Control", "private, no-store");

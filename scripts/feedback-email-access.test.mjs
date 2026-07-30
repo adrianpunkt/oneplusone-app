@@ -99,7 +99,7 @@ test("only recent, sent feedback deliveries can bootstrap login", () => {
   );
 });
 
-test("the click route exchanges a valid feedback delivery for a member login link", () => {
+test("the click route exchanges a valid event delivery for a member login link", () => {
   const route = readFileSync(
     new URL("../src/app/email/click/route.ts", import.meta.url),
     "utf8",
@@ -110,8 +110,8 @@ test("the click route exchanges a valid feedback delivery for a member login lin
   );
 
   assert.match(route, /record_event_email_click/);
-  assert.match(route, /createFeedbackEmailLoginRedirect/);
-  assert.match(route, /feedbackLoginUrl\s+\?\s+new URL\(feedbackLoginUrl\)/);
+  assert.match(route, /createEventEmailLoginRedirect/);
+  assert.match(route, /eventLoginUrl\s+\?\s+new URL\(eventLoginUrl\)/);
   assert.match(
     confirmPage,
     /if \(autoSubmit\) return loginRedirectPath\("expired-link", next, emailHint\)/,

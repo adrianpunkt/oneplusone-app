@@ -13,6 +13,7 @@
     "test:event-time-format": "node --experimental-strip-types --test scripts/event-time-format.test.mjs",
     "test:event-merge-link-compatibility": "node --test scripts/event-merge-link-compatibility.test.mjs",
     "test:event-relationship-intention": "node --experimental-strip-types --test scripts/event-relationship-intention.test.mjs",
+    "test:event-round-access": "node --experimental-strip-types --test scripts/event-round-access.test.mjs",
     "test:message-guard": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test scripts/message-guard.test.mjs",
     "test:membership-refund-feedback": "node --experimental-strip-types --test scripts/membership-refund-feedback.test.mjs",
     "test:host-package-visibility": "node --experimental-strip-types --test scripts/host-package-visibility.test.mjs",

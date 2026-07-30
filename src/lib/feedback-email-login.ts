@@ -1,6 +1,9 @@
 import "server-only";
 
-import { feedbackEmailLoginNextPath } from "@/lib/event-email-click";
+import {
+  eventRoundEmailLoginNextPath,
+  feedbackEmailLoginNextPath,
+} from "@/lib/event-email-click";
 import { normalizeLocale } from "@/lib/i18n/locales";
 import { createMemberLoginLink } from "@/lib/member-login-email";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
@@ -8,6 +11,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 type FeedbackDeliveryRow = {
   email_type: string;
   event_id: string;
+  frozen_payload: Record<string, unknown> | null;
   locale: string;
   member_id: string;
   sent_at: string | null;
@@ -35,7 +39,19 @@ export async function createFeedbackEmailLoginRedirect({
   destination: URL;
   origin: string;
 }) {
-  const context = await feedbackEmailLoginContext({ deliveryId, destination });
+  return createEventEmailLoginRedirect({ deliveryId, destination, origin });
+}
+
+export async function createEventEmailLoginRedirect({
+  deliveryId,
+  destination,
+  origin,
+}: {
+  deliveryId: string;
+  destination: URL;
+  origin: string;
+}) {
+  const context = await eventEmailLoginContext({ deliveryId, destination });
   if (!context) return null;
 
   const { loginUrl } = await createMemberLoginLink({
@@ -49,7 +65,7 @@ export async function createFeedbackEmailLoginRedirect({
   return loginUrl || null;
 }
 
-async function feedbackEmailLoginContext({
+async function eventEmailLoginContext({
   deliveryId,
   destination,
 }: {
@@ -59,13 +75,14 @@ async function feedbackEmailLoginContext({
   const supabase = getSupabaseServiceClient();
   const { data: delivery, error: deliveryError } = await supabase
     .from("event_email_deliveries")
-    .select("event_id,member_id,email_type,locale,status,sent_at")
+    .select("event_id,member_id,email_type,locale,status,sent_at,frozen_payload:payload")
     .eq("id", deliveryId)
     .maybeSingle<FeedbackDeliveryRow>();
 
   if (deliveryError || !delivery) return null;
 
-  const next = feedbackEmailLoginNextPath({ delivery, destination });
+  const next = feedbackEmailLoginNextPath({ delivery, destination })
+    || eventRoundEmailLoginNextPath({ delivery, destination });
   if (!next) return null;
 
   const { data: member, error: memberError } = await supabase
