@@ -14,9 +14,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { requireMemberContextForRender } from "@/lib/data/member";
-import { getEventDetail } from "@/lib/data/portal";
+import { getConversations, getEventDetail } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
+import { formatDate } from "@/lib/i18n/format";
 import type { Locale } from "@/lib/i18n/locales";
 
 export const dynamic = "force-dynamic";
@@ -55,8 +56,9 @@ export default async function EventConnectPage({
 }) {
   const { id } = await params;
   const { locale, member } = await requireMemberContextForRender();
-  const [eventDetail, now] = await Promise.all([
+  const [eventDetail, conversations, now] = await Promise.all([
     getEventDetail(id, member.id),
+    getConversations(member.id, { includeLastMessage: true }),
     getRequestTimestamp(),
   ]);
   const { event, eventAttendees, feedback, invitation } = eventDetail;
@@ -85,6 +87,16 @@ export default async function EventConnectPage({
     locale,
     "title",
   );
+  const conversationsByMemberId = new Map(
+    conversations
+      .filter((conversation) => conversation.event_id === event.id)
+      .map((conversation) => [
+        conversation.initiated_by_member_id === member.id
+          ? conversation.recipient_member_id
+          : conversation.initiated_by_member_id,
+        conversation,
+      ]),
+  );
 
   return (
     <>
@@ -110,35 +122,57 @@ export default async function EventConnectPage({
         </CardHeader>
         <CardContent className="grid gap-4">
           {feedback.attended && eventAttendees.length ? (
-            eventAttendees.map((person) => (
-              <article
-                className="flex flex-col gap-4 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 sm:flex-row sm:items-center sm:justify-between"
-                key={person.member_id}
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <AvatarPreview
-                    className="h-12 w-12"
-                    imageUrl={person.imageUrl}
-                    name={person.first_name}
-                    thumbnailUrl={person.thumbnailUrl}
-                  />
-                  <p className="min-w-0 break-words font-display text-lg font-extrabold text-wine-burgundy">
-                    {person.first_name}
-                  </p>
-                </div>
-                <Button asChild className="w-full sm:w-auto">
-                  <Link
-                    href={`/messages/new?${new URLSearchParams({
-                      eventId: event.id,
-                      recipientMemberId: person.member_id,
-                    }).toString()}`}
-                  >
-                    <MessageCircle aria-hidden="true" className="h-4 w-4" />
-                    {dictionary.messages.sendMessage}
-                  </Link>
-                </Button>
-              </article>
-            ))
+            eventAttendees.map((person) => {
+              const conversation = conversationsByMemberId.get(
+                person.member_id,
+              );
+              const receivedMessage =
+                conversation?.lastMessage?.direction === "received"
+                  ? conversation.lastMessage
+                  : null;
+              const href = conversation
+                ? `/messages/${conversation.id}`
+                : `/messages/new?${new URLSearchParams({
+                    eventId: event.id,
+                    recipientMemberId: person.member_id,
+                  }).toString()}`;
+
+              return (
+                <article
+                  className="flex flex-col gap-4 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 sm:flex-row sm:items-center sm:justify-between"
+                  key={person.member_id}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <AvatarPreview
+                      className="h-12 w-12"
+                      imageUrl={person.imageUrl}
+                      name={person.first_name}
+                      thumbnailUrl={person.thumbnailUrl}
+                    />
+                    <div className="grid min-w-0 gap-0.5">
+                      <p className="min-w-0 break-words font-display text-lg font-extrabold text-wine-burgundy">
+                        {person.first_name}
+                      </p>
+                      {receivedMessage ? (
+                        <p className="text-sm font-semibold text-muted">
+                          {dictionary.messages.messageReceivedOn(
+                            formatDate(receivedMessage.createdAt, locale),
+                          )}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                  <Button asChild className="w-full sm:w-auto">
+                    <Link href={href}>
+                      <MessageCircle aria-hidden="true" className="h-4 w-4" />
+                      {receivedMessage
+                        ? dictionary.messages.respondToMessage
+                        : dictionary.messages.sendMessage}
+                    </Link>
+                  </Button>
+                </article>
+              );
+            })
           ) : (
             <p className="rounded-lg bg-blush-pink p-4 text-sm font-semibold text-muted">
               {feedback.attended

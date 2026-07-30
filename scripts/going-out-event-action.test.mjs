@@ -34,13 +34,13 @@ test("completed events hide the action after non-attendance feedback", () => {
   );
 });
 
-test("events without open post-event details keep their details link", () => {
+test("events without post-event actions do not link to the event details page", () => {
   assert.equal(
     actionHref({
       canOpenPostEventDetails: false,
       feedbackAttended: false,
       feedbackSubmitted: true,
     }),
-    `/events/${eventId}`,
+    null,
   );
 });

@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, ClipboardCheck, MapPin } from "lucide-react";
+import {
+  Archive,
+  ArrowRight,
+  CalendarDays,
+  ChevronDown,
+  ClipboardCheck,
+  MapPin,
+} from "lucide-react";
 
 import { MessageHeartIcon } from "@/components/app/message-heart-icon";
 import { CorrespondentAvatar } from "@/components/messages/correspondent-avatar";
@@ -75,6 +82,70 @@ function NotificationHeart() {
   );
 }
 
+function ConversationLinkCard({
+  archived = false,
+  conversation,
+  dictionary,
+  locale,
+}: {
+  archived?: boolean;
+  conversation: ConversationSummary;
+  dictionary: Dictionary;
+  locale: Locale;
+}) {
+  const correspondent = conversation.correspondent || {
+    imageUrl: "",
+    name: dictionary.messages.member,
+    thumbnailUrl: "",
+  };
+  const hasNewMessage =
+    !archived && Boolean(conversation.lastMessage?.isUnread);
+
+  return (
+    <Link
+      href={`/messages/${conversation.id}`}
+      className={cn(
+        "relative flex min-w-0 items-center gap-3 overflow-hidden rounded-lg border p-4 shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-lipstick-red/35 hover:bg-white hover:shadow-[0_16px_30px_rgba(68,10,18,0.10)]",
+        hasNewMessage
+          ? "border-lipstick-red/70 bg-white shadow-[0_16px_34px_rgba(229,58,62,0.16)] ring-2 ring-lipstick-red/15 before:absolute before:inset-y-4 before:left-0 before:w-1 before:rounded-r-full before:bg-lipstick-red"
+          : "border-wine-burgundy/10 bg-blush-pink",
+      )}
+    >
+      <CorrespondentAvatar
+        className="h-12 w-12"
+        imageUrl={correspondent.thumbnailUrl || correspondent.imageUrl}
+        name={correspondent.name}
+      />
+      <div className="grid min-w-0 flex-1 gap-1">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <h2 className="truncate font-display text-lg font-extrabold text-wine-burgundy">
+            {correspondent.name}
+          </h2>
+          {hasNewMessage ? (
+            <Badge className="shrink-0 rounded-md px-2 py-0.5 text-xs">
+              {dictionary.messages.new}
+            </Badge>
+          ) : null}
+        </div>
+        <p className="truncate text-sm font-semibold text-muted">
+          {eventContext(conversation, dictionary, locale)}
+        </p>
+        <p
+          className={cn(
+            "flex min-w-0 items-center gap-1.5 text-xs font-semibold",
+            hasNewMessage ? "text-lipstick-red" : "text-faint",
+          )}
+        >
+          {hasNewMessage ? <NotificationHeart /> : null}
+          <span className="truncate">
+            {lastMessageContext(conversation, dictionary, locale)}
+          </span>
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 export default async function MessagesPage() {
   const { locale, member } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
@@ -82,10 +153,17 @@ export default async function MessagesPage() {
     getConversations(member.id, {
       includeCorrespondents: true,
       includeLastMessage: true,
+      includeParticipantState: true,
     }),
     getCompletedEventsAwaitingFeedback(member.id),
   ]);
-  const unreadConversationCount = conversations.filter((conversation) =>
+  const activeConversations = conversations.filter(
+    (conversation) => !conversation.archived_at,
+  );
+  const archivedConversations = conversations.filter((conversation) =>
+    Boolean(conversation.archived_at),
+  );
+  const unreadConversationCount = activeConversations.filter((conversation) =>
     Boolean(conversation.lastMessage?.isUnread),
   ).length;
 
@@ -169,67 +247,67 @@ export default async function MessagesPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-3">
-          {conversations.length ? (
-            conversations.map((conversation) => {
-              const correspondent = conversation.correspondent || {
-                imageUrl: "",
-                name: dictionary.messages.member,
-                thumbnailUrl: "",
-              };
-              const hasNewMessage = Boolean(conversation.lastMessage?.isUnread);
-
-              return (
-                <Link
-                  key={conversation.id}
-                  href={`/messages/${conversation.id}`}
-                  className={cn(
-                    "relative flex min-w-0 items-center gap-3 overflow-hidden rounded-lg border p-4 shadow-sm transition-[background-color,border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-lipstick-red/35 hover:bg-white hover:shadow-[0_16px_30px_rgba(68,10,18,0.10)]",
-                    hasNewMessage
-                      ? "border-lipstick-red/70 bg-white shadow-[0_16px_34px_rgba(229,58,62,0.16)] ring-2 ring-lipstick-red/15 before:absolute before:inset-y-4 before:left-0 before:w-1 before:rounded-r-full before:bg-lipstick-red"
-                      : "border-wine-burgundy/10 bg-blush-pink",
-                  )}
-                >
-                  <CorrespondentAvatar
-                    className="h-12 w-12"
-                    imageUrl={correspondent.thumbnailUrl || correspondent.imageUrl}
-                    name={correspondent.name}
-                  />
-                  <div className="grid min-w-0 flex-1 gap-1">
-                    <div className="flex min-w-0 items-start justify-between gap-3">
-                      <h2 className="truncate font-display text-lg font-extrabold text-wine-burgundy">
-                        {correspondent.name}
-                      </h2>
-                      {hasNewMessage ? (
-                        <Badge className="shrink-0 rounded-md px-2 py-0.5 text-xs">
-                          {dictionary.messages.new}
-                        </Badge>
-                      ) : null}
-                    </div>
-                    <p className="truncate text-sm font-semibold text-muted">
-                      {eventContext(conversation, dictionary, locale)}
-                    </p>
-                    <p
-                      className={cn(
-                        "flex min-w-0 items-center gap-1.5 text-xs font-semibold",
-                        hasNewMessage ? "text-lipstick-red" : "text-faint",
-                      )}
-                    >
-                      {hasNewMessage ? <NotificationHeart /> : null}
-                      <span className="truncate">
-                        {lastMessageContext(conversation, dictionary, locale)}
-                      </span>
-                    </p>
-                  </div>
-                </Link>
-              );
-            })
+          {activeConversations.length ? (
+            activeConversations.map((conversation) => (
+              <ConversationLinkCard
+                conversation={conversation}
+                dictionary={dictionary}
+                key={conversation.id}
+                locale={locale}
+              />
+            ))
           ) : (
-            <p className="rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 text-sm font-semibold leading-6 text-muted">
-              {eventsAwaitingFeedback.length
-                ? dictionary.messages.noConversationsUntilFeedback
-                : dictionary.messages.noConversations}
-            </p>
+            <div className="grid justify-items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
+              <p className="text-sm font-semibold leading-6 text-muted">
+                {archivedConversations.length
+                  ? dictionary.messages.noActiveConversations
+                  : eventsAwaitingFeedback.length
+                  ? dictionary.messages.noConversationsUntilFeedback
+                  : dictionary.messages.noConversations}
+              </p>
+              {!archivedConversations.length &&
+              !eventsAwaitingFeedback.length ? (
+                <Button asChild variant="secondary">
+                  <Link href="/going-out">
+                    {dictionary.messages.browsePastEvents}
+                    <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                  </Link>
+                </Button>
+              ) : null}
+            </div>
           )}
+
+          {archivedConversations.length ? (
+            <details className="group/archive rounded-lg border border-wine-burgundy/10 bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                <span className="inline-flex items-center gap-2 font-display font-extrabold text-wine-burgundy">
+                  <Archive
+                    aria-hidden="true"
+                    className="h-4 w-4 text-ocean-blue"
+                  />
+                  {dictionary.messages.archiveSection}
+                  <Badge variant="muted">
+                    {archivedConversations.length}
+                  </Badge>
+                </span>
+                <ChevronDown
+                  aria-hidden="true"
+                  className="h-4 w-4 text-muted transition-transform group-open/archive:rotate-180"
+                />
+              </summary>
+              <div className="grid gap-3 border-t border-wine-burgundy/10 p-3">
+                {archivedConversations.map((conversation) => (
+                  <ConversationLinkCard
+                    archived
+                    conversation={conversation}
+                    dictionary={dictionary}
+                    key={conversation.id}
+                    locale={locale}
+                  />
+                ))}
+              </div>
+            </details>
+          ) : null}
         </CardContent>
       </Card>
     </>

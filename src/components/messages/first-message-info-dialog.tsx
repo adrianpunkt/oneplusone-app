@@ -2,6 +2,7 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { MessageCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -9,17 +10,30 @@ import { Button } from "@/components/ui/button";
 export function FirstMessageInfoDialog({
   actionLabel,
   description,
+  dismissed,
+  dismissedHref,
   title,
 }: {
   actionLabel: string;
   description: string | string[];
+  dismissed: boolean;
+  dismissedHref: string;
   title: string;
 }) {
-  const [open, setOpen] = useState(true);
+  const router = useRouter();
+  const [open, setOpen] = useState(!dismissed);
   const paragraphs = Array.isArray(description) ? description : [description];
 
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+
+    if (!nextOpen && !dismissed) {
+      router.replace(dismissedHref, { scroll: false });
+    }
+  }
+
   return (
-    <Dialog.Root onOpenChange={setOpen} open={open}>
+    <Dialog.Root onOpenChange={handleOpenChange} open={open}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-50 bg-wine-burgundy/40 backdrop-blur-sm" />
         <Dialog.Content className="fixed left-1/2 top-1/2 z-50 grid w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 -translate-y-1/2 gap-5 rounded-xl border border-wine-burgundy/10 bg-white p-5 shadow-2xl outline-none">

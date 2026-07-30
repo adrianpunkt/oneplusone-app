@@ -321,6 +321,7 @@ export type EventGroupSummary = {
 };
 
 export type Conversation = {
+  archived_at?: string | null;
   id: string;
   event_id: string;
   initiated_by_member_id: string;

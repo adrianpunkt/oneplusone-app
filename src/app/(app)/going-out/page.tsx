@@ -1104,16 +1104,11 @@ function PastEventCard({
         {eventHref || (canApplyForSeat && item.invitation) ? (
           <div className="grid w-full justify-items-center gap-3 pt-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:justify-end sm:gap-2 sm:pt-0 lg:flex-col lg:items-end lg:justify-end">
             {eventHref ? (
-              <Button
-                asChild
-                variant={canOpenPostEventDetails ? "default" : "secondary"}
-              >
+              <Button asChild>
                 <Link href={eventHref}>
-                  {canOpenPostEventDetails
-                    ? feedbackSubmitted
-                      ? dictionary.goingOut.messageParticipants
-                      : dictionary.goingOut.postEventCta
-                    : dictionary.common.details}
+                  {feedbackSubmitted
+                    ? dictionary.goingOut.messageParticipants
+                    : dictionary.goingOut.postEventCta}
                 </Link>
               </Button>
             ) : null}

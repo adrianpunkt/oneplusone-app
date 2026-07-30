@@ -24,11 +24,13 @@ export default async function NewMessagePage({
 }: {
   searchParams: Promise<{
     eventId?: string | string[];
+    firstMessageIntro?: string | string[];
     recipientMemberId?: string | string[];
   }>;
 }) {
   const query = await searchParams;
   const eventId = firstSearchParam(query.eventId);
+  const firstMessageIntro = firstSearchParam(query.firstMessageIntro);
   const recipientMemberId = firstSearchParam(query.recipientMemberId);
 
   if (
@@ -42,7 +44,7 @@ export default async function NewMessagePage({
   const dictionary = getDictionary(locale);
   const [eventDetail, conversations] = await Promise.all([
     getEventDetail(eventId, member.id),
-    getConversations(member.id),
+    getConversations(member.id, { includeLastMessage: true }),
   ]);
 
   const existingConversation = conversations.find(
@@ -77,6 +79,12 @@ export default async function NewMessagePage({
   );
   if (!recipient) notFound();
 
+  const dismissedSearchParams = new URLSearchParams({
+    eventId: event.id,
+    firstMessageIntro: "dismissed",
+    recipientMemberId: recipient.member_id,
+  });
+
   return (
     <div className="fixed inset-x-0 bottom-0 top-[81px] z-10 px-0 pb-0 md:left-[260px] md:top-0 md:px-6 md:py-6 lg:px-8">
       <FirstMessageInfoDialog
@@ -84,6 +92,13 @@ export default async function NewMessagePage({
         description={dictionary.messages.firstMessageInfoBody(
           recipient.first_name,
         )}
+        dismissed={firstMessageIntro === "dismissed"}
+        dismissedHref={`/messages/new?${dismissedSearchParams}`}
+        key={
+          firstMessageIntro === "dismissed"
+            ? "first-message-intro-dismissed"
+            : "first-message-intro-open"
+        }
         title={dictionary.messages.firstMessageInfoTitle}
       />
 

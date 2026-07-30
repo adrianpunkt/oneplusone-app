@@ -11,10 +11,9 @@ export function pastEventPrimaryHref({
   feedbackSubmitted: boolean;
   hasEvent: boolean;
 }) {
-  if (!hasEvent) return null;
+  if (!hasEvent || !canOpenPostEventDetails) return null;
 
   const eventPath = `/events/${eventId}`;
-  if (!canOpenPostEventDetails) return eventPath;
   if (!feedbackSubmitted) return `${eventPath}/feedback`;
   if (!feedbackAttended) return null;
   return `${eventPath}/connect`;

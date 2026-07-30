@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import { profileImageThumbnailUrl, profileImageUrl } from "@/lib/profile-image";
@@ -37,6 +39,30 @@ type ParticipantLookupRow = {
   conversation_id: string;
   last_read_at: string | null;
 };
+type ParticipantArchiveLookupRow = {
+  archived_at: string | null;
+  conversation_id: string;
+};
+type ConversationFeedbackLookupRow = {
+  event_id: string;
+  id: string;
+};
+type EventFeedbackLookupRow = {
+  attended: boolean;
+  event_id: string;
+  submitted_at: string;
+};
+type EventInvitationLookupRow = {
+  cancelled_at: string | null;
+  event_id: string;
+  seat_status: string;
+};
+type RecipientConversationFeedbackState = {
+  feedbackIneligibleConversationIds: ReadonlySet<string>;
+  feedbackLockedConversationIds: ReadonlySet<string>;
+  feedbackSubmittedAtByConversationId: ReadonlyMap<string, string>;
+  recipientConversationIds: ReadonlySet<string>;
+};
 type PastEventAttendee = {
   first_name: string;
   imageUrl: string;
@@ -69,8 +95,8 @@ function otherConversationMemberId(conversation: Conversation, memberId: string)
     : conversation.initiated_by_member_id;
 }
 
-function fallbackMemberName(email: string | null | undefined) {
-  return email?.split("@")[0].replace(/[._-]+/g, " ") || "Member";
+function fallbackMemberName() {
+  return "Member";
 }
 
 function capitalizeName(name: string) {
@@ -91,7 +117,133 @@ function messageNotificationConversationId(notification: NotificationRecord) {
   return conversationId && UUID_PATTERN.test(conversationId) ? conversationId : null;
 }
 
-async function getUnreadConversationIds(memberId: string, conversationIds: string[]) {
+async function getRecipientConversationFeedbackState(
+  memberId: string,
+): Promise<RecipientConversationFeedbackState> {
+  const emptyState: RecipientConversationFeedbackState = {
+    feedbackIneligibleConversationIds: new Set(),
+    feedbackLockedConversationIds: new Set(),
+    feedbackSubmittedAtByConversationId: new Map(),
+    recipientConversationIds: new Set(),
+  };
+  const serviceSupabase = getSupabaseServiceClient();
+  const { data: conversationData, error: conversationError } =
+    await serviceSupabase
+      .from("conversations")
+      .select("id,event_id")
+      .eq("recipient_member_id", memberId);
+
+  if (conversationError) return emptyState;
+
+  const conversations = (conversationData || []) as ConversationFeedbackLookupRow[];
+  const eventIds = Array.from(
+    new Set(conversations.map((conversation) => conversation.event_id)),
+  );
+  if (!eventIds.length) return emptyState;
+
+  const [{ data: feedbackData, error: feedbackError }, { data: invitationData, error: invitationError }] =
+    await Promise.all([
+      serviceSupabase
+        .from("event_feedback")
+        .select("event_id,attended,submitted_at")
+        .eq("member_id", memberId)
+        .in("event_id", eventIds),
+      serviceSupabase
+        .from("event_invitations")
+        .select("event_id,seat_status,cancelled_at")
+        .eq("member_id", memberId)
+        .in("event_id", eventIds),
+    ]);
+
+  if (feedbackError || invitationError) return emptyState;
+
+  const feedbackByEventId = new Map(
+    ((feedbackData || []) as EventFeedbackLookupRow[]).map((feedback) => [
+      feedback.event_id,
+      feedback,
+    ]),
+  );
+  const eligibleInvitationEventIds = new Set(
+    ((invitationData || []) as EventInvitationLookupRow[])
+      .filter(
+        (invitation) =>
+          invitation.seat_status === "confirmed" && !invitation.cancelled_at,
+      )
+      .map((invitation) => invitation.event_id),
+  );
+  const eligibleConversations = conversations.filter((conversation) =>
+    eligibleInvitationEventIds.has(conversation.event_id),
+  );
+  const feedbackLockedConversationIds = new Set<string>();
+  const feedbackIneligibleConversationIds = new Set<string>();
+  const feedbackSubmittedAtByConversationId = new Map<string, string>();
+
+  for (const conversation of eligibleConversations) {
+    const feedback = feedbackByEventId.get(conversation.event_id);
+
+    if (!feedback) {
+      feedbackLockedConversationIds.add(conversation.id);
+    } else if (!feedback.attended) {
+      feedbackIneligibleConversationIds.add(conversation.id);
+    } else {
+      feedbackSubmittedAtByConversationId.set(
+        conversation.id,
+        feedback.submitted_at,
+      );
+    }
+  }
+
+  return {
+    feedbackIneligibleConversationIds,
+    feedbackLockedConversationIds,
+    feedbackSubmittedAtByConversationId,
+    recipientConversationIds: new Set(
+      eligibleConversations.map((conversation) => conversation.id),
+    ),
+  };
+}
+
+function isIncomingMessageUnread({
+  conversationId,
+  feedbackState,
+  lastReadAt,
+  latestMessage,
+  memberId,
+}: {
+  conversationId: string;
+  feedbackState: RecipientConversationFeedbackState;
+  lastReadAt: string | null | undefined;
+  latestMessage: MessageLookupRow;
+  memberId: string;
+}) {
+  if (
+    latestMessage.sender_member_id === memberId ||
+    feedbackState.feedbackIneligibleConversationIds.has(conversationId)
+  ) {
+    return false;
+  }
+
+  const feedbackSubmittedAt =
+    feedbackState.feedbackSubmittedAtByConversationId.get(conversationId);
+  const wasReadBeforeFeedback =
+    lastReadAt !== null &&
+    lastReadAt !== undefined &&
+    feedbackSubmittedAt !== undefined &&
+    new Date(lastReadAt) < new Date(feedbackSubmittedAt);
+
+  return (
+    feedbackState.feedbackLockedConversationIds.has(conversationId) ||
+    wasReadBeforeFeedback ||
+    !lastReadAt ||
+    new Date(latestMessage.created_at) > new Date(lastReadAt)
+  );
+}
+
+async function getUnreadConversationIds(
+  memberId: string,
+  conversationIds: string[],
+  feedbackState: RecipientConversationFeedbackState,
+) {
   if (!conversationIds.length) return new Set<string>();
 
   const serviceSupabase = getSupabaseServiceClient();
@@ -134,14 +286,23 @@ async function getUnreadConversationIds(memberId: string, conversationIds: strin
       return (
         isParticipant &&
         latestMessage !== undefined &&
-        latestMessage.sender_member_id !== memberId &&
-        (!lastReadAt || new Date(latestMessage.created_at) > new Date(lastReadAt))
+        isIncomingMessageUnread({
+          conversationId,
+          feedbackState,
+          lastReadAt,
+          latestMessage,
+          memberId,
+        })
       );
     }),
   );
 }
 
-async function filterStaleMessageNotifications(memberId: string, notifications: NotificationRecord[]) {
+async function filterStaleMessageNotifications(
+  memberId: string,
+  notifications: NotificationRecord[],
+  feedbackState: RecipientConversationFeedbackState,
+) {
   const conversationIds = Array.from(
     new Set(
       notifications
@@ -152,12 +313,18 @@ async function filterStaleMessageNotifications(memberId: string, notifications: 
 
   if (!conversationIds.length) return notifications;
 
-  const unreadConversationIds = await getUnreadConversationIds(memberId, conversationIds);
+  const unreadConversationIds = await getUnreadConversationIds(
+    memberId,
+    conversationIds,
+    feedbackState,
+  );
 
   return notifications.filter((notification) => {
     const conversationId = messageNotificationConversationId(notification);
 
-    return !conversationId || unreadConversationIds.has(conversationId);
+    return conversationId
+      ? unreadConversationIds.has(conversationId)
+      : !notification.read_at;
   });
 }
 
@@ -201,7 +368,7 @@ async function attachCorrespondents(memberId: string, conversations: Conversatio
         ? profilesByEmailNorm.get(member.email_norm) || null
         : null;
       const name =
-        storyValue(profileJson, "profile.first_name") || fallbackMemberName(member.email);
+        storyValue(profileJson, "profile.first_name") || fallbackMemberName();
 
       return [
         member.id,
@@ -295,7 +462,7 @@ async function attachLastMessages(memberId: string, conversations: Conversation[
 
   const conversationIds = conversations.map((conversation) => conversation.id);
   const serviceSupabase = getSupabaseServiceClient();
-  const [{ data }, { data: participantData }] = await Promise.all([
+  const [{ data }, { data: participantData }, feedbackState] = await Promise.all([
     serviceSupabase
       .from("messages")
       .select("conversation_id,sender_member_id,created_at")
@@ -306,6 +473,7 @@ async function attachLastMessages(memberId: string, conversations: Conversation[
       .select("conversation_id,last_read_at")
       .eq("member_id", memberId)
       .in("conversation_id", conversationIds),
+    getRecipientConversationFeedbackState(memberId),
   ]);
   const messages = (data || []) as MessageLookupRow[];
   const participants = (participantData || []) as ParticipantLookupRow[];
@@ -323,27 +491,70 @@ async function attachLastMessages(memberId: string, conversations: Conversation[
     }
   }
 
-  return conversations.map((conversation) => {
+  return conversations.flatMap((conversation) => {
     const lastMessage = latestByConversationId.get(conversation.id);
-    const direction: "sent" | "received" =
-      lastMessage?.sender_member_id === memberId ? "sent" : "received";
-    const lastReadAt = lastReadAtByConversationId.get(conversation.id);
-    const isUnread =
-      lastMessage !== undefined &&
-      direction === "received" &&
-      (!lastReadAt || new Date(lastMessage.created_at) > new Date(lastReadAt));
+    if (!lastMessage) return [];
 
-    return {
-      ...conversation,
-      lastMessage: lastMessage
-        ? {
-            createdAt: lastMessage.created_at,
-            direction,
-            isUnread,
-          }
-        : null,
-    };
+    const direction: "sent" | "received" =
+      lastMessage.sender_member_id === memberId ? "sent" : "received";
+    const lastReadAt = lastReadAtByConversationId.get(conversation.id);
+    const isUnread = isIncomingMessageUnread({
+      conversationId: conversation.id,
+      feedbackState,
+      lastReadAt,
+      latestMessage: lastMessage,
+      memberId,
+    });
+
+    return [
+      {
+        ...conversation,
+        lastMessage: {
+          createdAt: lastMessage.created_at,
+          direction,
+          isUnread,
+        },
+      },
+    ];
   });
+}
+
+async function attachConversationParticipantState(
+  memberId: string,
+  conversations: Conversation[],
+) {
+  if (!conversations.length) return conversations;
+
+  const serviceSupabase = getSupabaseServiceClient();
+  const { data, error } = await serviceSupabase
+    .from("conversation_participants")
+    .select("conversation_id,archived_at")
+    .eq("member_id", memberId)
+    .in(
+      "conversation_id",
+      conversations.map((conversation) => conversation.id),
+    );
+
+  if (error) {
+    console.error("Could not load conversation archive state", {
+      code: error.code,
+      memberId,
+      message: error.message,
+    });
+    throw new Error("Could not load conversation archive state.");
+  }
+
+  const archivedAtByConversationId = new Map(
+    ((data || []) as ParticipantArchiveLookupRow[]).map((participant) => [
+      participant.conversation_id,
+      participant.archived_at,
+    ]),
+  );
+
+  return conversations.map((conversation) => ({
+    ...conversation,
+    archived_at: archivedAtByConversationId.get(conversation.id) || null,
+  }));
 }
 
 export async function getCreditBalance(memberId: string) {
@@ -780,7 +991,11 @@ async function attachEventHostFirstName(host: EventHost): Promise<EventHost> {
 
 export async function getConversations(
   memberId: string,
-  options: { includeCorrespondents?: boolean; includeLastMessage?: boolean } = {},
+  options: {
+    includeCorrespondents?: boolean;
+    includeLastMessage?: boolean;
+    includeParticipantState?: boolean;
+  } = {},
 ) {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
@@ -803,6 +1018,13 @@ export async function getConversations(
 
   if (options.includeLastMessage) {
     enrichedConversations = await attachLastMessages(memberId, enrichedConversations);
+  }
+
+  if (options.includeParticipantState) {
+    enrichedConversations = await attachConversationParticipantState(
+      memberId,
+      enrichedConversations,
+    );
   }
 
   return enrichedConversations;
@@ -875,9 +1097,85 @@ export async function getCompletedEventsAwaitingFeedback(memberId: string) {
   return eventsAwaitingFeedback;
 }
 
+export async function getConversationFeedbackGate(
+  conversationId: string,
+  memberId: string,
+) {
+  const serviceSupabase = getSupabaseServiceClient();
+  const { data: conversation, error: conversationError } =
+    await serviceSupabase
+      .from("conversations")
+      .select("id,event_id,initiated_by_member_id,recipient_member_id")
+      .eq("id", conversationId)
+      .maybeSingle<{
+        event_id: string;
+        id: string;
+        initiated_by_member_id: string;
+        recipient_member_id: string;
+      }>();
+
+  if (conversationError) {
+    console.error("Could not check conversation feedback access", {
+      code: conversationError.code,
+      conversationId,
+      message: conversationError.message,
+    });
+    throw new Error("Could not check conversation feedback access.");
+  }
+  if (
+    !conversation ||
+    (conversation.initiated_by_member_id !== memberId &&
+      conversation.recipient_member_id !== memberId)
+  ) {
+    return null;
+  }
+
+  const [feedbackResult, invitationResult] = await Promise.all([
+    serviceSupabase
+      .from("event_feedback")
+      .select("attended")
+      .eq("event_id", conversation.event_id)
+      .eq("member_id", memberId)
+      .maybeSingle<{ attended: boolean }>(),
+    serviceSupabase
+      .from("event_invitations")
+      .select("seat_status,cancelled_at")
+      .eq("event_id", conversation.event_id)
+      .eq("member_id", memberId)
+      .maybeSingle<{
+        cancelled_at: string | null;
+        seat_status: string;
+      }>(),
+  ]);
+
+  if (feedbackResult.error || invitationResult.error) {
+    const error = feedbackResult.error || invitationResult.error;
+    console.error("Could not check conversation feedback requirement", {
+      code: error?.code,
+      conversationId,
+      message: error?.message,
+    });
+    throw new Error("Could not check conversation feedback requirement.");
+  }
+
+  const invitation = invitationResult.data;
+  if (
+    feedbackResult.data ||
+    invitation?.seat_status !== "confirmed" ||
+    invitation.cancelled_at
+  ) {
+    return null;
+  }
+
+  return {
+    eventId: conversation.event_id,
+  };
+}
+
 export async function getConversation(conversationId: string, memberId: string) {
   const supabase = await createSupabaseServerClient();
-  const [conversationResult, messagesResult] = await Promise.all([
+  const serviceSupabase = getSupabaseServiceClient();
+  const [conversationResult, messagesResult, participantResult] = await Promise.all([
     supabase
       .from("conversations")
       .select("id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at")
@@ -889,6 +1187,12 @@ export async function getConversation(conversationId: string, memberId: string) 
       .select("id,conversation_id,sender_member_id,body,created_at,edited_at,deleted_at")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true }),
+    serviceSupabase
+      .from("conversation_participants")
+      .select("conversation_id,archived_at")
+      .eq("conversation_id", conversationId)
+      .eq("member_id", memberId)
+      .maybeSingle(),
   ]);
 
   if (conversationResult.error) {
@@ -907,7 +1211,14 @@ export async function getConversation(conversationId: string, memberId: string) 
     });
     throw new Error("Could not load conversation messages.");
   }
-
+  if (participantResult.error) {
+    console.error("Could not load conversation participant", {
+      code: participantResult.error.code,
+      conversationId,
+      message: participantResult.error.message,
+    });
+    throw new Error("Could not load conversation participant.");
+  }
   const conversation = conversationResult.data as Conversation | null;
   const enrichedConversation = conversation
     ? (await attachCorrespondents(memberId, [conversation]))[0] || conversation
@@ -916,19 +1227,62 @@ export async function getConversation(conversationId: string, memberId: string) 
   return {
     conversation: enrichedConversation,
     messages: (messagesResult.data || []) as Message[],
+    participant: participantResult.data as ParticipantArchiveLookupRow | null,
   };
 }
 
 export async function getUnreadNotifications(memberId: string) {
   const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
+  const feedbackState =
+    await getRecipientConversationFeedbackState(memberId);
+  const recipientConversationHrefs = Array.from(
+    feedbackState.recipientConversationIds,
+  ).map(
+    (conversationId) => `/messages/${conversationId}`,
+  );
+  const notificationFields =
+    "id,member_id,type,title,body,href,localized_content,read_at,created_at";
+
+  const unreadQuery = supabase
     .from("notifications")
-    .select("id,member_id,type,title,body,href,localized_content,read_at,created_at")
+    .select(notificationFields)
     .eq("member_id", memberId)
     .eq("type", "message")
     .is("read_at", null)
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(50);
+  const recipientConversationQuery = recipientConversationHrefs.length
+    ? supabase
+        .from("notifications")
+        .select(notificationFields)
+        .eq("member_id", memberId)
+        .eq("type", "message")
+        .in("href", recipientConversationHrefs)
+        .order("created_at", { ascending: false })
+        .limit(50)
+    : Promise.resolve({ data: [] });
+  const [{ data: unreadData }, { data: recipientConversationData }] =
+    await Promise.all([unreadQuery, recipientConversationQuery]);
+  const notificationsById = new Map<string, NotificationRecord>();
 
-  return filterStaleMessageNotifications(memberId, (data || []) as NotificationRecord[]);
+  for (const notification of [
+    ...((unreadData || []) as NotificationRecord[]),
+    ...((recipientConversationData || []) as NotificationRecord[]),
+  ]) {
+    notificationsById.set(notification.id, notification);
+  }
+
+  const notifications = Array.from(notificationsById.values()).sort(
+    (left, right) =>
+      new Date(right.created_at).getTime() -
+      new Date(left.created_at).getTime(),
+  );
+
+  return (
+    await filterStaleMessageNotifications(
+      memberId,
+      notifications,
+      feedbackState,
+    )
+  ).slice(0, 10);
 }

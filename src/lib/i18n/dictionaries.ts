@@ -176,7 +176,7 @@ const en = {
       venueDisclaimer: "Venue and address will be announced on Thursday.",
     },
     upcomingEvents: "Upcoming events",
-    pastEvents: "Past or rejected events",
+    pastEvents: "Past or declined events",
     pastEventStatus: "past event",
     postEventCta: "Share feedback and connect",
     messageParticipants: "Message participants",
@@ -396,13 +396,17 @@ const en = {
     feedbackRequired: "Complete your event feedback",
     feedbackRequiredDescription:
       "Share your feedback for each completed event to see and message the other guests.",
+    feedbackRequiredMessageDescription:
+      "Share your feedback for this event to unlock and read your new message.",
     feedbackAction: "Share feedback and unlock messages",
     noConversationsUntilFeedback:
       "Complete the feedback above to unlock conversations from that event.",
     new: "New",
     noMessagesYet: "No messages yet",
     noMessagesYetPeriod: "No messages yet.",
-    noConversations: "You will be able to reach out to the other guests after each event.",
+    noConversations:
+      "Check each past event in Going-out to see your table and start a conversation.",
+    browsePastEvents: "Go to Going-out",
     metAfterEvent: "Met after a shared event",
     metAt: (format: string, city: string, date: string) =>
       `Met at ${format}${city ? ` in ${city}` : ""} on ${date}`,
@@ -417,6 +421,19 @@ const en = {
     deleted: "This message was deleted.",
     writePlaceholder: "Write a message...",
     sendMessage: "Send message",
+    respondToMessage: "Respond to message",
+    notInterested: "Not interested",
+    notInterestedTitle: "Archive this conversation?",
+    notInterestedBody:
+      "We’ll archive this conversation. The sender will never be notified.",
+    archiveConversation: "Archive conversation",
+    archivingConversation: "Archiving...",
+    archiveSection: "Archive",
+    noActiveConversations: "You have no active conversations.",
+    archivedConversationTitle: "Conversation archived",
+    archivedConversationBody:
+      "This conversation is in your Archive and can no longer receive a response.",
+    messageReceivedOn: (date: string) => `You received a message on ${date}`,
     messageSent: "Message sent.",
     firstMessagePlaceholder: "Write one thoughtful first message...",
     sendFirst: "Send first message",
@@ -427,6 +444,26 @@ const en = {
       `You will receive an email notification when ${name} responds.`,
     ],
     firstMessageInfoAction: "Got it",
+    incomingFirstMessageInfoTitle: "You received a first message",
+    incomingFirstMessageInfoBody: [
+      "Everyone can send one private first message to other participants from an event.",
+      "It is completely your choice whether you want to respond. The conversation can continue only after you reply to this first message.",
+    ],
+    incomingFirstMessageInfoAction: "Got it",
+    reportMember: "Report",
+    reportDetailsTitle: "Report this member?",
+    reportDetailsBody:
+      "Tell us what happened. Your report will be shared with our staff when you submit it.",
+    reportDetailsLabel: "Anything you would like us to know? (optional)",
+    reportDetailsPlaceholder:
+      "Add any context that may help our team review this report.",
+    reportDetailsSubmit: "Submit Report",
+    reportDetailsSubmitting: "Submitting Report...",
+    reportDetailsSkip: "Cancel",
+    reportCompleteTitle: "Report received",
+    reportCompleteBody:
+      "Thank you. Our staff can now review your report.",
+    reportCompleteAction: "Done",
     waitingForReplyTitle: "Message sent",
     waitingForReplyBody: (name: string) =>
       `This conversation will open when ${name} replies.`,
@@ -930,6 +967,9 @@ const en = {
     conversationMissing: "Conversation was not found.",
     invalidMessage: "Invalid message.",
     shortMessage: "Write a short message first.",
+    messageReportFailed: "Could not record the report. Please try again.",
+    messageReportDetailsRequired: "Add some details before sending.",
+    messageReportDetailsTooLong: "Keep the report details to 5,000 characters or fewer.",
   },
   dbErrors: {
     "Member account is required.": "Member account is required.",
@@ -963,7 +1003,20 @@ const en = {
     "Write a message between 1 and 2000 characters.":
       "Write a message between 1 and 2000 characters.",
     "Conversation was not found.": "Conversation was not found.",
+    "The first incoming message was not found.":
+      "The first incoming message was not found.",
+    "Conversation participant was not found.":
+      "Conversation participant was not found.",
+    "The reporting member has no email address.":
+      "The reporting member has no email address.",
+    "Message report was not found.": "Message report was not found.",
+    "Write report details first.": "Add some details before sending.",
+    "Report details must be 5000 characters or fewer.":
+      "Keep the report details to 5,000 characters or fewer.",
     "This conversation is closed.": "This conversation is closed.",
+    "This conversation is archived.": "This conversation is archived.",
+    "Only an unanswered first message can be archived.":
+      "Only an unanswered first message can be archived.",
     "You can send one first message. If they reply, the conversation opens.":
       "You can send one first message. If they reply, the conversation opens.",
     "You cannot message yourself.": "You cannot message yourself.",
@@ -1368,13 +1421,17 @@ const es: typeof en = {
     feedbackRequired: "Completa la valoración del evento",
     feedbackRequiredDescription:
       "Valora cada evento completado para ver y escribir a las otras personas invitadas.",
+    feedbackRequiredMessageDescription:
+      "Valora este evento para desbloquear y leer tu nuevo mensaje.",
     feedbackAction: "Valorar y desbloquear mensajes",
     noConversationsUntilFeedback:
       "Completa la valoración de arriba para desbloquear las conversaciones de ese evento.",
     new: "Nuevo",
     noMessagesYet: "Aún no hay mensajes",
     noMessagesYetPeriod: "Aún no hay mensajes.",
-    noConversations: "Podrás escribir a las otras personas invitadas después de cada evento.",
+    noConversations:
+      "Consulta cada evento pasado en Salidas para ver tu mesa e iniciar una conversación.",
+    browsePastEvents: "Ir a Salidas",
     metAfterEvent: "Os conocisteis después de un evento compartido",
     metAt: (format: string, city: string, date: string) =>
       `Os conocisteis en ${format}${city ? ` en ${city}` : ""} el ${date}`,
@@ -1389,6 +1446,19 @@ const es: typeof en = {
     deleted: "Este mensaje fue eliminado.",
     writePlaceholder: "Escribe un mensaje...",
     sendMessage: "Enviar mensaje",
+    respondToMessage: "Responder al mensaje",
+    notInterested: "No me interesa",
+    notInterestedTitle: "¿Archivar esta conversación?",
+    notInterestedBody:
+      "Archivaremos esta conversación. La otra persona nunca recibirá una notificación.",
+    archiveConversation: "Archivar conversación",
+    archivingConversation: "Archivando...",
+    archiveSection: "Archivo",
+    noActiveConversations: "No tienes conversaciones activas.",
+    archivedConversationTitle: "Conversación archivada",
+    archivedConversationBody:
+      "Esta conversación está en tu Archivo y ya no puede recibir una respuesta.",
+    messageReceivedOn: (date: string) => `Recibiste un mensaje el ${date}`,
     messageSent: "Mensaje enviado.",
     firstMessagePlaceholder: "Escribe un primer mensaje con intención...",
     sendFirst: "Enviar primer mensaje",
@@ -1399,6 +1469,26 @@ const es: typeof en = {
       `Recibirás una notificación por email cuando ${name} responda.`,
     ],
     firstMessageInfoAction: "Entendido",
+    incomingFirstMessageInfoTitle: "Has recibido un primer mensaje",
+    incomingFirstMessageInfoBody: [
+      "Todo el mundo puede enviar un primer mensaje privado a otras personas que participaron en un evento.",
+      "Tú decides si quieres responder. La conversación solo puede continuar después de que respondas a este primer mensaje.",
+    ],
+    incomingFirstMessageInfoAction: "Entendido",
+    reportMember: "Denunciar",
+    reportDetailsTitle: "¿Quieres denunciar a esta persona?",
+    reportDetailsBody:
+      "Cuéntanos qué ocurrió. Tu denuncia se compartirá con nuestro equipo cuando la envíes.",
+    reportDetailsLabel: "¿Hay algo que quieras que sepamos? (opcional)",
+    reportDetailsPlaceholder:
+      "Añade cualquier contexto que pueda ayudar a nuestro equipo a revisar la denuncia.",
+    reportDetailsSubmit: "Enviar denuncia",
+    reportDetailsSubmitting: "Enviando denuncia...",
+    reportDetailsSkip: "Cancelar",
+    reportCompleteTitle: "Denuncia recibida",
+    reportCompleteBody:
+      "Gracias. Nuestro equipo ya puede revisar tu denuncia.",
+    reportCompleteAction: "Listo",
     waitingForReplyTitle: "Mensaje enviado",
     waitingForReplyBody: (name: string) =>
       `Esta conversación se abrirá cuando ${name} responda.`,
@@ -1902,6 +1992,9 @@ const es: typeof en = {
     conversationMissing: "No se encontró la conversación.",
     invalidMessage: "Mensaje no válido.",
     shortMessage: "Escribe primero un mensaje breve.",
+    messageReportFailed: "No se pudo registrar la denuncia. Inténtalo de nuevo.",
+    messageReportDetailsRequired: "Añade algún detalle antes de enviarlo.",
+    messageReportDetailsTooLong: "Limita los detalles de la denuncia a 5.000 caracteres.",
   },
   dbErrors: {
     "Member account is required.": "Se requiere una cuenta de miembro.",
@@ -1935,7 +2028,20 @@ const es: typeof en = {
     "Write a message between 1 and 2000 characters.":
       "Escribe un mensaje de entre 1 y 2000 caracteres.",
     "Conversation was not found.": "No se encontró la conversación.",
+    "The first incoming message was not found.":
+      "No se encontró el primer mensaje recibido.",
+    "Conversation participant was not found.":
+      "No se encontró al participante de la conversación.",
+    "The reporting member has no email address.":
+      "El miembro que denuncia no tiene dirección de email.",
+    "Message report was not found.": "No se encontró la denuncia.",
+    "Write report details first.": "Añade algún detalle antes de enviarlo.",
+    "Report details must be 5000 characters or fewer.":
+      "Limita los detalles de la denuncia a 5.000 caracteres.",
     "This conversation is closed.": "Esta conversación está cerrada.",
+    "This conversation is archived.": "Esta conversación está archivada.",
+    "Only an unanswered first message can be archived.":
+      "Solo se puede archivar un primer mensaje sin responder.",
     "You can send one first message. If they reply, the conversation opens.":
       "Puedes enviar un primer mensaje. Si responde, la conversación se abre.",
     "You cannot message yourself.": "No puedes escribirte a ti mismo.",

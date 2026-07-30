@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { connection } from "next/server";
 import { CalendarDays } from "lucide-react";
 
@@ -8,7 +7,6 @@ import {
   InvitationDecisionForms,
 } from "@/components/forms/invitation-actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireMemberContextForRender } from "@/lib/data/member";
 import {
@@ -144,9 +142,6 @@ export default async function EventsPage() {
                   ) : null}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                  <Button asChild variant="secondary">
-                    <Link href={`/events/${invitation.event_id}`}>{dictionary.common.details}</Link>
-                  </Button>
                   <InvitationDecisionForms
                     copy={dictionary.actions}
                     creditBalance={creditBalance}
@@ -179,10 +174,9 @@ export default async function EventsPage() {
         <CardContent className="grid gap-3">
           {attendedEvents.length ? (
             attendedEvents.map((attendee) => (
-              <Link
+              <article
                 key={attendee.id}
-                href={`/events/${attendee.event_id}`}
-                className="grid gap-2 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 transition hover:border-lipstick-red/25"
+                className="grid gap-2 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={attendee.status === "attended" ? "ocean-blue" : "muted"}>
@@ -199,7 +193,7 @@ export default async function EventsPage() {
                     locale,
                   )}
                 </p>
-              </Link>
+              </article>
             ))
           ) : (
             <p className="rounded-lg bg-blush-pink p-4 text-sm font-semibold text-muted">

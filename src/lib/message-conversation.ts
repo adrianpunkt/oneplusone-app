@@ -1,5 +1,6 @@
 type ConversationSendState = {
   initiated_by_member_id: string;
+  recipient_member_id?: string;
   status: "pending" | "open" | "closed";
 };
 
@@ -21,8 +22,27 @@ export function isConversationWaitingForReply({
     conversation.status === "pending" &&
     conversation.initiated_by_member_id === memberId &&
     messages.some(
-      (message) =>
-        message.sender_member_id === memberId && !message.deleted_at,
+      (message) => message.sender_member_id === memberId,
     )
   );
+}
+
+export function shouldShowIncomingFirstMessageNotice({
+  conversation,
+  memberId,
+  messages,
+}: {
+  conversation: ConversationSendState;
+  memberId: string;
+  messages: MessageSendState[];
+}) {
+  if (
+    conversation.status !== "pending" ||
+    conversation.recipient_member_id !== memberId ||
+    messages.length !== 1
+  ) {
+    return false;
+  }
+
+  return messages[0]?.sender_member_id === conversation.initiated_by_member_id;
 }

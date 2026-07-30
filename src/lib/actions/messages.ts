@@ -16,6 +16,12 @@ export type MessageActionState = {
   ok?: boolean;
 };
 
+export type FirstMessageSafetyActionState = {
+  error?: string;
+  ok?: boolean;
+  reportId?: string;
+};
+
 type ParticipantReadRow = {
   conversation_id: string;
   last_read_at: string | null;
@@ -176,4 +182,85 @@ export async function markConversationReadAction(
   }
 
   return { changed: result.changed, ok: true };
+}
+
+export async function archiveUnansweredConversationAction(
+  conversationId: string,
+): Promise<MessageActionState> {
+  const { locale } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
+  if (!UUID_PATTERN.test(conversationId)) {
+    return { error: dictionary.actionErrors.conversationMissing };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("archive_unanswered_conversation", {
+    p_conversation_id: conversationId,
+  });
+
+  if (error) return { error: localizeDbError(error.message, dictionary) };
+
+  revalidatePath("/messages");
+  revalidatePath(`/messages/${conversationId}`);
+  return { ok: true };
+}
+
+export async function reportConversationMemberAction(
+  conversationId: string,
+): Promise<FirstMessageSafetyActionState> {
+  const { locale } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
+  if (!UUID_PATTERN.test(conversationId)) {
+    return { error: dictionary.actionErrors.conversationMissing };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc(
+    "create_conversation_member_report",
+    {
+      p_conversation_id: conversationId,
+    },
+  );
+
+  if (error) return { error: localizeDbError(error.message, dictionary) };
+
+  const reportId =
+    data && typeof data === "object" && !Array.isArray(data)
+      ? String((data as Record<string, unknown>).reportId || "")
+      : "";
+  if (!UUID_PATTERN.test(reportId)) {
+    return { error: dictionary.actionErrors.messageReportFailed };
+  }
+
+  revalidatePath("/messages");
+  revalidatePath(`/messages/${conversationId}`);
+  return { ok: true, reportId };
+}
+
+export async function addMessageReportDetailsAction(
+  reportId: string,
+  details: string,
+): Promise<FirstMessageSafetyActionState> {
+  const { locale } = await requireMemberContext();
+  const dictionary = getDictionary(locale);
+  const cleanDetails = details.trim();
+
+  if (!UUID_PATTERN.test(reportId)) {
+    return { error: dictionary.actionErrors.messageReportFailed };
+  }
+  if (!cleanDetails) {
+    return { error: dictionary.actionErrors.messageReportDetailsRequired };
+  }
+  if (cleanDetails.length > 5000) {
+    return { error: dictionary.actionErrors.messageReportDetailsTooLong };
+  }
+
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("add_message_report_details", {
+    p_details: cleanDetails,
+    p_report_id: reportId,
+  });
+
+  if (error) return { error: localizeDbError(error.message, dictionary) };
+  return { ok: true, reportId };
 }
