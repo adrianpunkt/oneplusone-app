@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { requireMemberContext } from "@/lib/data/member";
 import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 import { localizeDbError } from "@/lib/i18n/errors";
+import { deliverMessageEmailFromResult } from "@/lib/message-email-delivery";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { messageSchema } from "@/lib/validators/story";
 
@@ -126,6 +127,8 @@ export async function startConversationAction(
     return { error: dictionary.actionErrors.conversationMissing };
   }
 
+  await deliverMessageEmailFromResult(data);
+
   revalidatePath("/messages");
   revalidatePath(`/messages/${conversationId}`);
   revalidatePath(`/events/${eventId}`);
@@ -144,12 +147,14 @@ export async function sendMessageAction(
 
   const conversationId = String(formData.get("conversation_id") || "");
   const supabase = await createSupabaseServerClient();
-  const { error } = await supabase.rpc("send_message", {
+  const { data, error } = await supabase.rpc("send_message", {
     p_conversation_id: conversationId,
     p_body: parsed.data.body,
   });
 
   if (error) return { error: localizeDbError(error.message, dictionary) };
+
+  await deliverMessageEmailFromResult(data);
 
   revalidatePath("/messages");
   revalidatePath(`/messages/${conversationId}`);

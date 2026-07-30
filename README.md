@@ -109,6 +109,15 @@ their sessions are capped at the stored RSVP deadline. HTTP localhost previews
 use a development-only cookie name; production retains the Secure `__Host-`
 cookie.
 
+Every successful member-to-member message queues a service-only email delivery
+and immediately attempts a Loops transactional send to the recipient. The
+English template defaults to `cms6u1rqf0juz0jtg6yh72oqx`; the Spanish template
+defaults to `cms6u1s4c07450jzmtpsphbhy`. Override them with
+`LOOPS_TRANSACTIONAL_MESSAGE_NOTIFICATION_EN` and
+`LOOPS_TRANSACTIONAL_MESSAGE_NOTIFICATION_ES` if they change. The templates
+use only `firstName` and `ctaUrl`; they do not receive the sender or message
+body. Their source LMX is stored in `docs/messages/loops-lmx/`.
+
 The shared Supabase Auth config sets email OTP expiry to 24 hours. Apply
 `../website/supabase/config.toml` to the target Supabase project when changing
 that expiry remotely.
