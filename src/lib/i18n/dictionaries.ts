@@ -427,6 +427,9 @@ const en = {
       `You will receive an email notification when ${name} responds.`,
     ],
     firstMessageInfoAction: "Got it",
+    waitingForReplyTitle: "Message sent",
+    waitingForReplyBody: (name: string) =>
+      `This conversation will open when ${name} replies.`,
     sending: "Sending...",
     notificationTooltip: (count: number) =>
       `You have ${count} new ${count === 1 ? "message" : "messages"}`,
@@ -1396,6 +1399,9 @@ const es: typeof en = {
       `Recibirás una notificación por email cuando ${name} responda.`,
     ],
     firstMessageInfoAction: "Entendido",
+    waitingForReplyTitle: "Mensaje enviado",
+    waitingForReplyBody: (name: string) =>
+      `Esta conversación se abrirá cuando ${name} responda.`,
     sending: "Enviando...",
     notificationTooltip: (count: number) =>
       `Tienes ${count} mensaje${count === 1 ? "" : "s"} nuevo${count === 1 ? "" : "s"}`,

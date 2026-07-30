@@ -4,7 +4,7 @@ import type { Locale } from "@/lib/i18n/locales";
 
 export const eventFeedbackPageCopy = {
   en: {
-    backToEvent: "Back to events",
+    backToEvents: "Back to events",
     description:
       "We’d love to hear about your experience. Please answer the questions below to unlock messaging and connect with the other members from this event. Thank you!",
     form: {
@@ -37,7 +37,7 @@ export const eventFeedbackPageCopy = {
     title: "Event feedback",
   },
   es: {
-    backToEvent: "Volver a eventos",
+    backToEvents: "Volver a eventos",
     description:
       "Nos encantaría conocer tu experiencia. Responde a las preguntas a continuación para desbloquear los mensajes y conectar con los demás miembros de este evento. ¡Gracias!",
     form: {

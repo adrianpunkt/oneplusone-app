@@ -819,21 +819,28 @@ export async function getCompletedEventFeedbackState(memberId: string) {
       .is("cancelled_at", null),
     supabase
       .from("event_feedback")
-      .select("event_id")
+      .select("event_id,attended")
       .eq("member_id", memberId),
   ]);
 
   if (invitationResult.error || feedbackResult.error) {
     return {
+      attendedEventIds: [] as string[],
       eventsAwaitingFeedback: [] as EventRecord[],
       submittedEventIds: [] as string[],
     };
   }
 
+  const feedbackRows = (feedbackResult.data || []) as Array<
+    Pick<EventFeedback, "attended" | "event_id">
+  >;
   const submittedEventIds = new Set(
-    ((feedbackResult.data || []) as Array<Pick<EventFeedback, "event_id">>).map(
-      (feedback) => feedback.event_id,
-    ),
+    feedbackRows.map((feedback) => feedback.event_id),
+  );
+  const attendedEventIds = new Set(
+    feedbackRows
+      .filter((feedback) => feedback.attended)
+      .map((feedback) => feedback.event_id),
   );
   const invitations = (invitationResult.data || []) as unknown as Array<
     WithEventRelation<{ event_id: string }>
@@ -856,6 +863,7 @@ export async function getCompletedEventFeedbackState(memberId: string) {
     );
 
   return {
+    attendedEventIds: [...attendedEventIds],
     eventsAwaitingFeedback,
     submittedEventIds: [...submittedEventIds],
   };
@@ -869,13 +877,12 @@ export async function getCompletedEventsAwaitingFeedback(memberId: string) {
 
 export async function getConversation(conversationId: string, memberId: string) {
   const supabase = await createSupabaseServerClient();
-  const [{ data: conversation }, { data: messages }] = await Promise.all([
+  const [conversationResult, messagesResult] = await Promise.all([
     supabase
       .from("conversations")
-      .select(
-        "id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at,events(id,title,description,localized_content,language_code,event_format,status,starts_at,ends_at,city,venue_name,venue_address,capacity,member_notes)",
-      )
+      .select("id,event_id,initiated_by_member_id,recipient_member_id,status,created_at,updated_at")
       .eq("id", conversationId)
+      .or(`initiated_by_member_id.eq.${memberId},recipient_member_id.eq.${memberId}`)
       .maybeSingle(),
     supabase
       .from("messages")
@@ -883,18 +890,32 @@ export async function getConversation(conversationId: string, memberId: string) 
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: true }),
   ]);
-  const normalizedConversation = conversation
-    ? normalizeEventRelation<Conversation>(
-        conversation as unknown as WithEventRelation<Conversation>,
-      )
-    : null;
-  const enrichedConversation = normalizedConversation
-    ? (await attachCorrespondents(memberId, [normalizedConversation]))[0] || normalizedConversation
+
+  if (conversationResult.error) {
+    console.error("Could not load conversation", {
+      code: conversationResult.error.code,
+      conversationId,
+      message: conversationResult.error.message,
+    });
+    throw new Error("Could not load conversation.");
+  }
+  if (messagesResult.error) {
+    console.error("Could not load conversation messages", {
+      code: messagesResult.error.code,
+      conversationId,
+      message: messagesResult.error.message,
+    });
+    throw new Error("Could not load conversation messages.");
+  }
+
+  const conversation = conversationResult.data as Conversation | null;
+  const enrichedConversation = conversation
+    ? (await attachCorrespondents(memberId, [conversation]))[0] || conversation
     : null;
 
   return {
     conversation: enrichedConversation,
-    messages: (messages || []) as Message[],
+    messages: (messagesResult.data || []) as Message[],
   };
 }
 

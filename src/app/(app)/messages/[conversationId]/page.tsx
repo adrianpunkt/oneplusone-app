@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Clock3 } from "lucide-react";
 
 import { SendMessageForm } from "@/components/forms/send-message-form";
 import { AvatarPreview } from "@/components/messages/avatar-preview";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { requireMemberContextForRender } from "@/lib/data/member";
 import { getConversation } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { isConversationWaitingForReply } from "@/lib/message-conversation";
 import { requirePublicSupabaseEnv } from "@/lib/supabase/server";
 import { cn, formatDateTime } from "@/lib/utils";
 
@@ -32,6 +33,11 @@ export default async function ConversationPage({
     name: dictionary.messages.member,
     thumbnailUrl: "",
   };
+  const waitingForReply = isConversationWaitingForReply({
+    conversation,
+    memberId: member.id,
+    messages,
+  });
 
   return (
     <div className="fixed inset-x-0 bottom-0 top-[81px] z-10 px-0 pb-0 md:left-[260px] md:top-0 md:px-6 md:py-6 lg:px-8">
@@ -95,15 +101,33 @@ export default async function ConversationPage({
         </Card>
 
         <div className="shrink-0 border-t border-wine-burgundy/10 bg-white md:rounded-lg md:border md:border-wine-burgundy/10">
-          <SendMessageForm
-            conversationId={conversation.id}
-            copy={{
-              messageSent: dictionary.messages.messageSent,
-              sendMessage: dictionary.messages.sendMessage,
-              sending: dictionary.messages.sending,
-              writePlaceholder: dictionary.messages.writePlaceholder,
-            }}
-          />
+          {waitingForReply ? (
+            <div className="flex min-h-20 items-start gap-3 px-4 py-3.5">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-lipstick-red/10 text-lipstick-red">
+                <Clock3 aria-hidden="true" className="h-5 w-5" />
+              </span>
+              <div className="grid gap-0.5">
+                <p className="text-sm font-bold text-wine-burgundy">
+                  {dictionary.messages.waitingForReplyTitle}
+                </p>
+                <p className="text-sm leading-5 text-muted">
+                  {dictionary.messages.waitingForReplyBody(
+                    correspondent.name,
+                  )}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <SendMessageForm
+              conversationId={conversation.id}
+              copy={{
+                messageSent: dictionary.messages.messageSent,
+                sendMessage: dictionary.messages.sendMessage,
+                sending: dictionary.messages.sending,
+                writePlaceholder: dictionary.messages.writePlaceholder,
+              }}
+            />
+          )}
         </div>
       </div>
     </div>

@@ -58,6 +58,7 @@ import {
   isRejectedInvitation,
   shouldShowCannotMakeItStatus,
 } from "@/lib/event-invitation-classification";
+import { pastEventPrimaryHref } from "@/lib/going-out-event-action";
 import {
   getDictionary,
   profileOptionLabel,
@@ -1002,6 +1003,7 @@ function UpcomingEventCard({
 function PastEventCard({
   creditBalance,
   dictionary,
+  feedbackAttended,
   feedbackSubmitted,
   item,
   locale,
@@ -1011,6 +1013,7 @@ function PastEventCard({
 }: {
   creditBalance: number;
   dictionary: Dictionary;
+  feedbackAttended: boolean;
   feedbackSubmitted: boolean;
   item: EventListItem;
   locale: Locale;
@@ -1029,13 +1032,13 @@ function PastEventCard({
   const canApplyForSeat =
     canReapplyAfterDeclining || canRestoreAfterCancelling;
   const canOpenPostEventDetails = canOpenPostEvent(item, now);
-  const eventHref = item.event
-    ? canOpenPostEventDetails
-      ? feedbackSubmitted
-        ? `/events/${item.eventId}/connect`
-        : `/events/${item.eventId}/feedback`
-      : `/events/${item.eventId}`
-    : null;
+  const eventHref = pastEventPrimaryHref({
+    canOpenPostEventDetails,
+    eventId: item.eventId,
+    feedbackAttended,
+    feedbackSubmitted,
+    hasEvent: Boolean(item.event),
+  });
   const hasEventImage =
     item.event?.event_format === "brunch" ||
     item.event?.event_format === "dinner";
@@ -1354,6 +1357,9 @@ export default async function GoingOutPage({
   const submittedFeedbackEventIds = new Set(
     eventFeedbackState.submittedEventIds,
   );
+  const attendedFeedbackEventIds = new Set(
+    eventFeedbackState.attendedEventIds,
+  );
   const alwaysExpandPastEvents = pastEvents.some((item) =>
     isRecentAttendedEvent(item, now),
   );
@@ -1452,6 +1458,7 @@ export default async function GoingOutPage({
               <PastEventCard
                 creditBalance={creditBalance}
                 dictionary={dictionary}
+                feedbackAttended={attendedFeedbackEventIds.has(item.eventId)}
                 feedbackSubmitted={submittedFeedbackEventIds.has(item.eventId)}
                 key={item.key}
                 item={item}

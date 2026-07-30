@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import {
   buildAuthConfirmUrl,
@@ -17,25 +19,19 @@ export type MemberLoginEmailResult = {
   otpType?: MemberLoginOtpType;
 };
 
-export async function sendMemberLoginEmail({
+export async function createMemberLoginLink({
   autoSubmit = false,
   email,
   locale,
   next,
   origin,
-  reason = "login",
 }: {
   autoSubmit?: boolean;
   email: string;
   locale: Locale;
   next: string;
   origin: string;
-  reason?: "expired_link" | "login" | "resend";
-}): Promise<MemberLoginEmailResult> {
-  if (!isLoopsLoginEmailConfigured(locale)) {
-    return { ok: false };
-  }
-
+}) {
   const supabase = getSupabaseServiceClient();
   const redirectTo = buildAuthConfirmUrl({ autoSubmit, email, next, origin }).toString();
   const { data, error } = await supabase.auth.admin.generateLink({
@@ -61,15 +57,53 @@ export async function sendMemberLoginEmail({
   }
 
   const otpType = normalizeGeneratedOtpType(properties?.verification_type);
-  const loginUrl = buildAuthConfirmUrl({
+  return {
+    loginCode: typeof properties?.email_otp === "string" ? properties.email_otp : "",
+    loginUrl: buildAuthConfirmUrl({
+      autoSubmit,
+      email,
+      next,
+      origin,
+      tokenHash: String(tokenHash),
+      type: otpType,
+    }).toString(),
+    otpType,
+    tokenHash: String(tokenHash),
+  };
+}
+
+export async function sendMemberLoginEmail({
+  autoSubmit = false,
+  email,
+  locale,
+  next,
+  origin,
+  reason = "login",
+}: {
+  autoSubmit?: boolean;
+  email: string;
+  locale: Locale;
+  next: string;
+  origin: string;
+  reason?: "expired_link" | "login" | "resend";
+}): Promise<MemberLoginEmailResult> {
+  if (!isLoopsLoginEmailConfigured(locale)) {
+    return { ok: false };
+  }
+
+  const {
+    loginCode,
+    loginUrl,
+    otpType,
+    tokenHash,
+  } = await createMemberLoginLink({
     autoSubmit,
     email,
+    locale,
     next,
     origin,
-    tokenHash: String(tokenHash),
-    type: otpType,
-  }).toString();
-  const loginCode = typeof properties?.email_otp === "string" ? properties.email_otp : "";
+  });
+
   const transactionalId = getLoopsTransactionalId(locale);
 
   if (!transactionalId) {
@@ -80,7 +114,7 @@ export async function sendMemberLoginEmail({
     email,
     transactionalId,
     addToAudience: false,
-    idempotencyKey: `member-login-${reason}-${String(tokenHash).slice(0, 24)}`,
+    idempotencyKey: `member-login-${reason}-${tokenHash.slice(0, 24)}`,
     dataVariables: {
       email,
       confirmationUrl: loginUrl,

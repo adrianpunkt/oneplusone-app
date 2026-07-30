@@ -85,8 +85,8 @@ export default async function EventFeedbackPage({
   return (
     <>
       <EventPageHeader
-        backHref="/events"
-        backLabel={copy.backToEvent}
+        backHref="/going-out"
+        backLabel={copy.backToEvents}
         event={event}
         locale={locale}
         pendingTooltip={dictionary.events.venuePendingTooltip}

@@ -15,6 +15,7 @@ import { profileOptionLabel } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
 import { eventRelationshipIntention } from "@/lib/events/relationship-intention";
 import { sendLoopsTransactionalEmail } from "@/lib/loops";
+import { createMemberLoginLink } from "@/lib/member-login-email";
 import { getSupabaseServiceClient } from "@/lib/supabase/admin";
 import type { JsonObject } from "@/lib/types";
 import { storyValue } from "@/lib/utils";
@@ -31,6 +32,12 @@ const immediateEventEmailTypes = [
 ] as const;
 
 type ImmediateEventEmailType = (typeof immediateEventEmailTypes)[number];
+
+const oneTimeMemberEventEmailTypes = new Set<ImmediateEventEmailType>([
+  "seat_confirmed",
+  "waitlist_balance",
+  "waitlist_capacity",
+]);
 
 const eventTransactionalIds: Record<
   `${ImmediateEventEmailType}:${Locale}`,
@@ -184,7 +191,10 @@ export async function deliverMemberEventEmail(deliveryId: string) {
     if (!recipientEmail) throw new Error("Event email recipient is missing.");
     const durableIdempotencyKey = objectString(claimData, "idempotencyKey")
       || `event-email:${data.id}`;
-    const providerIdempotencyKey = data.email_type === "invitation_pending"
+    const providerIdempotencyKey = (
+      data.email_type === "invitation_pending"
+      || oneTimeMemberEventEmailTypes.has(data.email_type)
+    )
       ? `${durableIdempotencyKey}:attempt:${Math.max(1, Number(claim.attempts || 1))}`
       : durableIdempotencyKey;
     const clickToken = await createEventEmailClickToken(data.id);
@@ -270,6 +280,13 @@ async function eventEmailVariables(
   const rsvpDeadlineAt = objectString(payload, "rsvpDeadlineAt");
   const origin = resolveAppOrigin();
   const goingOutUrl = new URL("/going-out", origin).toString();
+  const oneTimeMemberEventUrl = oneTimeMemberEventEmailTypes.has(delivery.email_type)
+    ? await createMemberGoingOutLink({
+        email: claim.recipientEmail?.trim() || "",
+        locale,
+        origin,
+      })
+    : "";
   const invitationAccessToken = claim.invitationAccessToken?.trim() || "";
   const invitationDeclineToken = claim.invitationDeclineToken?.trim() || "";
   const invitationUrl = invitationAccessToken
@@ -283,7 +300,7 @@ async function eventEmailVariables(
     : "";
   const eventUrl = delivery.email_type === "invitation_pending"
     ? invitationUrl
-    : goingOutUrl;
+    : oneTimeMemberEventUrl || goingOutUrl;
   const eventFormat = objectString(payload, "eventFormat");
   const majorityIntention = eventRelationshipIntention(
     event?.localized_content,
@@ -342,6 +359,27 @@ async function eventEmailVariables(
       unsubscribeUrl,
     },
   });
+}
+
+async function createMemberGoingOutLink({
+  email,
+  locale,
+  origin,
+}: {
+  email: string;
+  locale: Locale;
+  origin: string;
+}) {
+  if (!email) throw new Error("Event email recipient is missing.");
+
+  const { loginUrl } = await createMemberLoginLink({
+    autoSubmit: true,
+    email,
+    locale,
+    next: "/going-out",
+    origin,
+  });
+  return loginUrl;
 }
 
 async function createEventEmailClickToken(deliveryId: string) {

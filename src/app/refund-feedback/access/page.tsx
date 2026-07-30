@@ -62,7 +62,7 @@ export default async function RefundFeedbackAccessPage({
             <AutoSubmitButton
               autoSubmit
               className="w-full"
-              delayMs={2_000}
+              delayMs={1_000}
               size="lg"
               type="submit"
             >

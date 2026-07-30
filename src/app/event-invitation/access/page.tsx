@@ -71,7 +71,7 @@ export default async function EventInvitationAccessPage({
             <AutoSubmitButton
               autoSubmit
               className="w-full sm:w-auto"
-              delayMs={2_000}
+              delayMs={1_000}
               size="lg"
               type="submit"
             >

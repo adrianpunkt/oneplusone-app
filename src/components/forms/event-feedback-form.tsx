@@ -366,8 +366,8 @@ function StarRating({
           ))}
         </div>
         <div className="flex w-full max-w-56 justify-between gap-4 text-xs font-semibold text-faint sm:max-w-60">
-          <span className="min-w-0">1 — {lowLabel}</span>
-          <span className="min-w-0 text-right">5 — {highLabel}</span>
+          <span className="min-w-0">{lowLabel}</span>
+          <span className="min-w-0 text-right">{highLabel}</span>
         </div>
       </div>
     </fieldset>

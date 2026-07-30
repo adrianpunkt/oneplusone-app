@@ -132,6 +132,8 @@ async function expiredLinkRedirectPath(
   emailHint: string,
   autoSubmit = false,
 ) {
+  if (autoSubmit) return loginRedirectPath("expired-link", next, emailHint);
+
   const email = decodeEmailHint(emailHint);
   if (!email) return loginRedirectPath("expired-link", next, emailHint);
   if (isDemoMemberEmail(email)) return loginRedirectPath("expired-link", next, emailHint);
@@ -191,6 +193,9 @@ export async function confirmLoginAction(formData: FormData) {
 
   if (error) {
     console.warn("Could not verify auth link", error.message);
+    if (await activeSessionMatchesEmailHint(supabase, emailHint)) {
+      redirect(next);
+    }
     redirect(await expiredLinkRedirectPath(origin, next, emailHint, autoSubmit));
   }
 
@@ -241,6 +246,27 @@ export async function confirmLoginAction(formData: FormData) {
   redirect(next);
 }
 
+async function activeSessionMatchesEmailHint(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  emailHint: string,
+) {
+  const expectedEmail = decodeEmailHint(emailHint);
+  if (!expectedEmail) return false;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user?.email?.trim().toLowerCase() !== expectedEmail) return false;
+
+  const { data: member } = await supabase
+    .from("members")
+    .select("membership_status")
+    .eq("user_id", user.id)
+    .maybeSingle<{ membership_status: string | null }>();
+
+  return member?.membership_status === "active";
+}
+
 export default async function ConfirmLoginPage({
   searchParams,
 }: {
@@ -255,14 +281,15 @@ export default async function ConfirmLoginPage({
   const emailHint = firstValue(params.email_hint);
   const autoSubmit = firstValue(params.auto) === "1";
   const context = await getOptionalMemberContextForRender();
-  if (context) redirect(next);
 
   if (!tokenHash || !allowedEmailOtpTypes.has(type)) {
+    if (context) redirect(next);
     redirect(loginRedirectPath("expired-link", next, emailHint));
   }
 
   const preflightStatus = await preflightAuthLink(tokenHash, type);
   if (preflightStatus === "invalid") {
+    if (context) redirect(next);
     const requestHeaders = await headers();
     const origin = resolveAppOrigin(requestHeaders.get("origin"));
     redirect(await expiredLinkRedirectPath(origin, next, emailHint, autoSubmit));
@@ -297,7 +324,11 @@ export default async function ConfirmLoginPage({
               <input type="hidden" name="next" value={next} />
               <input type="hidden" name="email_hint" value={emailHint} />
               <input type="hidden" name="auto" value={autoSubmit ? "1" : ""} />
-              <AutoSubmitButton autoSubmit={autoSubmit} size="lg">
+              <AutoSubmitButton
+                autoSubmit={autoSubmit}
+                delayMs={1_000}
+                size="lg"
+              >
                 <KeyRound className="h-4 w-4" />
                 {dictionary.login.confirmButton}
               </AutoSubmitButton>

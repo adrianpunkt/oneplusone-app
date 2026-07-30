@@ -5,6 +5,15 @@ const trackableLinkVariables = [
   "invitationLink",
 ] as const;
 
+export const FEEDBACK_EMAIL_LOGIN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+type FeedbackEmailAccessDelivery = {
+  email_type: string;
+  event_id: string;
+  sent_at: string | null;
+  status: string;
+};
+
 export function trackEventEmailLinks({
   origin,
   token,
@@ -56,4 +65,47 @@ export function eventEmailClickDestination(
   } catch {
     return fallback;
   }
+}
+
+export function feedbackEmailLoginNextPath({
+  delivery,
+  destination,
+  now = Date.now(),
+}: {
+  delivery: FeedbackEmailAccessDelivery;
+  destination: URL;
+  now?: number;
+}) {
+  if (delivery.email_type !== "feedback_request" || delivery.status !== "sent") {
+    return null;
+  }
+
+  const sentAt = new Date(delivery.sent_at || "").getTime();
+  if (
+    !Number.isFinite(sentAt)
+    || sentAt > now
+    || now - sentAt > FEEDBACK_EMAIL_LOGIN_MAX_AGE_MS
+  ) {
+    return null;
+  }
+
+  const expectedPath = `/events/${encodeURIComponent(delivery.event_id)}/feedback`;
+  if (destination.pathname !== expectedPath || destination.hash) return null;
+
+  const attended = destination.searchParams.get("attended");
+  const rating = destination.searchParams.get("overall_rating");
+  const allowedKeys = new Set(["attended", "overall_rating"]);
+  if ([...destination.searchParams.keys()].some((key) => !allowedKeys.has(key))) {
+    return null;
+  }
+
+  const isFormLink = !attended && !rating;
+  const isDidNotAttendLink = attended === "no" && !rating;
+  const isRatingLink =
+    attended === "yes"
+    && rating != null
+    && /^[1-5]$/.test(rating);
+  if (!isFormLink && !isDidNotAttendLink && !isRatingLink) return null;
+
+  return `${destination.pathname}${destination.search}`;
 }

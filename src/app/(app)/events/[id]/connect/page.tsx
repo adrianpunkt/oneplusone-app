@@ -24,19 +24,19 @@ export const dynamic = "force-dynamic";
 const connectCopy: Record<
   Locale,
   {
-    backToEvent: string;
+    backToEvents: string;
     description: string;
     messagingRequiresAttendance: string;
   }
 > = {
   en: {
-    backToEvent: "Back to events",
+    backToEvents: "Back to events",
     description: "Send a private message to anyone from your group.",
     messagingRequiresAttendance:
       "Messaging is available only to members who attended the event.",
   },
   es: {
-    backToEvent: "Volver a eventos",
+    backToEvents: "Volver a eventos",
     description: "Envía un mensaje privado a cualquier persona de tu grupo.",
     messagingRequiresAttendance:
       "Los mensajes solo están disponibles para quienes asistieron al evento.",
@@ -89,8 +89,8 @@ export default async function EventConnectPage({
   return (
     <>
       <EventPageHeader
-        backHref="/events"
-        backLabel={copy.backToEvent}
+        backHref="/going-out"
+        backLabel={copy.backToEvents}
         event={event}
         locale={locale}
         pendingTooltip={dictionary.events.venuePendingTooltip}

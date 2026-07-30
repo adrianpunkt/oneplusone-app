@@ -29,6 +29,11 @@ const nextConfig: NextConfig = {
         destination: "/my-story",
         permanent: true,
       },
+      {
+        source: "/events",
+        destination: "/going-out",
+        permanent: true,
+      },
     ];
   },
 };

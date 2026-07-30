@@ -12,10 +12,11 @@ export function FirstMessageInfoDialog({
   title,
 }: {
   actionLabel: string;
-  description: string[];
+  description: string | string[];
   title: string;
 }) {
   const [open, setOpen] = useState(true);
+  const paragraphs = Array.isArray(description) ? description : [description];
 
   return (
     <Dialog.Root onOpenChange={setOpen} open={open}>
@@ -31,7 +32,7 @@ export function FirstMessageInfoDialog({
                 {title}
               </Dialog.Title>
               <Dialog.Description className="grid gap-3 text-sm leading-6 text-muted">
-                {description.map((paragraph) => (
+                {paragraphs.map((paragraph) => (
                   <span key={paragraph}>{paragraph}</span>
                 ))}
               </Dialog.Description>

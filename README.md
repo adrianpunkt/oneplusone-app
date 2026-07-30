@@ -109,7 +109,7 @@ their sessions are capped at the stored RSVP deadline. HTTP localhost previews
 use a development-only cookie name; production retains the Secure `__Host-`
 cookie.
 
-The shared Supabase Auth config sets email OTP expiry to 1 hour. Apply
+The shared Supabase Auth config sets email OTP expiry to 24 hours. Apply
 `../website/supabase/config.toml` to the target Supabase project when changing
 that expiry remotely.
 
