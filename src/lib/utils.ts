@@ -5,6 +5,7 @@ import type { Locale } from "@/lib/i18n/locales";
 import {
   formatCurrency as formatLocalizedCurrency,
   formatDateTime as formatLocalizedDateTime,
+  formatEventDateTime as formatLocalizedEventDateTime,
 } from "@/lib/i18n/format";
 
 export function cn(...inputs: ClassValue[]) {
@@ -24,6 +25,14 @@ export function safeInternalPath(value: string | null | undefined, fallback = "/
 
 export function formatDateTime(value: string | null | undefined, locale: Locale = "en") {
   return formatLocalizedDateTime(value, locale);
+}
+
+export function formatEventDateTime(
+  value: string | null | undefined,
+  timeZone: string | null | undefined,
+  locale: Locale = "en",
+) {
+  return formatLocalizedEventDateTime(value, timeZone, locale);
 }
 
 export function formatCurrency(amountCents: number, currency = "eur", locale: Locale = "en") {

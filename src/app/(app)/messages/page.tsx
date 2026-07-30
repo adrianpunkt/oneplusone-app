@@ -20,7 +20,7 @@ import {
 import { localizeText } from "@/lib/i18n/dynamic";
 import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
-import { formatDate } from "@/lib/i18n/format";
+import { formatDate, formatEventDate } from "@/lib/i18n/format";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +36,11 @@ function eventContext(
 
   const eventFormat = dictionary.events.formats[event.event_format];
 
-  return dictionary.messages.metAt(eventFormat, event.city || "", formatDate(event.starts_at, locale));
+  return dictionary.messages.metAt(
+    eventFormat,
+    event.city || "",
+    formatEventDate(event.starts_at, event.timezone, locale),
+  );
 }
 
 function lastMessageContext(
@@ -128,7 +132,7 @@ export default async function MessagesPage() {
                         aria-hidden="true"
                         className="h-4 w-4 text-lipstick-red"
                       />
-                      {formatDate(event.starts_at, locale)}
+                      {formatEventDate(event.starts_at, event.timezone, locale)}
                     </span>
                     {event.city ? (
                       <span className="inline-flex items-center gap-1.5">

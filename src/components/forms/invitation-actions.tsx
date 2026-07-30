@@ -35,7 +35,7 @@ import { canRestoreCancelledInvitation } from "@/lib/event-invitation-classifica
 import type { Dictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
 import type { EventInvitation, EventRecord } from "@/lib/types";
-import { formatDateTime } from "@/lib/utils";
+import { formatEventDateTime } from "@/lib/utils";
 import successCheckmarkImage from "../../../public/success-checkmark-transparent.webp";
 
 const initialState: EventActionState = {};
@@ -353,7 +353,7 @@ export function ConfirmInvitationForm({
                       className="h-4 w-4 text-lipstick-red"
                     />
                     <time dateTime={event.starts_at}>
-                      {formatDateTime(event.starts_at, locale)}
+                      {formatEventDateTime(event.starts_at, event.timezone, locale)}
                     </time>
                     {relativeTime ? (
                       <span className="text-ocean-blue">· {relativeTime}</span>

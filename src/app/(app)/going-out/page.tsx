@@ -72,7 +72,7 @@ import type {
   EventInvitation,
   EventRecord,
 } from "@/lib/types";
-import { formatDateTime } from "@/lib/utils";
+import { formatDateTime, formatEventDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -432,7 +432,7 @@ function EventMeta({
     <div className="flex items-center gap-2 text-sm font-semibold text-muted">
       <span className="inline-flex items-center gap-2 whitespace-nowrap">
         <CalendarDays className="h-4 w-4 text-lipstick-red" />
-        {formatDateTime(event?.starts_at, locale)}
+        {formatEventDateTime(event?.starts_at, event?.timezone, locale)}
       </span>
       {showCalendar && event?.starts_at ? (
         <AddToCalendarButton

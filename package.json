@@ -10,6 +10,7 @@
     "test:event-contract": "node scripts/verify-event-contract.mjs",
     "test:event-invitation-decline-reasons": "node --experimental-strip-types --test scripts/event-invitation-decline-reasons.test.mjs",
     "test:event-invitation-classification": "node --experimental-strip-types --test scripts/event-invitation-classification.test.mjs",
+    "test:event-time-format": "node --experimental-strip-types --test scripts/event-time-format.test.mjs",
     "test:event-merge-link-compatibility": "node --test scripts/event-merge-link-compatibility.test.mjs",
     "test:event-relationship-intention": "node --experimental-strip-types --test scripts/event-relationship-intention.test.mjs",
     "test:message-guard": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test scripts/message-guard.test.mjs",

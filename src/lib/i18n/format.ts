@@ -5,8 +5,12 @@ export function intlLocale(locale: Locale) {
   return locale === "es" ? "es-ES" : "en";
 }
 
+function pendingDateLabel(locale: Locale) {
+  return locale === "es" ? "Por confirmar" : "TBC";
+}
+
 export function formatDateTime(value: string | null | undefined, locale: Locale = "en") {
-  if (!value) return locale === "es" ? "Por confirmar" : "TBC";
+  if (!value) return pendingDateLabel(locale);
 
   return new Intl.DateTimeFormat(intlLocale(locale), {
     dateStyle: "medium",
@@ -14,11 +18,38 @@ export function formatDateTime(value: string | null | undefined, locale: Locale 
   }).format(new Date(value));
 }
 
-export function formatDate(value: string | null | undefined, locale: Locale = "en") {
-  if (!value) return locale === "es" ? "Por confirmar" : "TBC";
+export function formatEventDateTime(
+  value: string | null | undefined,
+  timeZone: string | null | undefined,
+  locale: Locale = "en",
+) {
+  if (!value || !timeZone) return pendingDateLabel(locale);
 
   return new Intl.DateTimeFormat(intlLocale(locale), {
     dateStyle: "medium",
+    timeStyle: "short",
+    timeZone,
+  }).format(new Date(value));
+}
+
+export function formatDate(value: string | null | undefined, locale: Locale = "en") {
+  if (!value) return pendingDateLabel(locale);
+
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    dateStyle: "medium",
+  }).format(new Date(value));
+}
+
+export function formatEventDate(
+  value: string | null | undefined,
+  timeZone: string | null | undefined,
+  locale: Locale = "en",
+) {
+  if (!value || !timeZone) return pendingDateLabel(locale);
+
+  return new Intl.DateTimeFormat(intlLocale(locale), {
+    dateStyle: "medium",
+    timeZone,
   }).format(new Date(value));
 }
 

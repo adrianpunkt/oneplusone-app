@@ -4,7 +4,7 @@ import { ArrowLeft, CalendarDays } from "lucide-react";
 import { EventLocation } from "@/components/app/event-location";
 import type { EventRecord } from "@/lib/types";
 import type { Locale } from "@/lib/i18n/locales";
-import { formatDateTime } from "@/lib/utils";
+import { formatEventDateTime } from "@/lib/utils";
 
 type HeaderEvent = Pick<
   EventRecord,
@@ -52,7 +52,7 @@ export function EventPageHeader({
             className="h-4 w-4 shrink-0 text-lipstick-red"
           />
           <span className="min-w-0 break-words">
-            {formatDateTime(event.starts_at, locale)}
+            {formatEventDateTime(event.starts_at, event.timezone, locale)}
           </span>
         </span>
         <EventLocation

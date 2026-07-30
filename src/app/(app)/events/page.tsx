@@ -21,7 +21,7 @@ import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
 import type { Locale } from "@/lib/i18n/locales";
 import type { EventInvitation } from "@/lib/types";
-import { formatDateTime } from "@/lib/utils";
+import { formatEventDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -125,7 +125,11 @@ export default async function EventsPage() {
                   </div>
                   <p className="flex items-center gap-2 text-sm font-semibold text-muted">
                     <CalendarDays className="h-4 w-4 text-lipstick-red" />
-                    {formatDateTime(invitation.events?.starts_at, locale)}
+                    {formatEventDateTime(
+                      invitation.events?.starts_at,
+                      invitation.events?.timezone,
+                      locale,
+                    )}
                   </p>
                   <EventLocation
                     event={invitation.events}
@@ -189,7 +193,11 @@ export default async function EventsPage() {
                   </h2>
                 </div>
                 <p className="text-sm font-semibold text-muted">
-                  {formatDateTime(attendee.events?.starts_at, locale)}
+                  {formatEventDateTime(
+                    attendee.events?.starts_at,
+                    attendee.events?.timezone,
+                    locale,
+                  )}
                 </p>
               </Link>
             ))

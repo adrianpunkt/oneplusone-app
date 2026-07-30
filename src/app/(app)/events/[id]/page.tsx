@@ -17,7 +17,7 @@ import { getCreditBalance, getEventDetail, getPreferences } from "@/lib/data/por
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
 import type { Locale } from "@/lib/i18n/locales";
-import { formatDateTime } from "@/lib/utils";
+import { formatEventDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -200,7 +200,9 @@ export default async function EventDetailPage({
               </div>
               <div className="rounded-lg bg-blush-pink p-3">
                 <dt className="flex items-center gap-1.5 text-xs font-semibold uppercase text-faint"><Clock3 className="h-3.5 w-3.5" />{copy.deadline}</dt>
-                <dd className="mt-1 text-sm font-semibold text-wine-burgundy">{formatDateTime(event.rsvp_deadline_at, locale)}</dd>
+                <dd className="mt-1 text-sm font-semibold text-wine-burgundy">
+                  {formatEventDateTime(event.rsvp_deadline_at, event.timezone, locale)}
+                </dd>
               </div>
               <div className="rounded-lg bg-blush-pink p-3">
                 <dt className="text-xs font-semibold uppercase text-faint">{copy.creditCost}</dt>
