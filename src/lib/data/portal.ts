@@ -18,6 +18,7 @@ import type {
   NotificationRecord,
   EventRecord,
   JsonObject,
+  PostEventCreditOffer,
 } from "@/lib/types";
 import { currentHostPackageMaterials } from "@/lib/events/host-package-visibility";
 import { eventRelationshipIntention } from "@/lib/events/relationship-intention";
@@ -584,11 +585,60 @@ export async function getCreditProducts() {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase
     .from("credit_products")
-    .select("id,name,description,localized_content,credits,price_amount_cents,currency,stripe_price_id,status,sort_order")
+    .select("id,name,description,localized_content,credits,price_amount_cents,currency,stripe_price_id,status,sort_order,offer_type")
     .eq("status", "active")
+    .eq("offer_type", "standard")
     .order("sort_order", { ascending: true });
 
   return (data || []) as CreditProduct[];
+}
+
+type PostEventCreditOfferRow = {
+  product_id: string;
+  product_name: string;
+  product_description: string | null;
+  product_localized_content: JsonObject;
+  product_credits: number;
+  product_price_amount_cents: number;
+  product_currency: string;
+  product_stripe_price_id: string | null;
+  product_status: "active" | "archived";
+  product_sort_order: number;
+  product_offer_type: "post_event_48h";
+  offer_event_id: string;
+  offer_event_timezone: string;
+  offer_expires_at: string;
+};
+
+export async function getPostEventCreditOffer(): Promise<PostEventCreditOffer | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("get_current_post_event_credit_offer");
+  if (error) {
+    console.error("Could not load post-event credit offer", error);
+    return null;
+  }
+
+  const row = ((data || []) as PostEventCreditOfferRow[])[0];
+  if (!row) return null;
+
+  return {
+    product: {
+      id: row.product_id,
+      name: row.product_name,
+      description: row.product_description,
+      localized_content: row.product_localized_content,
+      credits: row.product_credits,
+      price_amount_cents: row.product_price_amount_cents,
+      currency: row.product_currency,
+      stripe_price_id: row.product_stripe_price_id,
+      status: row.product_status,
+      sort_order: row.product_sort_order,
+      offer_type: row.product_offer_type,
+    },
+    eventId: row.offer_event_id,
+    eventTimezone: row.offer_event_timezone,
+    expiresAt: row.offer_expires_at,
+  };
 }
 
 export async function getReferralCode(memberId: string) {

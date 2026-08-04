@@ -44,6 +44,14 @@ export type CreditProduct = {
   stripe_price_id: string | null;
   status: "active" | "archived";
   sort_order: number;
+  offer_type: "standard" | "post_event_48h";
+};
+
+export type PostEventCreditOffer = {
+  product: CreditProduct;
+  eventId: string;
+  eventTimezone: string;
+  expiresAt: string;
 };
 
 export type CreditLedgerEntry = {

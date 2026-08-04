@@ -17,6 +17,7 @@
     "test:message-guard": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test scripts/message-guard.test.mjs",
     "test:membership-refund-feedback": "node --experimental-strip-types --test scripts/membership-refund-feedback.test.mjs",
     "test:host-package-visibility": "node --experimental-strip-types --test scripts/host-package-visibility.test.mjs",
+    "test:post-event-credit-offer": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test scripts/post-event-credit-offer.test.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "node scripts/deploy-cloudflare-production.mjs",
     "deploy:dev": "node scripts/deploy-cloudflare-production.mjs --env dev",

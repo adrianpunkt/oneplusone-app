@@ -1,0 +1,22 @@
+<Style themeId="cmqb4vmha00o10ju4ths91501" />
+<Component componentId="cmqcao6dm1wwz0kys84vjjm7h" paddingTop="20" paddingBottom="30">
+  <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlfw8ho03sf0jxsbxf18x0a.png" alt="Hola {data.firstName}," width="202" dynamicSrc="https://oneplusoneclub.com/email/es/welcome/{data.firstName}.png" paddingTop="20" paddingBottom="30" />
+</Component>
+<H1 fontSize="26" lineHeight="120" paddingBottom="12">Un pequeño detalle para darte las gracias</H1>
+<Paragraph paddingBottom="16">Gracias por acompañarnos en el evento. Esperamos que disfrutaras de las conversaciones y de conocer a las personas de tu mesa.</Paragraph>
+<Paragraph></Paragraph>
+<Section blockColor="#f8eeee" blockBorderRadius="12" paddingTop="20" paddingRight="20" paddingBottom="20" paddingLeft="20">
+  <Paragraph fontSize="13" lineHeight="140" paddingBottom="8" align="center"><Strong textColor="#e53a3e">OFERTA PARA ASISTENTES · VÁLIDA 24 HORAS</Strong></Paragraph>
+  <H2 fontSize="24" lineHeight="125" paddingBottom="8" align="center">3 créditos por 30 €</H2>
+  <Paragraph align="center">Durante las próximas 24 horas, puedes conseguir más créditos por 10 € cada uno.</Paragraph>
+</Section>
+<Paragraph></Paragraph>
+<Button href="https://app.oneplusoneclub.com/login?next=%2Fcredits" bgColor="#e53a3e" textColor="#ffffff" borderRadius="8" borderWidth="1" borderColor="#e53a3e" innerXPadding="18" innerYPadding="12" fontSize="16" align="center" paddingTop="20" paddingBottom="20">Conseguir la oferta de 3 créditos</Button>
+<Paragraph fontSize="14" lineHeight="150" align="center"></Paragraph>
+<Component componentId="cmqcdwxlt1oyx0jxfjrrwxls0" paddingTop="20" paddingBottom="20">
+  <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlg3fsz050i0jxqp5h3c8c0.png" alt="one plus one club" href="https://oneplusoneclub.com" width="222" dynamicSrc="https://oneplusoneclub.com/email/es/with-love-oneplusoneclub.png" paddingTop="20" paddingBottom="20" />
+</Component>
+<Component componentId="cmql94c2n20uz0j0553vw8dpu">
+  <Paragraph fontSize="16" lineHeight="150"><Text textColor="#440a12">P.D. Puedes seguirnos en Instagram </Text><Link href="https://www.instagram.com/oneplusone_club?utm_source=post-event-credit-offer"><Underline>@oneplusone_club</Underline></Link></Paragraph>
+</Component>
+<Paragraph></Paragraph>

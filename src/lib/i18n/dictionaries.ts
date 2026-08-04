@@ -294,6 +294,13 @@ const en = {
     perCredit: (amount: string) => `${amount} per credit`,
     mostPopular: "MOST POPULAR",
     maxSavings: "MAX SAVINGS",
+    postEventOfferBadge: "48-HOUR EVENT OFFER",
+    postEventOfferTitle: (credits: number, price: string) =>
+      `${credits} credits for ${price}`,
+    postEventOfferDescription:
+      "Thanks for joining us. This attendee-only price is available for 48 hours after your event.",
+    postEventOfferExpiresIn: "Offer expires in",
+    postEventOfferExpired: "Offer expired",
     attendEvents: (credits: number) => `Attend ${credits} event${credits === 1 ? "" : "s"}`,
   },
   creditHistory: {
@@ -339,6 +346,8 @@ const en = {
     loginRequired: "Login required.",
     invalidProduct: "Invalid credit product.",
     productNotFound: "Credit product was not found.",
+    postEventOfferUnavailable:
+      "This event offer has expired or is not available for your account.",
     paymentNotConfigured: "Payment is not configured yet.",
   },
   preferences: {
@@ -1324,6 +1333,13 @@ const es: typeof en = {
     perCredit: (amount: string) => `${amount} por crédito`,
     mostPopular: "MÁS POPULAR",
     maxSavings: "MÁXIMO AHORRO",
+    postEventOfferBadge: "OFERTA DEL EVENTO · 48 HORAS",
+    postEventOfferTitle: (credits: number, price: string) =>
+      `${credits} créditos por ${price}`,
+    postEventOfferDescription:
+      "Gracias por acompañarnos. Este precio exclusivo para asistentes está disponible durante las 48 horas posteriores a tu evento.",
+    postEventOfferExpiresIn: "La oferta caduca en",
+    postEventOfferExpired: "La oferta ha caducado",
     attendEvents: (credits: number) => `Asiste a ${credits} evento${credits === 1 ? "" : "s"}`,
   },
   creditHistory: {
@@ -1369,6 +1385,8 @@ const es: typeof en = {
     loginRequired: "Necesitas iniciar sesión.",
     invalidProduct: "Producto de créditos no válido.",
     productNotFound: "No se encontró el producto de créditos.",
+    postEventOfferUnavailable:
+      "Esta oferta del evento ha caducado o no está disponible para tu cuenta.",
     paymentNotConfigured: "El pago aún no está configurado.",
   },
   preferences: {

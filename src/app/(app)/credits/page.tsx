@@ -1,7 +1,8 @@
 import Image from "next/image";
-import { CreditCard, Gift, XCircle } from "lucide-react";
+import { CreditCard, Gift, Sparkles, XCircle } from "lucide-react";
 
 import { CreditHistorySection } from "@/components/app/credit-history-section";
+import { PostEventOfferCountdown } from "@/components/app/post-event-offer-countdown";
 import { RouteToast } from "@/components/app/route-toast";
 import { CreditCheckoutButton } from "@/components/forms/credit-checkout-button";
 import { ReferralCodeActions } from "@/components/forms/referral-code-actions";
@@ -14,12 +15,14 @@ import { requireMemberContextForRender } from "@/lib/data/member";
 import {
   getCreditBalance,
   getCreditLedger,
+  getPostEventCreditOffer,
   getCreditProducts,
   getReferralCode,
 } from "@/lib/data/portal";
 import { getDictionary, type Dictionary } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
-import type { CreditProduct } from "@/lib/types";
+import type { Locale } from "@/lib/i18n/locales";
+import type { CreditProduct, PostEventCreditOffer } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import successCheckmarkImage from "../../../../public/success-checkmark-transparent.webp";
 
@@ -41,10 +44,11 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
       ? await syncCreditCheckoutSessionForMember(sessionId, member.id)
       : null;
 
-  const [creditBalance, ledger, products, referralCode] = await Promise.all([
+  const [creditBalance, ledger, products, postEventOffer, referralCode] = await Promise.all([
     getCreditBalance(member.id),
     getCreditLedger(member.id),
     getCreditProducts(),
+    getPostEventCreditOffer(),
     getReferralCode(member.id),
   ]);
   const productPricing = getCreditProductPricing(products);
@@ -133,73 +137,154 @@ export default async function CreditsPage({ searchParams }: CreditsPageProps) {
             {dictionary.credits.buyTitle}
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid gap-3 sm:grid-cols-3">
-          {productPricing.map(
-            ({ product, discountPercent, labelKey, perCreditAmountCents }) => (
-              <div
-                key={product.id}
-                className="flex min-h-full flex-col gap-4 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 text-wine-burgundy"
-              >
-                <div className="flex h-7 items-start">
-                  {labelKey ? (
-                    <span
-                      className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold uppercase tracking-wide text-white ${
-                        labelKey === "mostPopular" ? "bg-lipstick-red" : "bg-ocean-blue"
-                      }`}
-                    >
-                      {labelKey === "mostPopular"
-                        ? dictionary.credits.mostPopular
-                        : dictionary.credits.maxSavings}
-                    </span>
-                  ) : null}
-                </div>
-                <div>
-                  <p className="text-sm font-extrabold text-wine-burgundy">
-                    {localizeText(product.name, product.localized_content, locale, "name")}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-muted">
-                    {localizeText(
-                      product.description,
-                      product.localized_content,
-                      locale,
-                      "description",
-                    ) || formatCreditProductDescription(product.credits, dictionary)}
-                  </p>
-                </div>
-                <div className="mt-auto grid gap-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-2xl font-black text-wine-burgundy">
-                      {formatCurrency(
-                        product.price_amount_cents,
-                        product.currency,
-                        locale,
-                      )}
-                    </p>
-                    <span className="inline-flex h-6 items-center rounded-full bg-white px-2.5 text-xs font-semibold uppercase tracking-wide text-muted ring-1 ring-wine-burgundy/10">
-                      {discountPercent > 0
-                        ? dictionary.credits.save(discountPercent)
-                        : dictionary.credits.base}
-                    </span>
+        <CardContent className="grid gap-5">
+          {postEventOffer ? (
+            <PostEventOfferCard
+              dictionary={dictionary}
+              locale={locale}
+              offer={postEventOffer}
+            />
+          ) : null}
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {productPricing.map(
+              ({ product, discountPercent, labelKey, perCreditAmountCents }) => (
+                <div
+                  key={product.id}
+                  className="flex min-h-full flex-col gap-4 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4 text-wine-burgundy"
+                >
+                  <div className="flex h-7 items-start">
+                    {labelKey ? (
+                      <span
+                        className={`inline-flex h-7 items-center rounded-full px-3 text-xs font-semibold uppercase tracking-wide text-white ${
+                          labelKey === "mostPopular" ? "bg-lipstick-red" : "bg-ocean-blue"
+                        }`}
+                      >
+                        {labelKey === "mostPopular"
+                          ? dictionary.credits.mostPopular
+                          : dictionary.credits.maxSavings}
+                      </span>
+                    ) : null}
                   </div>
-                  <p className="text-xs font-medium text-muted">
-                    {dictionary.credits.perCredit(formatCurrency(perCreditAmountCents, product.currency, locale))}
-                  </p>
+                  <div>
+                    <p className="text-sm font-extrabold text-wine-burgundy">
+                      {localizeText(product.name, product.localized_content, locale, "name")}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted">
+                      {localizeText(
+                        product.description,
+                        product.localized_content,
+                        locale,
+                        "description",
+                      ) || formatCreditProductDescription(product.credits, dictionary)}
+                    </p>
+                  </div>
+                  <div className="mt-auto grid gap-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-2xl font-black text-wine-burgundy">
+                        {formatCurrency(
+                          product.price_amount_cents,
+                          product.currency,
+                          locale,
+                        )}
+                      </p>
+                      <span className="inline-flex h-6 items-center rounded-full bg-white px-2.5 text-xs font-semibold uppercase tracking-wide text-muted ring-1 ring-wine-burgundy/10">
+                        {discountPercent > 0
+                          ? dictionary.credits.save(discountPercent)
+                          : dictionary.credits.base}
+                      </span>
+                    </div>
+                    <p className="text-xs font-medium text-muted">
+                      {dictionary.credits.perCredit(formatCurrency(perCreditAmountCents, product.currency, locale))}
+                    </p>
+                  </div>
+                  <CreditCheckoutButton
+                    copy={{
+                      buy: dictionary.checkout.buy,
+                      couldNotStart: dictionary.checkout.couldNotStart,
+                      opening: dictionary.checkout.opening,
+                    }}
+                    productId={product.id}
+                  />
                 </div>
-                <CreditCheckoutButton
-                  copy={{
-                    buy: dictionary.checkout.buy,
-                    couldNotStart: dictionary.checkout.couldNotStart,
-                    opening: dictionary.checkout.opening,
-                  }}
-                  productId={product.id}
-                />
-              </div>
-            ),
-          )}
+              ),
+            )}
+          </div>
         </CardContent>
       </Card>
 
     </>
+  );
+}
+
+function PostEventOfferCard({
+  dictionary,
+  locale,
+  offer,
+}: {
+  dictionary: Dictionary;
+  locale: Locale;
+  offer: PostEventCreditOffer;
+}) {
+  const { product } = offer;
+  const price = formatCurrency(
+    product.price_amount_cents,
+    product.currency,
+    locale,
+  );
+  const perCreditPrice = formatCurrency(
+    product.price_amount_cents / product.credits,
+    product.currency,
+    locale,
+  );
+  return (
+    <div className="relative overflow-hidden rounded-xl bg-lipstick-red p-5 text-white shadow-[0_18px_45px_rgba(229,58,62,0.22)]">
+      <Sparkles
+        aria-hidden="true"
+        className="absolute -right-6 -top-6 h-28 w-28 text-white/10"
+      />
+      <div className="relative grid gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <div className="grid gap-3">
+          <span className="w-fit rounded-full bg-white/14 px-3 py-1 text-xs font-bold uppercase tracking-wide text-blush-pink ring-1 ring-white/20">
+            {dictionary.credits.postEventOfferBadge}
+          </span>
+          <div>
+            <p className="max-w-2xl text-sm leading-6 text-white/85">
+              {dictionary.credits.postEventOfferDescription}
+            </p>
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className="font-display text-3xl font-black text-white">
+                {dictionary.credits.postEventOfferTitle(product.credits, price)}
+              </p>
+              <span className="text-sm font-bold text-blush-pink">
+                {dictionary.credits.perCredit(perCreditPrice)}
+              </span>
+            </div>
+          </div>
+          <div className="text-xs font-semibold text-blush-pink">
+            <PostEventOfferCountdown
+              copy={{
+                expired: dictionary.credits.postEventOfferExpired,
+                expiresIn: dictionary.credits.postEventOfferExpiresIn,
+              }}
+              expiresAt={offer.expiresAt}
+              locale={locale}
+            />
+          </div>
+        </div>
+        <div className="min-w-36">
+          <CreditCheckoutButton
+            buttonVariant="ocean-blue"
+            copy={{
+              buy: dictionary.checkout.buy,
+              couldNotStart: dictionary.checkout.couldNotStart,
+              opening: dictionary.checkout.opening,
+            }}
+            productId={product.id}
+          />
+        </div>
+      </div>
+    </div>
   );
 }
 

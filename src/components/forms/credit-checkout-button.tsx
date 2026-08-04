@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CreditCard } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, type ButtonProps } from "@/components/ui/button";
 
 const CHECKOUT_REQUEST_TIMEOUT_MS = 15_000;
 
@@ -14,9 +14,11 @@ export type CreditCheckoutCopy = {
 };
 
 export function CreditCheckoutButton({
+  buttonVariant = "default",
   copy,
   productId,
 }: {
+  buttonVariant?: ButtonProps["variant"];
   copy: CreditCheckoutCopy;
   productId: string;
 }) {
@@ -58,11 +60,24 @@ export function CreditCheckoutButton({
 
   return (
     <div className="grid gap-2">
-      <Button type="button" onClick={startCheckout} disabled={loading}>
+      <Button
+        type="button"
+        variant={buttonVariant}
+        onClick={startCheckout}
+        disabled={loading}
+      >
         <CreditCard className="h-4 w-4" />
         {loading ? copy.opening : copy.buy}
       </Button>
-      {error ? <p className="text-xs font-semibold text-lipstick-red">{error}</p> : null}
+      {error ? (
+        <p
+          className={`text-xs font-semibold ${
+            buttonVariant === "ocean-blue" ? "text-white" : "text-lipstick-red"
+          }`}
+        >
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

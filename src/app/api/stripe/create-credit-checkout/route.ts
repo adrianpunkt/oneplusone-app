@@ -4,9 +4,14 @@ import { z } from "zod";
 
 import { isLocalOrigin, resolveAppOrigin } from "@/lib/app-origin";
 import { getOptionalMemberContext } from "@/lib/data/member";
+import { getPostEventCreditOffer } from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeText } from "@/lib/i18n/dynamic";
 import { getRequestLocaleFallback } from "@/lib/i18n/server";
+import {
+  POST_EVENT_CREDIT_OFFER_PRODUCT_ID,
+  postEventCheckoutExpiresAt,
+} from "@/lib/post-event-credit-offer";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/stripe";
 import type { CreditProduct } from "@/lib/types";
@@ -32,16 +37,53 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: dictionary.checkout.invalidProduct }, { status: 400 });
   }
 
-  const supabase = await createSupabaseServerClient();
-  const { data: product, error } = await supabase
-    .from("credit_products")
-    .select("id,name,description,localized_content,credits,price_amount_cents,currency,stripe_price_id,status,sort_order")
-    .eq("id", payload.data.productId)
-    .eq("status", "active")
-    .maybeSingle<CreditProduct>();
+  const isPostEventOffer =
+    payload.data.productId === POST_EVENT_CREDIT_OFFER_PRODUCT_ID;
+  const postEventOffer = isPostEventOffer
+    ? await getPostEventCreditOffer()
+    : null;
+  let product: CreditProduct | null = postEventOffer?.product || null;
 
-  if (error || !product) {
-    return NextResponse.json({ ok: false, error: dictionary.checkout.productNotFound }, { status: 404 });
+  if (!isPostEventOffer) {
+    const supabase = await createSupabaseServerClient();
+    const { data, error } = await supabase
+      .from("credit_products")
+      .select("id,name,description,localized_content,credits,price_amount_cents,currency,stripe_price_id,status,sort_order,offer_type")
+      .eq("id", payload.data.productId)
+      .eq("status", "active")
+      .eq("offer_type", "standard")
+      .maybeSingle<CreditProduct>();
+
+    if (error) {
+      return NextResponse.json(
+        { ok: false, error: dictionary.checkout.productNotFound },
+        { status: 404 },
+      );
+    }
+
+    product = data;
+  }
+
+  if (!product) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: isPostEventOffer
+          ? dictionary.checkout.postEventOfferUnavailable
+          : dictionary.checkout.productNotFound,
+      },
+      { status: isPostEventOffer ? 410 : 404 },
+    );
+  }
+
+  const checkoutExpiresAt = postEventOffer
+    ? postEventCheckoutExpiresAt(postEventOffer.expiresAt)
+    : null;
+  if (postEventOffer && !checkoutExpiresAt) {
+    return NextResponse.json(
+      { ok: false, error: dictionary.checkout.postEventOfferUnavailable },
+      { status: 410 },
+    );
   }
 
   const origin = getCheckoutOrigin(request);
@@ -83,6 +125,7 @@ export async function POST(request: NextRequest) {
       client_reference_id: context.member.id,
       customer_email: context.member.email || context.user.email || undefined,
       line_items: [lineItem],
+      ...(checkoutExpiresAt ? { expires_at: checkoutExpiresAt } : {}),
       success_url: `${origin}/credits?purchase=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/credits?purchase=cancelled`,
       metadata: {
@@ -90,6 +133,13 @@ export async function POST(request: NextRequest) {
         member_id: context.member.id,
         credit_product_id: product.id,
         credits: String(product.credits),
+        offer_type: product.offer_type,
+        ...(postEventOffer
+          ? {
+              offer_event_id: postEventOffer.eventId,
+              offer_expires_at: postEventOffer.expiresAt,
+            }
+          : {}),
       },
       payment_intent_data: {
         metadata: {
@@ -97,6 +147,13 @@ export async function POST(request: NextRequest) {
           member_id: context.member.id,
           credit_product_id: product.id,
           credits: String(product.credits),
+          offer_type: product.offer_type,
+          ...(postEventOffer
+            ? {
+                offer_event_id: postEventOffer.eventId,
+                offer_expires_at: postEventOffer.expiresAt,
+              }
+            : {}),
         },
       },
     });
