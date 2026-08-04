@@ -161,6 +161,13 @@ const conversationReportingMigration = await readFile(
   ),
   "utf8",
 );
+const privateReportSupportCopyMigration = await readFile(
+  new URL(
+    "../supabase/migrations/20260731120000_remove_internal_ids_from_message_report_requests.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const archiveConversationMigration = await readFile(
   new URL(
     "../supabase/migrations/20260731011000_archive_unanswered_conversations.sql",
@@ -810,6 +817,33 @@ test("optional report details update the existing report and staff queue item", 
   assert.match(
     conversationReportingMigration,
     /update public\.support_requests[\s\S]*message = support_message/i,
+  );
+});
+
+test("message-report support copy omits private internal identifiers", () => {
+  assert.match(
+    privateReportSupportCopyMigration,
+    /create or replace function public\.create_conversation_member_report/i,
+  );
+  assert.match(
+    privateReportSupportCopyMigration,
+    /create or replace function public\.add_message_report_details/i,
+  );
+  assert.match(
+    privateReportSupportCopyMigration,
+    /create or replace function public\.create_first_message_report/i,
+  );
+  assert.match(
+    privateReportSupportCopyMigration,
+    /create or replace function public\.add_first_message_report_details/i,
+  );
+  assert.match(
+    privateReportSupportCopyMigration,
+    /update public\.support_requests as support_request[\s\S]*from public\.message_reports as report/i,
+  );
+  assert.doesNotMatch(
+    privateReportSupportCopyMigration,
+    /(?:Report|Conversation|Message|Event|Reporter member|Reported member) ID:/i,
   );
 });
 
