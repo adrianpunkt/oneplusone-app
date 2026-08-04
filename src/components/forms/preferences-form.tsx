@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useCallback, useEffect, useRef, useState } from "react";
-import { Save } from "lucide-react";
+import { BellOff, Save } from "lucide-react";
 
 import { ActionStatus } from "@/components/forms/action-status";
 import { HostingInfoDialog } from "@/components/forms/hosting-info-dialog";
@@ -102,6 +102,9 @@ export function PreferencesForm({
   // Keep the submit controls available until hydration completes. If a client
   // bundle is delayed or unavailable, the native form remains fully usable.
   const [isDirty, setIsDirty] = useState(true);
+  const [receivesEventInvitations, setReceivesEventInvitations] = useState(
+    preferences?.receives_event_invitations ?? true,
+  );
   const formRef = useRef<HTMLFormElement>(null);
   const initialSnapshotRef = useRef<string | null>(null);
   const otherEventIdeas =
@@ -188,20 +191,55 @@ export function PreferencesForm({
         <input name="return_to" type="hidden" value="dashboard" />
       ) : null}
 
-      <section aria-labelledby="events-preferences" className="grid gap-4">
+      <section
+        aria-labelledby="events-preferences"
+        className="grid scroll-mt-24 gap-4"
+        id="event-invitations"
+      >
         <h2
           id="events-preferences"
           className="font-display text-lg font-extrabold text-wine-burgundy"
         >
           {copy.events}
         </h2>
+        {!receivesEventInvitations ? (
+          <div
+            className="flex items-start gap-3 rounded-lg border border-lipstick-red/25 bg-lipstick-red/[0.06] p-4"
+            role="status"
+          >
+            <BellOff
+              aria-hidden="true"
+              className="mt-0.5 h-5 w-5 shrink-0 text-lipstick-red"
+              strokeWidth={2.2}
+            />
+            <div>
+              <p className="text-sm font-bold text-wine-burgundy">
+                {copy.invitationsPausedTitle}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                {copy.invitationsPausedDescription}
+              </p>
+            </div>
+          </div>
+        ) : null}
         <p className="text-sm font-semibold text-ink">
           {copy.invitationsQuestion}
         </p>
-        <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-wine-burgundy/10 bg-blush-pink p-4">
+        <label
+          className={cn(
+            "flex cursor-pointer items-start gap-3 rounded-lg border bg-blush-pink p-4 transition-colors",
+            receivesEventInvitations
+              ? "border-wine-burgundy/10"
+              : "border-lipstick-red/35 bg-lipstick-red/[0.04]",
+          )}
+        >
           <Checkbox
             name="receives_event_invitations"
-            defaultChecked={preferences?.receives_event_invitations ?? true}
+            checked={receivesEventInvitations}
+            onCheckedChange={(checked) => {
+              setReceivesEventInvitations(checked === true);
+              scheduleDirtyCheck();
+            }}
           />
           <span>
             <span className="block text-sm font-semibold text-wine-burgundy">

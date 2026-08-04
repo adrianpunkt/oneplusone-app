@@ -206,6 +206,7 @@ export async function savePreferencesAction(
   revalidatePath("/preferences");
   revalidatePath("/dashboard");
   revalidatePath("/going-out");
+  revalidatePath("/(app)", "layout");
   redirect(
     returnToDashboard
       ? "/dashboard?preferences=saved"

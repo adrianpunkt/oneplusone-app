@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 import {
+  BellOff,
   CalendarDays,
   Check,
   CircleCheck,
@@ -1145,6 +1146,7 @@ function PreferencesStrip({
 }) {
   const extraPreferences: Record<string, unknown> =
     preferences?.extra_preferences ?? {};
+  const invitationsPaused = preferences?.receives_event_invitations === false;
   const hasTextPreference = (value: unknown) =>
     typeof value === "string" && value.trim().length > 0;
   const hasOtherEventIdeas =
@@ -1161,7 +1163,8 @@ function PreferencesStrip({
   );
   const hasAnyPreference = Boolean(
     preferences &&
-      (preferences.prefers_saturday_dinner ||
+      (invitationsPaused ||
+        preferences.prefers_saturday_dinner ||
         preferences.prefers_sunday_brunch ||
         hasOtherEventIdeas ||
         hasLocationPreferences ||
@@ -1171,12 +1174,24 @@ function PreferencesStrip({
   );
 
   return (
-    <section className="flex flex-col gap-4 rounded-lg border border-wine-burgundy/10 bg-white/88 p-4 shadow-[0_14px_35px_rgba(68,10,18,0.05)] sm:flex-row sm:items-center sm:justify-between">
+    <section
+      className={`flex flex-col gap-4 rounded-lg border p-4 shadow-[0_14px_35px_rgba(68,10,18,0.05)] sm:flex-row sm:items-center sm:justify-between ${
+        invitationsPaused
+          ? "border-lipstick-red/25 bg-lipstick-red/[0.04]"
+          : "border-wine-burgundy/10 bg-white/88"
+      }`}
+    >
       <div className="grid gap-2">
         <p className="font-display text-base font-extrabold text-wine-burgundy">
           {dictionary.goingOut.preferencesTitle}
         </p>
         <div className="flex flex-wrap gap-2">
+          {invitationsPaused ? (
+            <Badge className="gap-1.5 border-lipstick-red/30 bg-lipstick-red text-white">
+              <BellOff aria-hidden="true" className="h-3.5 w-3.5" />
+              {dictionary.preferences.invitationsPausedBadge}
+            </Badge>
+          ) : null}
           {preferences?.prefers_saturday_dinner ? (
             <Badge>{dictionary.goingOut.saturdayDinner}</Badge>
           ) : null}
@@ -1205,7 +1220,11 @@ function PreferencesStrip({
         variant="secondary"
         size="sm"
       >
-        <Link href="/preferences">{dictionary.goingOut.updatePreferences}</Link>
+        <Link href={invitationsPaused ? "/preferences#event-invitations" : "/preferences"}>
+          {invitationsPaused
+            ? dictionary.preferences.resumeInvitations
+            : dictionary.goingOut.updatePreferences}
+        </Link>
       </Button>
     </section>
   );
@@ -1239,6 +1258,7 @@ export default async function GoingOutPage({
     getCreditBalance(member.id),
     getCompletedEventFeedbackState(member.id),
   ]);
+  const invitationsPaused = preferences?.receives_event_invitations === false;
   const eventGroupSummaries = await getEventGroupSummaries([
     ...invitations.map((invitation) => invitation.events),
     ...attendedEvents.map((attendee) => attendee.events),
@@ -1410,10 +1430,18 @@ export default async function GoingOutPage({
               ))
             ) : (
               <EmptyEventState
-                title={dictionary.goingOut.noInvitationsTitle}
-                body={dictionary.goingOut.noInvitationsBody}
-                ctaHref="/my-story"
-                ctaLabel={dictionary.goingOut.updateStoryCta}
+                title={invitationsPaused
+                  ? dictionary.preferences.invitationsPausedTitle
+                  : dictionary.goingOut.noInvitationsTitle}
+                body={invitationsPaused
+                  ? dictionary.preferences.invitationsPausedDescription
+                  : dictionary.goingOut.noInvitationsBody}
+                ctaHref={invitationsPaused
+                  ? "/preferences#event-invitations"
+                  : "/my-story"}
+                ctaLabel={invitationsPaused
+                  ? dictionary.preferences.resumeInvitations
+                  : dictionary.goingOut.updateStoryCta}
               />
             )}
           </EventSection>

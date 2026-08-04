@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { BellOff, Star } from "lucide-react";
 
 import { BrandLogo } from "@/components/brand-logo";
 import { LanguageSwitcher } from "@/components/app/language-switcher";
@@ -86,6 +86,42 @@ function CreditBalanceLink({
   );
 }
 
+function EventInvitationsPausedBanner({
+  dictionary,
+}: {
+  dictionary: Dictionary;
+}) {
+  return (
+    <aside
+      aria-labelledby="event-invitations-paused-title"
+      className="flex flex-col gap-3 rounded-xl border border-lipstick-red/25 bg-lipstick-red/[0.06] px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-5"
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lipstick-red text-white">
+          <BellOff aria-hidden="true" className="h-4.5 w-4.5" strokeWidth={2.2} />
+        </span>
+        <div className="min-w-0">
+          <p
+            className="font-display text-sm font-extrabold text-wine-burgundy"
+            id="event-invitations-paused-title"
+          >
+            {dictionary.preferences.invitationsPausedTitle}
+          </p>
+          <p className="mt-0.5 text-sm leading-5 text-muted">
+            {dictionary.preferences.invitationsPausedDescription}
+          </p>
+        </div>
+      </div>
+      <Link
+        className="w-fit shrink-0 text-sm font-bold text-lipstick-red underline decoration-lipstick-red/30 underline-offset-4 transition hover:text-wine-burgundy hover:decoration-wine-burgundy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ocean-blue/35 focus-visible:ring-offset-2"
+        href="/preferences#event-invitations"
+      >
+        {dictionary.preferences.resumeInvitations}
+      </Link>
+    </aside>
+  );
+}
+
 export function AppShell({
   children,
   creditBalance,
@@ -94,6 +130,7 @@ export function AppShell({
   member,
   notifications,
   profile,
+  receivesEventInvitations,
 }: {
   children: React.ReactNode;
   creditBalance: number;
@@ -102,6 +139,7 @@ export function AppShell({
   member: Member;
   notifications: NotificationRecord[];
   profile: ProfileRegistration | null;
+  receivesEventInvitations: boolean;
 }) {
   const unreadCount = notifications.length;
   const displayName = memberDisplayName(member, profile);
@@ -217,6 +255,9 @@ export function AppShell({
           </div>
         </header>
         <main className="mx-auto grid w-full max-w-6xl gap-4 px-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-20 sm:gap-6 sm:px-6 sm:pt-24 md:py-6 lg:px-8">
+          {!receivesEventInvitations ? (
+            <EventInvitationsPausedBanner dictionary={dictionary} />
+          ) : null}
           {children}
         </main>
       </div>

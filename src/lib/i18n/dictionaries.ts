@@ -349,6 +349,11 @@ const en = {
     receiveInvitations: "Yes, I’d like to receive event invitations",
     receiveInvitationsDescription:
       "Turn this off to stop new invitations. You can turn it back on anytime.",
+    invitationsPausedTitle: "You’re not receiving event invitations",
+    invitationsPausedDescription:
+      "New event invitations are paused. You can turn them back on at any time.",
+    invitationsPausedBadge: "Invitations paused",
+    resumeInvitations: "Turn invitations back on",
     eventsQuestion: "Which events would you like to be invited to?",
     saturdayDinners: "Saturday dinners",
     saturdayDescription: "Organized usually at 8pm in a restaurant.",
@@ -1374,6 +1379,11 @@ const es: typeof en = {
     receiveInvitations: "Sí, me gustaría recibir invitaciones a eventos",
     receiveInvitationsDescription:
       "Desactiva esta opción para dejar de recibir nuevas invitaciones. Puedes volver a activarla cuando quieras.",
+    invitationsPausedTitle: "No estás recibiendo invitaciones a eventos",
+    invitationsPausedDescription:
+      "Las nuevas invitaciones a eventos están pausadas. Puedes volver a activarlas cuando quieras.",
+    invitationsPausedBadge: "Invitaciones pausadas",
+    resumeInvitations: "Volver a recibir invitaciones",
     eventsQuestion: "¿A qué eventos te gustaría recibir invitación?",
     saturdayDinners: "Cenas de sábado",
     saturdayDescription: "Normalmente organizadas a las 20:00 en un restaurante.",

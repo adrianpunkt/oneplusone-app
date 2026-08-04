@@ -2,7 +2,11 @@ import { AppShell } from "@/components/app/app-shell";
 import { NotificationRefresh } from "@/components/app/notification-refresh";
 import { PostHogMemberIdentify } from "@/components/app/posthog-member-identify";
 import { requireMemberContextForRender } from "@/lib/data/member";
-import { getCreditBalance, getUnreadNotifications } from "@/lib/data/portal";
+import {
+  getCreditBalance,
+  getPreferences,
+  getUnreadNotifications,
+} from "@/lib/data/portal";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizeNotification } from "@/lib/i18n/dynamic";
 import { requirePublicSupabaseEnv } from "@/lib/supabase/server";
@@ -17,9 +21,10 @@ export default async function PortalLayout({
   const { locale, member, profile } = await requireMemberContextForRender();
   const dictionary = getDictionary(locale);
   const supabaseConfig = requirePublicSupabaseEnv();
-  const [creditBalance, notifications] = await Promise.all([
+  const [creditBalance, notifications, preferences] = await Promise.all([
     getCreditBalance(member.id),
     getUnreadNotifications(member.id),
+    getPreferences(member.id),
   ]);
 
   return (
@@ -30,6 +35,7 @@ export default async function PortalLayout({
       member={member}
       notifications={notifications.map((notification) => localizeNotification(notification, locale))}
       profile={profile}
+      receivesEventInvitations={preferences?.receives_event_invitations ?? true}
     >
       <PostHogMemberIdentify locale={locale} member={member} />
       <NotificationRefresh memberId={member.id} supabaseConfig={supabaseConfig} />
