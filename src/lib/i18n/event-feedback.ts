@@ -12,6 +12,12 @@ export const eventFeedbackPageCopy = {
       yes: "Yes",
       no: "No",
       nonattendance: "What stopped you from attending?",
+      nonattendanceReasons: {
+        eventNotAppealing: "I was no longer interested in this event",
+        illness: "I wasn't feeling well",
+        other: "Something else",
+        scheduleChange: "My plans changed",
+      },
       overall: "How would you rate your overall experience?",
       overallLow: "Poor",
       overallHigh: "Excellent",
@@ -45,6 +51,12 @@ export const eventFeedbackPageCopy = {
       yes: "Sí",
       no: "No",
       nonattendance: "¿Qué te impidió asistir?",
+      nonattendanceReasons: {
+        eventNotAppealing: "Ya no me interesaba este evento",
+        illness: "No me encontraba bien",
+        other: "Otro motivo",
+        scheduleChange: "Mis planes cambiaron",
+      },
       overall: "¿Cómo valorarías tu experiencia en general?",
       overallLow: "mala",
       overallHigh: "excelente",
@@ -80,12 +92,5 @@ export function getEventFeedbackFormCopy(
     nonattendanceOtherLabel: dictionary.actions.cancellationDetailsLabel,
     nonattendanceOtherPlaceholder:
       dictionary.actions.cancellationDetailsPlaceholder,
-    nonattendanceReasons: {
-      eventNotAppealing:
-        dictionary.actions.cancellationReasons.noLongerInterested,
-      illness: dictionary.actions.cancellationReasons.illness,
-      other: dictionary.actions.cancellationReasons.somethingElse,
-      scheduleChange: dictionary.actions.cancellationReasons.scheduleChanged,
-    },
   };
 }
