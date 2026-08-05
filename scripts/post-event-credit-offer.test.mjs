@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import {
@@ -8,6 +9,19 @@ import {
 
 const NOW = Date.parse("2026-08-03T12:00:00.000Z");
 const NOW_SECONDS = NOW / 1000;
+
+const offerEmailLmx = await Promise.all(
+  ["en", "es"].map(async (locale) => ({
+    locale,
+    source: await readFile(
+      new URL(
+        `../docs/events/loops-lmx/post-event-credit-offer-${locale}.lmx`,
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  })),
+);
 
 test("uses the offer deadline when it is within Stripe's checkout window", () => {
   assert.equal(
@@ -56,4 +70,12 @@ test("marks elapsed and invalid offer windows as expired", () => {
     minutes: 0,
     expired: true,
   });
+});
+
+test("email copy matches the 48-hour database offer window", () => {
+  for (const { locale, source } of offerEmailLmx) {
+    assert.match(source, /48 (?:hours|horas)/i, `${locale} must state 48 hours`);
+    assert.doesNotMatch(source, /24 (?:hours|horas)/i, `${locale} must not state 24 hours`);
+    assert.doesNotMatch(source, /<Paragraph\b[^>]*><\/Paragraph>/, `${locale} spacers must contain a line break`);
+  }
 });

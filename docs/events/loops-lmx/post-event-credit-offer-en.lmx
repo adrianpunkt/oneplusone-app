@@ -4,19 +4,19 @@
 </Component>
 <H1 fontSize="26" lineHeight="120" paddingBottom="12">A little thank-you from us</H1>
 <Paragraph paddingBottom="16">Thank you for joining us at the event. We hope you enjoyed the conversations and meeting the people at your table.</Paragraph>
-<Paragraph></Paragraph>
+<Paragraph><Br /></Paragraph>
 <Section blockColor="#f8eeee" blockBorderRadius="12" paddingTop="20" paddingRight="20" paddingBottom="20" paddingLeft="20">
-  <Paragraph fontSize="13" lineHeight="140" paddingBottom="8" align="center"><Strong textColor="#e53a3e">ATTENDEE OFFER · VALID 24 HOURS</Strong></Paragraph>
+  <Paragraph fontSize="13" lineHeight="140" paddingBottom="8" align="center"><Strong textColor="#e53a3e">ATTENDEE OFFER · VALID 48 HOURS</Strong></Paragraph>
   <H2 fontSize="24" lineHeight="125" paddingBottom="8" align="center">3 credits for €30</H2>
-  <Paragraph align="center">For the next 24 hours, you can get more credits for €10 each.</Paragraph>
+  <Paragraph align="center">For the next 48 hours, you can get more credits for €10 each.</Paragraph>
 </Section>
-<Paragraph></Paragraph>
+<Paragraph><Br /></Paragraph>
 <Button href="https://app.oneplusoneclub.com/login?next=%2Fcredits" bgColor="#e53a3e" textColor="#ffffff" borderRadius="8" borderWidth="1" borderColor="#e53a3e" innerXPadding="18" innerYPadding="12" fontSize="16" align="center" paddingTop="20" paddingBottom="20">Get 3 credits offer</Button>
-<Paragraph fontSize="14" lineHeight="150" align="center"></Paragraph>
+<Paragraph fontSize="14" lineHeight="150" align="center"><Br /></Paragraph>
 <Component componentId="cmqcdwxlt1oyx0jxfjrrwxls0" paddingTop="20" paddingBottom="20">
   <Image src="https://images.vialoops.com/cmqb4p85p00er0jx8l4k4zg0h/cmqlg3fsz050i0jxqp5h3c8c0.png" alt="one plus one club" href="https://oneplusoneclub.com" width="222" dynamicSrc="https://oneplusoneclub.com/email/en/with-love-oneplusoneclub.png" paddingTop="20" paddingBottom="20" />
 </Component>
 <Component componentId="cmql90bd02j7r0j05fsp2h0dt">
   <Paragraph fontSize="16" lineHeight="150"><Text textColor="#440a12">P.S. You can follow us on Instagram </Text><Link href="https://www.instagram.com/oneplusone_club?utm_source=post-event-credit-offer"><Underline>@oneplusone_club</Underline></Link></Paragraph>
 </Component>
-<Paragraph></Paragraph>
+<Paragraph><Br /></Paragraph>
