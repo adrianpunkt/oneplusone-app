@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { wakeBackgroundJobs } from "@/lib/background-jobs";
 import { deliverMemberEventEmailFromResult } from "@/lib/event-email-delivery";
 import { resolveEventInvitationDeclineToken } from "@/lib/event-invitation-decline";
 import { isEventInvitationDeclineReasonForFormat } from "@/lib/event-invitation-decline-reasons";
@@ -68,6 +69,7 @@ export async function POST(request: NextRequest) {
     return declineRedirect(request, { locale: resultLocale, status: "already_declined" });
   }
 
+  wakeBackgroundJobs();
   const delivery = await deliverMemberEventEmailFromResult(result);
   if (!delivery.ok) {
     console.error("Event decline acknowledgement remains queued for retry.");

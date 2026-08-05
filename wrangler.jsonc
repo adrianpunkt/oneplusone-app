@@ -14,6 +14,14 @@
   "observability": {
     "enabled": true
   },
+  "queues": {
+    "producers": [
+      {
+        "binding": "BACKGROUND_JOBS_QUEUE",
+        "queue": "oneplusoneclub-background-jobs"
+      }
+    ]
+  },
   "routes": [
     {
       "pattern": "app.oneplusoneclub.com",
@@ -47,6 +55,14 @@
         "NEXT_PUBLIC_POSTHOG_UI_HOST": "https://eu.posthog.com",
         "NEXTJS_ENV": "cloudflare",
         "SUPABASE_PROJECT_REF": "oackdojvcfrkzbnprovb"
+      },
+      "queues": {
+        "producers": [
+          {
+            "binding": "BACKGROUND_JOBS_QUEUE",
+            "queue": "oneplusoneclub-background-jobs-dev"
+          }
+        ]
       },
       "build": {
         "command": "npx opennextjs-cloudflare build --env dev"

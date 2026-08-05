@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { wakeBackgroundJobs } from "@/lib/background-jobs";
 import { requireMemberContext } from "@/lib/data/member";
 import { isEventCancellationReason } from "@/lib/event-cancellation";
 import { deliverMemberEventEmailFromResult } from "@/lib/event-email-delivery";
@@ -214,6 +215,7 @@ export async function declineInvitationAction(
 
   if (error) return { error: localizeDbError(error.message, dictionary) };
 
+  wakeBackgroundJobs();
   await deliverMemberEventEmailFromResult(data);
   const result = data as { eventId?: string } | null;
   revalidateEventMutationPaths(result?.eventId);
@@ -263,6 +265,7 @@ export async function cancelInvitationAction(
 
   if (error) return { error: localizeDbError(error.message, dictionary) };
 
+  wakeBackgroundJobs();
   await deliverMemberEventEmailFromResult(data);
   revalidateEventMutationPaths(invitation.event_id);
   const result = data as { seatStatus?: string } | null;
@@ -394,6 +397,7 @@ export async function submitEventFeedbackAction(
     p_wants_to_connect: attended ? wantsToConnect : false,
   });
   if (error) return { error: localizeDbError(error.message, dictionary) };
+  wakeBackgroundJobs();
   revalidateEventMutationPaths(eventId);
   redirect(`/events/${encodeURIComponent(eventId)}/connect`);
 }

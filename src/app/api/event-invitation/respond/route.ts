@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
 
+import { wakeBackgroundJobs } from "@/lib/background-jobs";
 import { readEventInvitationSessionToken } from "@/lib/event-invitations";
 import { deliverMemberEventEmailFromResult } from "@/lib/event-email-delivery";
 import { pendingEventInvitationDeclineReasons } from "@/lib/event-invitation-decline-reasons";
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ ok: false, error: "Could not save your response." }, { status: 409 });
   }
+  wakeBackgroundJobs();
   await deliverMemberEventEmailFromResult(data);
   return NextResponse.json(data);
 }
