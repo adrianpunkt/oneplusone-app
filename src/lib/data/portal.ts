@@ -83,11 +83,66 @@ const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EVENT_FIELDS = "id,title,description,localized_content,language_code,event_format,status,starts_at,ends_at,timezone,city,capacity,invitation_limit,credit_cost,minimum_confirmed_count,minimum_run_count,gender_balance_enabled,invitation_send_at,rsvp_deadline_at,prepared_at,invitations_opened_at,venue_confirmed_at,confirmation_released_at,completed_at,cancelled_at,cancellation_reason";
 
+type ReleasedVenue = Pick<
+  EventRecord,
+  "confirmation_released_at" | "id" | "venue_address" | "venue_name"
+>;
+
+type ConfirmedInvitationVenueRow = {
+  event_id: string;
+  events: ReleasedVenue | ReleasedVenue[] | null;
+};
+
 function normalizeEventRelation<T extends { events?: EventRecord | null }>(
   row: WithEventRelation<Omit<T, "events">>,
 ): T {
   const event = Array.isArray(row.events) ? row.events[0] || null : row.events || null;
   return { ...row, events: event } as T;
+}
+
+async function attachReleasedVenues<
+  T extends { event_id: string; events?: EventRecord | null },
+>(memberId: string, items: T[]) {
+  const releasedEventIds = Array.from(
+    new Set(
+      items
+        .filter((item) => item.events?.confirmation_released_at)
+        .map((item) => item.event_id)
+        .filter((eventId) => UUID_PATTERN.test(eventId)),
+    ),
+  );
+  if (!releasedEventIds.length) return items;
+
+  const { data, error } = await getSupabaseServiceClient()
+    .from("event_invitations")
+    .select(
+      "event_id,events!inner(id,venue_name,venue_address,confirmation_released_at)",
+    )
+    .eq("member_id", memberId)
+    .eq("seat_status", "confirmed")
+    .in("event_id", releasedEventIds);
+
+  if (error) {
+    throw new Error(`Unable to load released event venues: ${error.message}`);
+  }
+
+  const venuesByEventId = new Map<string, ReleasedVenue>();
+  for (const row of (data || []) as unknown as ConfirmedInvitationVenueRow[]) {
+    const venue = Array.isArray(row.events) ? row.events[0] : row.events;
+    if (venue?.confirmation_released_at) {
+      venuesByEventId.set(row.event_id, venue);
+    }
+  }
+
+  return items.map((item) => {
+    const venue = venuesByEventId.get(item.event_id);
+    if (!venue || !item.events) return item;
+
+    return {
+      ...item,
+      events: { ...item.events, ...venue },
+    };
+  });
 }
 
 function otherConversationMemberId(conversation: Conversation, memberId: string) {
@@ -749,7 +804,7 @@ export async function getInvitations(memberId: string) {
     ]),
   );
 
-  const invitations = (
+  const normalizedInvitations = (
     (data || []) as unknown as WithEventRelation<EventInvitation>[]
   ).map((row) => {
     const invitation = normalizeEventRelation<EventInvitation>(row);
@@ -758,6 +813,7 @@ export async function getInvitations(memberId: string) {
       response_mode: responseModes.get(invitation.id),
     };
   });
+  const invitations = await attachReleasedVenues(memberId, normalizedInvitations);
   const cancelledInvitationIds = invitations
     .filter(
       (invitation) =>
@@ -794,8 +850,11 @@ export async function getAttendedEvents(memberId: string) {
     .eq("member_id", memberId)
     .order("created_at", { ascending: false });
 
-  return ((data || []) as unknown as WithEventRelation<EventAttendee>[]).map((row) =>
-    normalizeEventRelation<EventAttendee>(row),
+  return attachReleasedVenues(
+    memberId,
+    ((data || []) as unknown as WithEventRelation<EventAttendee>[]).map((row) =>
+      normalizeEventRelation<EventAttendee>(row),
+    ),
   );
 }
 

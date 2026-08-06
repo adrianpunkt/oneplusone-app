@@ -68,6 +68,14 @@ export function EventGroupSummaryLine({
   if (!event) return null;
 
   const segments: Array<{ key: string; value: ReactNode }> = [];
+  const hasReleasedVenue = Boolean(
+    event.confirmation_released_at &&
+      (event.venue_name?.trim() || event.venue_address?.trim()),
+  );
+  const secondLineStart =
+    separatePeopleLine && hasReleasedVenue && event.language_code
+      ? "language"
+      : "people";
 
   segments.push({
     key: "location",
@@ -140,7 +148,8 @@ export function EventGroupSummaryLine({
   return (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-muted">
       {segments.map((segment, index) => {
-        const startsSecondLine = separatePeopleLine && segment.key === "people";
+        const startsSecondLine =
+          separatePeopleLine && segment.key === secondLineStart;
 
         return (
           <Fragment key={segment.key}>

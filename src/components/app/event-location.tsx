@@ -35,22 +35,23 @@ export function EventLocation({
   const detailsReleased = Boolean(event.confirmation_released_at);
   const venueName = detailsReleased ? cleanVenueName(event.venue_name) : "";
   const venueAddress = detailsReleased ? event.venue_address?.trim() || "" : "";
-  const label = event.city?.trim() || venueName || venueAddress || pendingTooltip;
-  const tooltip = [venueName, venueAddress].filter(Boolean).join(", ") || pendingTooltip;
+  const venue = [venueName, venueAddress].filter(Boolean).join(", ");
+  const label = venue || event.city?.trim() || pendingTooltip;
+  const tooltip = venue || pendingTooltip;
   const countryFlag = showCountryFlag ? eventCountryFlag(event.timezone) : null;
 
   return (
     <span
       aria-label={tooltip}
       className={cn(
-        "group relative inline-flex w-fit items-center gap-2 rounded-sm text-sm font-semibold text-muted outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/40 focus-visible:ring-offset-2",
+        "group relative inline-flex w-fit max-w-full items-center gap-2 rounded-sm text-sm font-semibold text-muted outline-none focus-visible:ring-2 focus-visible:ring-lipstick-red/40 focus-visible:ring-offset-2",
         className,
       )}
       tabIndex={0}
     >
-      <MapPin className="h-4 w-4 text-lipstick-red" aria-hidden="true" />
+      <MapPin className="h-4 w-4 shrink-0 text-lipstick-red" aria-hidden="true" />
       {countryFlag ? <span aria-hidden="true">{countryFlag}</span> : null}
-      <span>{label}</span>
+      <span className="min-w-0 break-words">{label}</span>
       <HoverTooltip placement="top-right">{tooltip}</HoverTooltip>
     </span>
   );

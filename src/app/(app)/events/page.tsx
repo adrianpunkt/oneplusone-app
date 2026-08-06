@@ -193,6 +193,10 @@ export default async function EventsPage() {
                     locale,
                   )}
                 </p>
+                <EventLocation
+                  event={attendee.events}
+                  pendingTooltip={dictionary.events.venuePendingTooltip}
+                />
               </article>
             ))
           ) : (
