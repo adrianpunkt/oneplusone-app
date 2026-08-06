@@ -402,6 +402,13 @@ export function LoginForm({
           <Mail className="h-4 w-4" />
           {requestPending ? copy.sending : copy.sendLoginCode}
         </Button>
+        <a
+          className="group mx-auto inline-flex items-center gap-1.5 text-sm font-semibold text-ocean-blue underline decoration-ocean-blue/40 underline-offset-4 transition-colors hover:text-ocean-blue/80 hover:decoration-ocean-blue"
+          href={joinUrl}
+        >
+          <UserPlus className="h-4 w-4" />
+          {copy.joinClub}
+        </a>
         {requestState.error ? (
           <p className="text-sm font-semibold text-lipstick-red" role="status">
             {requestState.error}
