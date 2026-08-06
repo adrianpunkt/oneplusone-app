@@ -299,11 +299,10 @@ export default async function ConfirmLoginPage({
     <main className="grid min-h-screen place-items-center px-4 py-10">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <div className="relative flex flex-col items-center gap-3 sm:min-h-10 sm:flex-row sm:justify-center">
+          <div className="flex items-start justify-between gap-4">
             <BrandLogo className="w-40" priority />
             <LanguageSwitcher
               ariaLabel={dictionary.common.language}
-              className="sm:absolute sm:right-0 sm:top-0"
               currentLocale={locale}
             />
           </div>
