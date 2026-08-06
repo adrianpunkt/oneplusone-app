@@ -36,7 +36,8 @@ evaluation enabled so project-side session recording settings, sampling, and
 linked-flag triggers can start recordings correctly. It uses cookie persistence
 with cross-subdomain cookies and identifies signed-in users with `members.id`
 and email as PostHog person properties, matching the onboarding website
-identity.
+identity. Person profiles are processed for every visitor, including anonymous
+visitors, by setting `person_profiles` to `always`.
 
 Local development runs at `http://localhost:3030` and is configured to use the
 Supabase development project:

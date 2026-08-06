@@ -38,7 +38,7 @@ function initPostHog() {
       mask_all_text: true,
       opt_out_capturing_persistence_type: "cookie",
       persistence: "cookie",
-      person_profiles: "identified_only",
+      person_profiles: "always",
       secure_cookie: window.location.protocol === "https:",
       ui_host: posthogConfig.uiHost,
     } satisfies Partial<PostHogConfig>;
