@@ -192,32 +192,52 @@ function RequiredCheckboxGroup({
 
 function RadioQuestion({
   description,
+  error,
   name,
   onChange,
+  onSelectionChange,
   options,
   title,
 }: {
   description?: string;
+  error: boolean;
   name: string;
   onChange?: (value: string) => void;
+  onSelectionChange?: (group: string, hasSelection: boolean) => void;
   options: Array<{ description?: string; label: string; value: string }>;
   title: string;
 }) {
   return (
     <Question description={description} title={title}>
-      <div className="grid w-full max-w-xl gap-2">
+      <div
+        aria-describedby={error ? `${name}-error` : undefined}
+        className="grid w-full max-w-xl gap-2"
+        data-required-group={name}
+      >
         {options.map((option) => (
           <Choice
             description={option.description}
             key={option.value}
             label={option.label}
             name={name}
-            onChange={() => onChange?.(option.value)}
+            onChange={() => {
+              onChange?.(option.value);
+              onSelectionChange?.(name, true);
+            }}
             required
             type="radio"
             value={option.value}
           />
         ))}
+        {error ? (
+          <p
+            className="text-sm font-semibold text-lipstick-red"
+            id={`${name}-error`}
+            role="alert"
+          >
+            Choose one option to continue.
+          </p>
+        ) : null}
       </div>
     </Question>
   );
@@ -414,10 +434,25 @@ export function ValenciaAugustSurveyForm() {
     panel.querySelectorAll<HTMLElement>("[data-required-group]").forEach((group) => {
       const groupName = group.dataset.requiredGroup;
       if (!groupName) return;
-      const checked = group.querySelector<HTMLInputElement>("input[type='checkbox']:checked");
+      const checked = group.querySelector<HTMLInputElement>("input:checked");
       nextGroupErrors[groupName] = !checked;
     });
     setGroupErrors((current) => ({ ...current, ...nextGroupErrors }));
+
+    const firstInvalidGroupName = Object.entries(nextGroupErrors).find(
+      ([, hasError]) => hasError,
+    )?.[0];
+    const firstInvalidGroup = firstInvalidGroupName
+      ? Array.from(panel.querySelectorAll<HTMLElement>("[data-required-group]")).find(
+          (group) => group.dataset.requiredGroup === firstInvalidGroupName,
+        )
+      : undefined;
+
+    if (firstInvalidGroup) {
+      firstInvalidGroup.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstInvalidGroup.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true });
+      return false;
+    }
 
     const firstInvalid = Array.from(
       panel.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>("input[required], textarea[required]"),
@@ -425,7 +460,8 @@ export function ValenciaAugustSurveyForm() {
 
     if (firstInvalid) {
       firstInvalid.reportValidity();
-      firstInvalid.focus();
+      firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" });
+      firstInvalid.focus({ preventScroll: true });
     }
 
     return !firstInvalid && !Object.values(nextGroupErrors).some(Boolean);
@@ -637,7 +673,9 @@ export function ValenciaAugustSurveyForm() {
 
                 {selectedDays.length > 0 ? (
                   <RadioQuestion
+                    error={Boolean(groupErrors.time_preference)}
                     name="time_preference"
+                    onSelectionChange={handleRequiredGroupSelection}
                     options={[
                       { label: "Prefer mornings", value: "mornings" },
                       { label: "Prefer evenings", value: "evenings" },
@@ -648,7 +686,9 @@ export function ValenciaAugustSurveyForm() {
                 ) : null}
 
                 <RadioQuestion
+                  error={Boolean(groupErrors.schedule_regularness)}
                   name="schedule_regularness"
+                  onSelectionChange={handleRequiredGroupSelection}
                   options={[
                     { label: "Same schedule every week", value: "same_every_week" },
                     { label: "Days might change sometimes", value: "changes_sometimes" },
@@ -658,7 +698,9 @@ export function ValenciaAugustSurveyForm() {
                 />
 
                 <RadioQuestion
+                  error={Boolean(groupErrors.planning_window)}
                   name="planning_window"
+                  onSelectionChange={handleRequiredGroupSelection}
                   options={[
                     { label: "Current week is fine", value: "current_week" },
                     { label: "Prefer a week in advance", value: "one_week" },
@@ -821,8 +863,10 @@ export function ValenciaAugustSurveyForm() {
                 <SectionHeading index={2} />
                 <RadioQuestion
                   description="If you’re passionate about a particular activity or just love bringing people together, you tell us what you want to organize and we find a small group of singles who match your dating intentions and invite them to the event, same small groups format and same balanced genders ratio, just driven by your interests."
+                  error={Boolean(groupErrors.hosting_interest)}
                   name="hosting_interest"
                   onChange={setHostingInterest}
+                  onSelectionChange={handleRequiredGroupSelection}
                   options={[
                     { label: "Yes, I’d love to", value: "yes" },
                     { label: "Maybe — tell me more", value: "maybe" },
@@ -834,7 +878,9 @@ export function ValenciaAugustSurveyForm() {
                 {hostingInterest === "yes" || hostingInterest === "maybe" ? (
                   <RadioQuestion
                     description="This puts you in the spotlight and attracts more people who might have the same interests. We will still filter people attending the event by age, gender, and other preferences."
+                    error={Boolean(groupErrors.host_promotion_interest)}
                     name="host_promotion_interest"
+                    onSelectionChange={handleRequiredGroupSelection}
                     options={[
                       { label: "Yes", value: "yes" },
                       { label: "Maybe", value: "maybe" },
@@ -926,7 +972,9 @@ export function ValenciaAugustSurveyForm() {
 
                 <RadioQuestion
                   description="They can read about you and choose if they would like to connect."
+                  error={Boolean(groupErrors.personal_introductions)}
                   name="personal_introductions"
+                  onSelectionChange={handleRequiredGroupSelection}
                   options={[
                     { label: "Yes", value: "yes" },
                     { label: "Maybe — tell me more", value: "maybe" },
@@ -937,7 +985,9 @@ export function ValenciaAugustSurveyForm() {
 
                 <RadioQuestion
                   description="You can review and decide to connect to find out more."
+                  error={Boolean(groupErrors.proactive_introductions)}
                   name="proactive_introductions"
+                  onSelectionChange={handleRequiredGroupSelection}
                   options={[
                     { label: "Yes", value: "yes" },
                     { label: "Maybe — tell me more", value: "maybe" },
@@ -956,7 +1006,9 @@ export function ValenciaAugustSurveyForm() {
                 <SectionHeading index={5} />
                 <RadioQuestion
                   description="Meet other people of the same gender and age range as you."
+                  error={Boolean(groupErrors.similar_life_stage)}
                   name="similar_life_stage"
+                  onSelectionChange={handleRequiredGroupSelection}
                   options={[
                     { label: "Yes", value: "yes" },
                     { label: "Maybe — tell me more", value: "maybe" },
@@ -967,7 +1019,9 @@ export function ValenciaAugustSurveyForm() {
 
                 <RadioQuestion
                   description="Regardless of age and gender, the events will be focused on roots and origins."
+                  error={Boolean(groupErrors.mother_language)}
                   name="mother_language"
+                  onSelectionChange={handleRequiredGroupSelection}
                   options={[
                     { label: "Yes", value: "yes" },
                     { label: "Maybe — tell me more", value: "maybe" },
